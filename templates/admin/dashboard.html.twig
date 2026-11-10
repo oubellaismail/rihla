@@ -1,0 +1,19 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block main %}
+    <div class="row g-3">
+        {% for label, value in stats %}
+            <div class="col-6 col-md-4 col-xl">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="text-muted small">{{ label }}</div>
+                        <div class="fs-3 fw-semibold">{{ value }}</div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <p class="mt-4 text-muted">Back-office de gestion : trajets, arrêts, réservations, paiements simulés, avis, utilisateurs, véhicules et villes.</p>
+{% endblock %}
