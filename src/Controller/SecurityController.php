@@ -10,7 +10,7 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 class SecurityController extends AbstractController
 {
     /** Temporary login page (EasyAdmin's template) until the Level 3 account pages exist. */
-    #[Route('/connexion', name: 'app_login')]
+    #[Route('/login', name: 'app_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
         return $this->render('@EasyAdmin/page/login.html.twig', [
@@ -27,7 +27,7 @@ class SecurityController extends AbstractController
         ]);
     }
 
-    #[Route('/deconnexion', name: 'app_logout')]
+    #[Route('/logout', name: 'app_logout')]
     public function logout(): never
     {
         throw new \LogicException('Intercepted by the logout key of the firewall.');
