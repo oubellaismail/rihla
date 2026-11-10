@@ -48,10 +48,15 @@ class Trip
     #[Assert\Valid]
     private Collection $stops;
 
+    /** @var Collection<int, Booking> */
+    #[ORM\OneToMany(targetEntity: Booking::class, mappedBy: 'trip')]
+    private Collection $bookings;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->stops = new ArrayCollection();
+        $this->bookings = new ArrayCollection();
     }
 
     public function __toString(): string
@@ -173,5 +178,11 @@ class Trip
     public function getLastStop(): ?TripStop
     {
         return $this->stops->last() ?: null;
+    }
+
+    /** @return Collection<int, Booking> */
+    public function getBookings(): Collection
+    {
+        return $this->bookings;
     }
 }
