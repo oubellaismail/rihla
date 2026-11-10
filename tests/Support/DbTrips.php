@@ -36,17 +36,21 @@ final class DbTrips
         return $user;
     }
 
-    public function trip(int $seatsOffered = 3, ?User $driver = null): Trip
+    /**
+     * @param list<array{0: string, 1: string, 2: ?int}>|null $stops [city, HH:MM, price to next]
+     */
+    public function trip(int $seatsOffered = 3, ?User $driver = null, ?array $stops = null, string $day = TripBuilder::DAY): Trip
     {
         $driver ??= $this->user('Karim');
         $vehicle = (new Vehicle())->setOwner($driver)->setModel('Dacia Logan')->setColor('bleue')->setPassengerSeats(4);
         $this->em->persist($vehicle);
         $trip = (new Trip())->setDriver($driver)->setVehicle($vehicle)->setSeatsOffered($seatsOffered);
 
-        foreach ([['Agadir', '08:00', 60], ['Essaouira', '09:45', 65], ['Marrakech', '12:00', 85], ['Casablanca', '15:00', null]] as [$name, $time, $price]) {
+        $stops ??= [['Agadir', '08:00', 60], ['Essaouira', '09:45', 65], ['Marrakech', '12:00', 85], ['Casablanca', '15:00', null]];
+        foreach ($stops as [$name, $time, $price]) {
             $trip->addStop((new TripStop())
                 ->setCity($this->city($name))
-                ->setDepartureAt(new \DateTimeImmutable(TripBuilder::DAY . ' ' . $time))
+                ->setDepartureAt(new \DateTimeImmutable($day . ' ' . $time))
                 ->setMeetingPoint('Centre-ville')
                 ->setLegPriceToNext($price));
         }
@@ -76,12 +80,20 @@ final class DbTrips
         return $booking;
     }
 
+    public function vehicle(User $owner, int $passengerSeats = 4): Vehicle
+    {
+        $vehicle = (new Vehicle())->setOwner($owner)->setModel('Renault Kangoo')->setColor('grise')->setPassengerSeats($passengerSeats);
+        $this->em->persist($vehicle);
+
+        return $vehicle;
+    }
+
     public static function stop(Trip $trip, int $position): TripStop
     {
         return $trip->getStops()->get($position) ?? throw new \OutOfRangeException("No stop at position $position");
     }
 
-    private function city(string $name): City
+    public function city(string $name): City
     {
         $city = $this->em->getRepository(City::class)->findOneBy(['name' => $name]);
         if (!$city) {
