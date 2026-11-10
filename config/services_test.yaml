@@ -1,0 +1,10 @@
+# Test environment only: make the business services public so integration tests can fetch them
+# from the container even before a controller or command injects them.
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: true
+
+    App\Service\:
+        resource: '../src/Service/'
