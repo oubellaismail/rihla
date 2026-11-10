@@ -1,0 +1,28 @@
+---
+title: Booking a seat with the database lock
+---
+sequenceDiagram
+  autonumber
+  actor P as Passenger
+  participant C as BookingController
+  participant S as BookingService
+  participant A as SeatAvailabilityCalculator
+  participant DB as MySQL
+  P->>C: POST book (trip, fromStop, toStop, seats)
+  C->>S: book(trip, from, to, seats, user)
+  S->>DB: BEGIN TRANSACTION
+  S->>DB: SELECT trip FOR UPDATE (lock row)
+  Note over DB: A second booking for the same trip waits here
+  S->>DB: load CONFIRMED bookings of the trip
+  S->>A: freeSeats(seatsOffered, bookings, from, to)
+  A-->>S: min free seats over the legs
+  alt enough seats on every leg
+    S->>DB: INSERT booking (CONFIRMED, frozen price) + payment
+    S->>DB: COMMIT (releases the lock)
+    S-->>C: Booking
+    C-->>P: Réservation confirmée
+  else a leg is full
+    S->>DB: ROLLBACK (releases the lock)
+    S-->>C: NotEnoughSeatsException
+    C-->>P: Place déjà réservée + alternatives
+  end
