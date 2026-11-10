@@ -20,15 +20,25 @@ Requirements: Docker and Docker Compose.
 docker compose up -d --build
 ```
 
-The app is served at <http://localhost:8080>. On first start, the PHP container installs the dependencies, waits for MySQL and runs the migrations.
+The app is served at <http://localhost:8080>. On first start, the PHP container installs the dependencies, waits for MySQL, runs the migrations and, on an empty database, loads the demo data.
 
-The full guide (demo accounts, troubleshooting) will live in `INSTALL.md`.
+### Demo accounts
+
+All demo accounts use the password `rihla2026`.
+
+| Account | Role |
+|---|---|
+| `admin@rihla.ma` | Back-office at <http://localhost:8080/admin> |
+| `karim@rihla.ma` | Driver of the Agadir → Essaouira → Marrakech → Casablanca trip |
+| `salma@rihla.ma` | Passenger with upcoming, completed and cancelled bookings |
+
+The full guide (troubleshooting, reset) will live in `INSTALL.md`.
 
 ## Progress
 
 | Level | Scope | Status |
 |---|---|---|
-| 1 — Model | Entities, migrations, demo data, back-office | In progress |
+| 1 — Model | Entities, migrations, demo data, back-office | Done |
 | 2 — Rules | Seats per leg, no overbooking, cancellations, reviews, tests | To do |
 | 3 — Product | Accounts, search, booking, driver space, profiles | To do |
 | 4 — External API | Nominatim and OSRM: suggested price and map | To do |

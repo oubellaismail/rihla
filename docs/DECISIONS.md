@@ -51,3 +51,10 @@ The passenger reviews the driver, and the driver reviews each passenger. A revie
 
 To book, the service opens a transaction, **locks the trip row** (`SELECT … FOR UPDATE`, `LockMode::PESSIMISTIC_WRITE` in Doctrine), recalculates free seats per leg, then saves or rejects the booking. Two simultaneous bookings for the last seat are therefore handled one after the other: the second one sees the seat taken and gets a clear message.
 *Rejected*: optimistic locking alone (a `version` column), which would force the client to retry in a case that is common on small trips.
+
+## 2026-11-10 — Level 1 implemented
+
+- The four design diagrams were approved before any entity was written ([`docs/diagrams/`](diagrams/)).
+- **Users, bookings, payments and reviews cannot be created by hand in the back-office.** They come from the application flows (sign-up, booking service), so the business rules and the overbooking lock cannot be bypassed from `/admin`. Trips, stops, vehicles and cities stay editable for support.
+- **Demo data loads automatically** on an empty database in dev, so `docker compose up` gives a working demo straight away. Dates are relative to today, so there are always upcoming trips.
+- **Table name `app_user`**: `user` is reserved in several SQL dialects.
