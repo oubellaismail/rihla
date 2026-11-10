@@ -1,45 +1,47 @@
-# Rihla — covoiturage régional au Maroc
+# Rihla — regional carpooling in Morocco
 
-Projet réalisé pour le **PFE Challenge EMC** (Education Media Company, Agadir).
-Sujet choisi : **Sujet 3 — Plateforme de covoiturage régional**.
+Built for the **EMC PFE Challenge** (Education Media Company, Agadir).
+Chosen subject: **Subject 3 — Regional carpooling platform**.
 
-Rihla (رحلة, « voyage ») met en relation des conducteurs qui font un trajet entre villes marocaines, avec des arrêts, et des passagers qui peuvent réserver **tout ou partie** du parcours. Une place libérée à une étape intermédiaire est remise en vente pour la suite du trajet.
+Rihla (رحلة, "journey") connects drivers travelling between Moroccan cities, with stops along the way, and passengers who can book **all or part** of the route. A seat freed at an intermediate stop goes back on sale for the rest of the trip.
 
 ## Stack
 
-- Symfony 7.4 (LTS), PHP 8.3
-- MySQL 8.4, Doctrine ORM et migrations
-- Twig, Stimulus et Turbo (Symfony UX), AssetMapper
-- Docker Compose : PHP-FPM, Nginx, MySQL
+- Symfony 7.4 (LTS), PHP 8.4
+- MySQL 8.4, Doctrine ORM and migrations
+- Twig, Stimulus and Turbo (Symfony UX), AssetMapper
+- Docker Compose: PHP 8.4-FPM, Nginx, MySQL 8.4
 
-## Lancer le projet
+## Running the project
 
-Prérequis : Docker et Docker Compose.
+Requirements: Docker and Docker Compose.
 
 ```bash
 docker compose up -d --build
 ```
 
-L'application est servie sur <http://localhost:8080>. Au premier démarrage, le conteneur PHP installe les dépendances, attend MySQL et applique les migrations.
+The app is served at <http://localhost:8080>. On first start, the PHP container installs the dependencies, waits for MySQL and runs the migrations.
 
-Le guide complet (comptes de démonstration, dépannage) sera dans `INSTALL.md`.
+The full guide (demo accounts, troubleshooting) will live in `INSTALL.md`.
 
-## Avancement
+## Progress
 
-| Niveau | Contenu | État |
+| Level | Scope | Status |
 |---|---|---|
-| 1 — Modéliser | Entités, migrations, données de démonstration, back-office | En cours |
-| 2 — Règles | Places par tronçon, surréservation, annulations, avis, tests | À faire |
-| 3 — Produit | Comptes, recherche, réservation, espace conducteur, profils | À faire |
-| 4 — API externe | Nominatim et OSRM : prix suggéré et carte | À faire |
-| 5 — Livrer | Docker, `INSTALL.md` | Squelette Docker en place |
+| 1 — Model | Entities, migrations, demo data, back-office | In progress |
+| 2 — Rules | Seats per leg, no overbooking, cancellations, reviews, tests | To do |
+| 3 — Product | Accounts, search, booking, driver space, profiles | To do |
+| 4 — External API | Nominatim and OSRM: suggested price and map | To do |
+| 5 — Delivery | Docker, `INSTALL.md` | Docker skeleton in place |
 
 ## Documentation
 
-- [`docs/MODELE.md`](docs/MODELE.md) : modèle de données et choix
-- [`docs/DECISIONS.md`](docs/DECISIONS.md) : journal daté des décisions et réponses aux « Questions à trancher »
-- [`docs/design/`](docs/design/) : identité visuelle, maquette et photos
+- [`docs/MODELE.md`](docs/MODELE.md): data model and design choices
+- [`docs/DECISIONS.md`](docs/DECISIONS.md): dated decision log, including answers to the brief's open questions
+- [`docs/design/`](docs/design/): visual identity, mockup and photos
 
-## Usage de l'IA
+The documentation in `docs/` is written in French, the language of the brief.
 
-Le projet est développé avec l'aide d'agents IA (Claude Code). Les commits produits avec l'IA portent le trailer `Co-Authored-By`. Les traces d'usage sont fournies à part, dans l'archive demandée par le brief.
+## Use of AI
+
+The project is built with the help of AI agents (Claude Code). Commits produced with AI carry a `Co-Authored-By` trailer. Usage traces are provided separately, in the archive the brief asks for.
