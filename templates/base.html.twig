@@ -1,24 +1,72 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
     <head>
         <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
-        {% block stylesheets %}
-        {% endblock %}
-
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% block title %}Covoiturage entre les villes du Maroc{% endblock %} · Rihla</title>
+        <meta name="description" content="{% block description %}Trouvez une place dans une voiture qui fait déjà la route. Vous ne payez que votre bout de trajet.{% endblock %}">
+        <link rel="icon" href="{{ asset('images/rihla-icon.svg') }}" type="image/svg+xml">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+        {% block stylesheets %}{% endblock %}
         {% block javascripts %}
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
-
-        {% set frankenphp_hot_reload = app.request.server.get('FRANKENPHP_HOT_RELOAD') %}
-        {% if frankenphp_hot_reload %}
-        <meta name="frankenphp-hot-reload:url" content="{{ frankenphp_hot_reload }}">
-        <script src="https://cdn.jsdelivr.net/npm/idiomorph"></script>
-        <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
-        {% endif %}
     </head>
     <body>
-        {% block body %}{% endblock %}
+        {% import 'macros.html.twig' as ui %}
+        {% set route = app.request.attributes.get('_route') %}
+        <header class="site-header">
+            <nav class="container" aria-label="Navigation principale">
+                <a class="brand" href="{{ path('app_home') }}" aria-label="Rihla, accueil">
+                    {{ ui.logo(44) }}
+                    <span>Rihla</span>
+                </a>
+                <div class="nav-links">
+                    <a href="{{ path('app_trip_search') }}" {% if route == 'app_trip_search' %}aria-current="page"{% endif %}>Rechercher</a>
+                    {% if app.user %}
+                        <a href="{{ path('app_booking_index') }}" {% if route starts with 'app_booking' or route starts with 'app_driver' %}aria-current="page"{% endif %}>Mes trajets</a>
+                        <a class="btn btn--outline" href="{{ path('app_trip_new') }}">{{ ui.icon('plus') }} Publier un trajet</a>
+                        <details class="menu">
+                            <summary aria-label="Menu du compte">{{ ui.avatar(app.user) }}</summary>
+                            <div class="menu-panel">
+                                <div class="menu-who"><strong>{{ app.user.fullName }}</strong><br><span class="small muted">{{ app.user.email }}</span></div>
+                                <a href="{{ path('app_user_profile', {id: app.user.id}) }}">Mon profil public</a>
+                                <a href="{{ path('app_account') }}">Mon compte</a>
+                                <a href="{{ path('app_vehicles') }}">Mes véhicules</a>
+                                {% if is_granted('ROLE_ADMIN') %}<a href="{{ path('admin') }}">Back-office</a>{% endif %}
+                                <a href="{{ path('app_logout') }}">Déconnexion</a>
+                            </div>
+                        </details>
+                    {% else %}
+                        <a href="{{ path('app_login') }}">Connexion</a>
+                        <a class="btn btn--outline" href="{{ path('app_register') }}">Inscription</a>
+                    {% endif %}
+                </div>
+            </nav>
+        </header>
+
+        {% set flashes = app.flashes(['success', 'error', 'info']) %}
+        {% if flashes|filter(m => m is not empty)|length %}
+            <div class="container" role="status">
+                <div class="flashes">
+                    {% for type, messages in flashes %}
+                        {% for message in messages %}<p class="flash flash--{{ type }}">{{ message }}</p>{% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <main id="contenu">
+            {% block body %}{% endblock %}
+        </main>
+
+        <footer class="site-footer">
+            <div class="container">
+                <span>Rihla · covoiturage régional au Maroc</span>
+                <span>Projet réalisé pour l'EMC PFE Challenge 2026 · Photos Unsplash</span>
+            </div>
+        </footer>
     </body>
 </html>
