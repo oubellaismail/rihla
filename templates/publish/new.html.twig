@@ -11,7 +11,7 @@
         <p>Ajoutez les villes où vous pouvez vous arrêter. Chaque arrêt permet à quelqu'un de monter ou de descendre, et remplit votre voiture plus longtemps.</p>
     </div>
 
-    {{ form_start(form, {attr: {class: 'form', 'data-controller': 'stop-list', 'data-stop-list-prototype-value': include('publish/_stop.html.twig', {stop: form.stops.vars.prototype}), 'data-stop-list-index-value': form.stops|length}}) }}
+    {{ form_start(form, {attr: {class: 'form', 'data-controller': 'stop-list', 'data-stop-list-prototype-value': include('publish/_stop.html.twig', {stop: form.stops.vars.prototype}) ~ '', 'data-stop-list-index-value': form.stops|length}}) }}
         <div class="split">
             <div class="stack stack--l">
                 {% for e in form.vars.errors %}<p class="flash flash--error" role="alert">{{ e.message }}</p>{% endfor %}

@@ -32,6 +32,8 @@ All demo accounts use the password `rihla2026`.
 | `karim@rihla.ma` | Driver of the Agadir → Essaouira → Marrakech → Casablanca trip |
 | `salma@rihla.ma` | Passenger with upcoming, completed and cancelled bookings |
 
+Try it: search **Essaouira → Marrakech** on the date of Karim's trip, open the trip, book a seat as Salma, then cancel it from *Mes trajets*. Log in as Karim to see the passengers per leg on *Mes trajets › En tant que conducteur*.
+
 The full guide (troubleshooting, reset) will live in `INSTALL.md`.
 
 ## Progress
@@ -39,8 +41,8 @@ The full guide (troubleshooting, reset) will live in `INSTALL.md`.
 | Level | Scope | Status |
 |---|---|---|
 | 1 — Model | Entities, migrations, demo data, back-office | Done |
-| 2 — Rules | Seats per leg, no overbooking, cancellations, reviews, tests | Done (83 tests) |
-| 3 — Product | Accounts, search, booking, driver space, profiles | To do |
+| 2 — Rules | Seats per leg, no overbooking, cancellations, reviews, tests | Done |
+| 3 — Product | Accounts, search, booking, driver space, profiles | Done (149 tests in total) |
 | 4 — External API | Nominatim and OSRM: suggested price and map | To do |
 | 5 — Delivery | Docker, `INSTALL.md` | Docker skeleton in place |
 
@@ -50,7 +52,7 @@ The full guide (troubleshooting, reset) will live in `INSTALL.md`.
 docker compose exec php composer test
 ```
 
-Runs the unit tests (pure rules, no database) and the integration tests on a separate `rihla_test` MySQL database, including a real concurrency test where two processes book the last seat at the same time. Each integration test is rolled back, so the demo data is never touched.
+Runs the unit tests (pure rules, permissions), the integration tests on a separate `rihla_test` MySQL database (including a real concurrency test where two processes book the last seat at the same time) and the functional tests, which click through the pages like a user: sign up, search, book, cancel, review, publish a trip, cancel it. Each integration test is rolled back, so the demo data is never touched.
 
 ## Documentation
 

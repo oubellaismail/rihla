@@ -101,3 +101,14 @@ Before designing the pages we looked at how competitors use maps. **Uber** and i
 5. **Driver's trip: legs coloured by occupancy** (seats left, almost full, full), so the driver sees where seats free up.
 
 **Future work** (only if time allows): live tracking on the day of the trip, map-based search ("trips passing near me"), price negotiation.
+
+## 2026-11-10 — Level 3: the product
+
+- **Design approved first** ([`level3-product.drawio`](diagrams/level3-product.drawio): site map and components), then built.
+- **Tests first, at two levels.** New business code (`TripSearch`, `TripPublisher`, the two voters, profile figures) was specified by integration and unit tests; every page was specified by functional tests that click through the flows. The pages were then built by three Sonnet subagents in parallel, against fixed route names, and reviewed.
+- **Routes in English, pages in French**: `/trips`, `/bookings/{id}/cancel`, `/driver/trips`… with French content.
+- **Permissions live in voters** (`TripVoter`, `BookingVoter`), not in templates or controllers: only the driver sees the passenger list and cancels the trip, only the passenger cancels or reviews their booking. Ownership is never decided on ids alone.
+- **Privacy**: a public profile shows the first name and initial only, never the email or phone. The driver's phone appears on a booking only while it is confirmed; the driver sees passengers' phones on their own trip.
+- **No invented numbers** on the home page: free seats per leg, the latest booking and the reviews shown are read from the database.
+- **Search is by city name, in any case**, and on a day; a trip is found for any portion served in the right direction with enough free seats on every leg of that portion.
+- **Not in Level 3**: editing a trip once published (a driver cancels it instead, which refunds everyone), choosing a specific seat (bonus), the map (Level 4 fills the reserved space).
