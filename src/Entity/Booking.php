@@ -208,4 +208,14 @@ class Booking
     {
         return $this->payment;
     }
+
+    public function setPayment(Payment $payment): static
+    {
+        $this->payment = $payment;
+        if ($payment->getBooking() !== $this) {
+            $payment->setBooking($this);
+        }
+
+        return $this;
+    }
 }

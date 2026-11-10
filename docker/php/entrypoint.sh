@@ -21,4 +21,13 @@ done
 
 php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
 
+# Load the demo data on an empty database (dev only; set LOAD_DEMO_DATA=0 to skip).
+if [ "${APP_ENV:-dev}" = "dev" ] && [ "${LOAD_DEMO_DATA:-1}" = "1" ]; then
+    users=$(php bin/console dbal:run-sql "SELECT COUNT(*) AS n FROM app_user" 2>/dev/null | grep -Eo '[0-9]+' | tail -1)
+    if [ "${users:-0}" = "0" ]; then
+        echo "Empty database: loading the demo data..."
+        php bin/console doctrine:fixtures:load --no-interaction
+    fi
+fi
+
 exec "$@"
