@@ -4,7 +4,7 @@ namespace App\Tests\Integration\Service;
 
 use App\Enum\BookingStatus;
 use App\Enum\TripStatus;
-use App\Service\TripMatch;
+use App\Model\TripMatch;
 use App\Service\TripSearch;
 use App\Tests\Support\DbTrips;
 use Doctrine\ORM\EntityManagerInterface;
