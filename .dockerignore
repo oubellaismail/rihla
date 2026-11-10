@@ -1,0 +1,6 @@
+.git
+vendor
+var
+node_modules
+public/assets
+.env.local
