@@ -147,7 +147,7 @@ final class PassengerFlowTest extends WebFlowTestCase
         $this->client->submit($crawler->selectButton("Confirmer l'annulation")->form());
 
         self::assertResponseRedirects(sprintf('/bookings/%d', $booking->getId()));
-        $this->em->refresh($booking);
+        $booking = $this->reload($booking);
         self::assertSame(BookingStatus::CancelledByPassenger, $booking->getStatus());
     }
 

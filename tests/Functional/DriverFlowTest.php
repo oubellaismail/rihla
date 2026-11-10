@@ -93,6 +93,28 @@ final class DriverFlowTest extends WebFlowTestCase
         self::assertNull($this->em->getRepository(Trip::class)->findOneBy(['driver' => $karim]));
     }
 
+    public function testAStopWithoutCityOrTimeIsAFormErrorNotACrash(): void
+    {
+        $karim = $this->db->user('Karim');
+        $vehicle = $this->db->vehicle($karim);
+        $agadir = $this->db->city('Agadir');
+        $this->login($karim);
+
+        $crawler = $this->client->request('GET', '/trips/new');
+        $form = $crawler->selectButton('Publier le trajet')->form();
+        $values = $form->getPhpValues();
+        $values['trip']['vehicle'] = $vehicle->getId();
+        $values['trip']['seatsOffered'] = 3;
+        $values['trip']['stops'] = [
+            ['city' => $agadir->getId(), 'departureAt' => '2026-11-12T08:00', 'meetingPoint' => 'Gare routière', 'legPriceToNext' => 60],
+            ['city' => '', 'departureAt' => '', 'meetingPoint' => '', 'legPriceToNext' => ''],
+        ];
+        $this->client->request('POST', $form->getUri(), $values);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertNull($this->em->getRepository(Trip::class)->findOneBy(['driver' => $karim]));
+    }
+
     public function testTheDriverSeesHisTripsAndThePassengersOfEachLeg(): void
     {
         $karim = $this->db->user('Karim');
@@ -131,8 +153,8 @@ final class DriverFlowTest extends WebFlowTestCase
         $this->client->submit($crawler->selectButton('Annuler le trajet')->form());
 
         self::assertResponseRedirects(sprintf('/driver/trips/%d', $trip->getId()));
-        $this->em->refresh($trip);
-        $this->em->refresh($booking);
+        $trip = $this->reload($trip);
+        $booking = $this->reload($booking);
         self::assertSame(TripStatus::Cancelled, $trip->getStatus());
         self::assertSame(BookingStatus::CancelledByDriver, $booking->getStatus());
     }
@@ -148,7 +170,7 @@ final class DriverFlowTest extends WebFlowTestCase
         ]));
 
         self::assertResponseRedirects('/account');
-        $this->em->refresh($karim);
+        $karim = $this->reload($karim);
         self::assertSame('0611223344', $karim->getPhone());
     }
 }

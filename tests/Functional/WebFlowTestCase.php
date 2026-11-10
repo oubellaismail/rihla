@@ -36,6 +36,21 @@ abstract class WebFlowTestCase extends WebTestCase
         $this->client->loginUser($user);
     }
 
+    /**
+     * Fresh copy of an entity from the database. The kernel resets the EntityManager after
+     * each request, so objects created before a request are detached and cannot be refreshed.
+     *
+     * @template T of object
+     *
+     * @param T $entity
+     *
+     * @return T
+     */
+    protected function reload(object $entity): object
+    {
+        return $this->em->find($entity::class, $entity->getId());
+    }
+
     /** French flash messages and errors shown on the page. */
     protected function pageText(): string
     {
