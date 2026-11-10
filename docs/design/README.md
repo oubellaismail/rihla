@@ -1,30 +1,32 @@
-# Conception visuelle
+# Visual design
 
-Phase de conception réalisée les 9 et 10 novembre 2026, avant le premier commit.
+Design phase carried out on 9 and 10 November 2026, before the first commit.
 
-## Maquette interactive
+## Interactive mockup
 
-10 écrans cliquables : accueil, recherche, page trajet, choix de la place, place déjà réservée, profil public, publication d'un trajet (prix suggéré), mes trajets (passager et conducteur), modification d'un trajet réservé, identité visuelle.
+10 clickable screens: home, search, trip page, seat choice, seat already taken, public profile, publishing a trip (suggested price), my trips (passenger and driver), editing a booked trip, visual identity.
 
-Lien : <https://claude.ai/artifact/A32XRcGEbhedSzzrTqBmYe>
+Link: <https://claude.ai/artifact/A32XRcGEbhedSzzrTqBmYe>
 
-## Identité
+The mockup's text is in French, like the application's interface.
 
-| Rôle | Couleur | Usage |
+## Identity
+
+| Role | Colour | Use |
 |---|---|---|
-| Crépuscule | `#22305C` | Liens, sélection, carte, confiance |
-| Coucher de soleil | `#E8743B` | Action principale (« Réserver »), arrivée |
-| Safran | `#F2B544` | Étoiles, place libérée en route |
-| Sable | `#FBF5EC` / `#F5E9D7` | Fonds |
-| Asphalte | `#2B2D33` | Texte, prix |
+| Dusk | `#22305C` | Links, selection, map, trust |
+| Sunset | `#E8743B` | Main action ("Réserver"), arrival |
+| Saffron | `#F2B544` | Stars, seat freed along the way |
+| Sand | `#FBF5EC` / `#F5E9D7` | Backgrounds |
+| Asphalt | `#2B2D33` | Text, prices |
 
-- Polices : **Bricolage Grotesque** (titres) et **Figtree** (texte), Google Fonts.
-- Logo : [`logo/`](logo/) — une route à trois arrêts, du bleu de départ à l'orange d'arrivée.
-- Photos : [`photos/`](photos/), licence Unsplash, crédits dans [`photos/CREDITS.md`](photos/CREDITS.md).
+- Fonts: **Bricolage Grotesque** (headings) and **Figtree** (body), from Google Fonts.
+- Logo: [`logo/`](logo/), a road with three stops, from the blue departure to the orange arrival.
+- Photos: [`photos/`](photos/), Unsplash licence, credits in [`photos/CREDITS.md`](photos/CREDITS.md).
 
-## Règles d'interface
+## Interface rules
 
-- Pas de cartes dans des cartes, une seule échelle d'arrondis (12 / 16 / 20 px).
-- Icônes dessinées en SVG, jamais d'emoji ni de symboles texte.
-- Prix en texte foncé ; l'orange est réservé à l'action principale.
-- Fond uni, rythme par bandes de couleur pleine, sans dégradés décoratifs.
+- No cards inside cards, a single radius scale (12 / 16 / 20 px).
+- Icons drawn in SVG, never emoji or text symbols.
+- Prices in dark text; orange is reserved for the main action.
+- Flat backgrounds, rhythm from full-width colour bands, no decorative gradients.

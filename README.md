@@ -40,7 +40,7 @@ The full guide (demo accounts, troubleshooting) will live in `INSTALL.md`.
 - [`docs/DECISIONS.md`](docs/DECISIONS.md): dated decision log, including answers to the brief's open questions
 - [`docs/design/`](docs/design/): visual identity, mockup and photos
 
-The documentation in `docs/` is written in French, the language of the brief.
+Code, documentation and commits are in English. The application's interface is in French, the language of its Moroccan users.
 
 ## Use of AI
 

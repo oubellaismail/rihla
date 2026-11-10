@@ -1,31 +1,31 @@
-# Modèle de données
+# Data model
 
-> Première version (10 novembre 2026), avant l'implémentation des entités. Elle sera mise à jour au fil du niveau 1.
+> First version (10 November 2026), written before the entities were implemented. It will be updated during Level 1. The file keeps the name `MODELE.md` required by the brief.
 
-## Idée centrale : le trajet est découpé en tronçons
+## Core idea: a trip is split into legs
 
 ```
-Agadir ──tronçon 0── Essaouira ──tronçon 1── Marrakech ──tronçon 2── Casablanca
+Agadir ──leg 0── Essaouira ──leg 1── Marrakech ──leg 2── Casablanca
 ```
 
-Un trajet est une suite ordonnée d'**arrêts** (`TripStop`, avec une `position`). Une réservation va d'un arrêt de départ à un arrêt d'arrivée et occupe donc les tronçons compris entre les deux. Les places libres d'une portion se calculent tronçon par tronçon : c'est le tronçon le plus chargé qui décide.
+A trip is an ordered list of **stops** (`TripStop`, with a `position`). A booking goes from a boarding stop to a drop-off stop, so it occupies every leg between the two. Free seats on a portion are counted leg by leg: the busiest leg decides.
 
-## Diagramme
+## Diagram
 
 ```mermaid
 erDiagram
-    USER ||--o{ VEHICLE : possede
-    USER ||--o{ TRIP : conduit
-    USER ||--o{ BOOKING : reserve
-    VEHICLE ||--o{ TRIP : utilise
-    TRIP ||--|{ TRIP_STOP : "arrets ordonnes"
-    CITY ||--o{ TRIP_STOP : situe
-    TRIP ||--o{ BOOKING : contient
-    TRIP_STOP ||--o{ BOOKING : "monte a"
-    TRIP_STOP ||--o{ BOOKING : "descend a"
-    BOOKING ||--o| PAYMENT : "paiement simule"
-    BOOKING ||--o{ REVIEW : "donne lieu a"
-    USER ||--o{ REVIEW : "ecrit / recoit"
+    USER ||--o{ VEHICLE : owns
+    USER ||--o{ TRIP : drives
+    USER ||--o{ BOOKING : books
+    VEHICLE ||--o{ TRIP : "used for"
+    TRIP ||--|{ TRIP_STOP : "ordered stops"
+    CITY ||--o{ TRIP_STOP : "located in"
+    TRIP ||--o{ BOOKING : contains
+    TRIP_STOP ||--o{ BOOKING : "boards at"
+    TRIP_STOP ||--o{ BOOKING : "gets off at"
+    BOOKING ||--o| PAYMENT : "simulated payment"
+    BOOKING ||--o{ REVIEW : "leads to"
+    USER ||--o{ REVIEW : "writes / receives"
 
     USER {
         int id
@@ -83,11 +83,11 @@ erDiagram
     }
 ```
 
-## Choix
+## Choices
 
-- **Prix et distance stockés sur l'arrêt, pour le tronçon qui suit** (`legPriceToNext`, `legDistanceKmToNext`). Le prix d'une réservation est figé au moment de la réservation (`Booking.totalPrice`) : une modification ultérieure du prix ne change pas ce qui a déjà été payé.
-- **Montants en entiers (MAD)** : pas de flottants pour l'argent.
-- **`City` avec latitude et longitude** : sert de cache au géocodage Nominatim, pour ne pas rappeler l'API à chaque recherche.
-- **Statuts** (`Trip.status`, `Booking.status`) : énumérations PHP, cycle de vie géré par le composant Workflow de Symfony.
-- **Un utilisateur peut être conducteur et passager** : un seul `User`, les rôles découlent de ce qu'il fait (publier un trajet, réserver).
-- **Verrou de concurrence** : posé sur la ligne `TRIP` lors d'une réservation (voir `DECISIONS.md`).
+- **Price and distance stored on the stop, for the leg that follows it** (`legPriceToNext`, `legDistanceKmToNext`). A booking's price is frozen when it is made (`Booking.totalPrice`): a later price change does not affect what has already been paid.
+- **Amounts as integers (MAD)**: no floats for money.
+- **`City` with latitude and longitude**: acts as a cache for Nominatim geocoding, so the API is not called again on every search.
+- **Statuses** (`Trip.status`, `Booking.status`): PHP enums, with the lifecycle managed by Symfony's Workflow component.
+- **One user can be both driver and passenger**: a single `User`; roles follow from what the person does (publishing a trip, booking a seat).
+- **Concurrency lock**: placed on the `TRIP` row when booking (see `DECISIONS.md`).
