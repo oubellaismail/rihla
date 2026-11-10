@@ -88,6 +88,10 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
+        ],
+        "test": [
+            "@php bin/console --env=test doctrine:migrations:migrate --no-interaction --allow-no-migration",
+            "@php bin/phpunit"
         ]
     },
     "conflict": {
@@ -100,6 +104,7 @@
         }
     },
     "require-dev": {
+        "dama/doctrine-test-bundle": "^8.7",
         "doctrine/doctrine-fixtures-bundle": "^4.3",
         "phpunit/phpunit": "^13.4",
         "symfony/browser-kit": "7.4.*",
@@ -108,5 +113,8 @@
         "symfony/maker-bundle": "^1.0",
         "symfony/stopwatch": "7.4.*",
         "symfony/web-profiler-bundle": "7.4.*"
+    },
+    "scripts-descriptions": {
+        "test": "Bring the test database schema up to date, then run all tests"
     }
 }
