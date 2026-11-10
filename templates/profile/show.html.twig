@@ -1,0 +1,68 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as ui %}
+
+{% block title %}{{ member.publicName }}{% endblock %}
+
+{% block body %}
+<div class="container container--narrow page">
+    <section class="profile-head">
+        {{ ui.avatar(member, 'avatar--l') }}
+        <div class="stack">
+            <h1 class="h1-m">{{ member.publicName }}</h1>
+            <p class="muted">Membre depuis {{ member.createdAt|format_datetime(pattern: 'MMMM y') }}</p>
+            <p>{{ ui.rating(summary) }}</p>
+        </div>
+    </section>
+
+    <ul class="profile-stats">
+        <li><strong class="num">{{ completed }}</strong> trajet{{ completed > 1 ? 's' : '' }} effectué{{ completed > 1 ? 's' : '' }} comme conducteur</li>
+        <li><strong class="num">{{ cancelled }}</strong> trajet{{ cancelled > 1 ? 's' : '' }} annulé{{ cancelled > 1 ? 's' : '' }} comme conducteur</li>
+    </ul>
+
+    <section class="stack profile-section">
+        <h2 class="h2-s">Prochains trajets</h2>
+        {% if upcoming is empty %}
+            <p class="muted">{{ member.firstName }} n'a aucun trajet publié pour le moment.</p>
+        {% else %}
+            <ul class="stack">
+                {% for trip in upcoming %}
+                    <li>
+                        <a class="card card--link row row--between" href="{{ path('app_trip_show', {id: trip.id}) }}">
+                            <span>
+                                {{ ui.route(trip.firstStop.city.name, trip.lastStop.city.name) }}<br>
+                                <span class="small muted">{{ trip.firstStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }} à {{ trip.firstStop.departureAt|date('H:i') }}</span>
+                            </span>
+                            <span class="small">{{ trip.stops|length - 2 > 0 ? (trip.stops|length - 2) ~ ' arrêt' ~ (trip.stops|length - 2 > 1 ? 's' : '') ~ ' intermédiaire' ~ (trip.stops|length - 2 > 1 ? 's' : '') : 'Sans arrêt intermédiaire' }}</span>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+
+    <section class="stack profile-section">
+        <h2 class="h2-s">Avis reçus</h2>
+        {% if reviews is empty %}
+            <p class="muted">Aucun avis pour le moment.</p>
+        {% else %}
+            <ul class="stack">
+                {% for review in reviews %}
+                    <li class="review">
+                        {{ ui.avatar(review.author) }}
+                        <div class="stack review-body">
+                            <span class="row">
+                                <strong>{{ review.author.publicName }}</strong>
+                                {{ ui.stars(review.rating) }}
+                            </span>
+                            <span class="small muted">
+                                {{ review.createdAt|format_datetime(pattern: 'd MMMM y') }}, en tant que {{ review.target.id == review.booking.trip.driver.id ? 'conducteur' : 'passager' }}
+                            </span>
+                            {% if review.comment %}<p>{{ review.comment }}</p>{% endif %}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

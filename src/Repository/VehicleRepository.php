@@ -15,4 +15,19 @@ class VehicleRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Vehicle::class);
     }
+
+    /** @return list<int> ids of the owner's vehicles that are used by at least one trip */
+    public function usedIdsOf(\App\Entity\User $owner): array
+    {
+        $rows = $this->getEntityManager()->createQueryBuilder()
+            ->select('DISTINCT IDENTITY(t.vehicle) AS id')
+            ->from(\App\Entity\Trip::class, 't')
+            ->join('t.vehicle', 'v')
+            ->where('v.owner = :owner')
+            ->setParameter('owner', $owner)
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_map(static fn (array $r) => (int) $r['id'], $rows);
+    }
 }

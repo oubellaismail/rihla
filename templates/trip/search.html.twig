@@ -1,0 +1,74 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as ui %}
+
+{% block title %}Rechercher un trajet{% endblock %}
+
+{% block body %}
+<div class="container page">
+    <form class="searchbar" action="{{ path('app_trip_search') }}" method="get" role="search">
+        <label><span>Départ</span><input type="text" name="from" value="{{ from }}" list="city-names" autocomplete="off" required></label>
+        <label><span>Arrivée</span><input type="text" name="to" value="{{ to }}" list="city-names" autocomplete="off" required></label>
+        <label><span>Quand</span><input type="date" name="date" value="{{ date|date('Y-m-d') }}" required></label>
+        <label><span>Passagers</span>
+            <select name="seats">{% for n in 1..4 %}<option value="{{ n }}"{% if n == seats %} selected{% endif %}>{{ n }} passager{{ n > 1 ? 's' : '' }}</option>{% endfor %}</select>
+        </label>
+        <button class="btn btn--primary" type="submit">{{ ui.icon('search') }} Rechercher</button>
+        <datalist id="city-names">{% for name in cityNames %}<option value="{{ name }}">{% endfor %}</datalist>
+    </form>
+
+    <div class="search-results stack stack--l">
+        {% if not searched %}
+            <div class="page-head">
+                <h1>Où allez-vous ?</h1>
+                <p>Indiquez la ville où vous montez et celle où vous descendez. Même si la voiture va plus loin, vous ne payez que votre portion.</p>
+            </div>
+        {% elseif unknownCity %}
+            <div class="empty card">
+                <h2>Aucun trajet pour « {{ unknownCity }} »</h2>
+                <p>Cette ville n’est pas encore desservie sur Rihla. Vérifiez l’orthographe ou choisissez une ville dans la liste proposée.</p>
+            </div>
+        {% else %}
+            {% if results %}
+            <div class="page-head">
+                <h1>{{ results|length == 1 ? '1 trajet' : results|length ~ ' trajets' }} {{ date|format_datetime(pattern: 'EEEE d MMMM') }}</h1>
+                <p>{{ from|capitalize }} vers {{ to|capitalize }}</p>
+            </div>
+
+            {% endif %}
+
+            {% for result in results %}
+                {% set match = result.match %}
+                {% set trip = match.trip %}
+                {% set partial = match.from.position != trip.firstStop.position or match.to.position != trip.lastStop.position %}
+                <a class="card card--link result" href="/trips/{{ trip.id }}?from={{ match.from.position }}&amp;to={{ match.to.position }}">
+                    <div class="result-times">
+                        <span><strong class="num">{{ match.from.departureAt|date('H:i') }}</strong> {{ match.from.city.name }}</span>
+                        <span><strong class="num">{{ match.to.departureAt|date('H:i') }}</strong> {{ match.to.city.name }}</span>
+                        {% if partial %}<span class="small muted">trajet complet {{ trip.firstStop.city.name }} → {{ trip.lastStop.city.name }}</span>{% endif %}
+                    </div>
+                    <div class="row">
+                        {{ ui.avatar(trip.driver) }}
+                        <span class="stack stack--tight">
+                            <strong>{{ trip.driver.publicName }}</strong>
+                            <span class="small">{{ ui.rating(result.rating) }}</span>
+                        </span>
+                    </div>
+                    <div class="result-price">
+                        <strong class="num">{{ match.pricePerSeat }} MAD</strong>
+                        <span class="small muted">{{ match.freeSeats }} {{ match.freeSeats > 1 ? 'places libres' : 'place libre' }}</span>
+                    </div>
+                </a>
+            {% else %}
+                <div class="empty card">
+                    <h2>Aucun trajet ce jour-là</h2>
+                    <p>Aucun conducteur ne propose {{ from|capitalize }} vers {{ to|capitalize }} le {{ date|format_datetime(pattern: 'd MMMM') }}. Essayez un autre jour, ou publiez vous-même le trajet.</p>
+                    <div class="row">
+                        <a class="btn btn--outline" href="{{ path('app_trip_search', {from: from, to: to, date: date.modify('+1 day')|date('Y-m-d'), seats: seats}) }}">Voir le lendemain</a>
+                        <a class="btn btn--outline" href="{{ path('app_trip_new') }}">Publier ce trajet</a>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

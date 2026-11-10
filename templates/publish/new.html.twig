@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as ui %}
+{% form_theme form 'form/rihla.html.twig' %}
+
+{% block title %}Publier un trajet{% endblock %}
+
+{% block body %}
+<div class="container page">
+    <div class="page-head">
+        <h1>Publier un trajet</h1>
+        <p>Ajoutez les villes où vous pouvez vous arrêter. Chaque arrêt permet à quelqu'un de monter ou de descendre, et remplit votre voiture plus longtemps.</p>
+    </div>
+
+    {{ form_start(form, {attr: {class: 'form', 'data-controller': 'stop-list', 'data-stop-list-prototype-value': include('publish/_stop.html.twig', {stop: form.stops.vars.prototype}), 'data-stop-list-index-value': form.stops|length}}) }}
+        <div class="split">
+            <div class="stack stack--l">
+                {% for e in form.vars.errors %}<p class="flash flash--error" role="alert">{{ e.message }}</p>{% endfor %}
+
+                <section class="card stack">
+                    <h2 class="h2-s">Itinéraire</h2>
+                    {{ form_errors(form.stops) }}
+                    <ol class="stop-list" data-stop-list-target="list">
+                        {% for stop in form.stops %}
+                            {{ include('publish/_stop.html.twig', {stop: stop}) }}
+                        {% endfor %}
+                    </ol>
+                    <div><button type="button" class="btn btn--outline" data-action="stop-list#add">{{ ui.icon('plus') }} Ajouter un arrêt</button></div>
+                </section>
+
+                <section class="card stack">
+                    <h2 class="h2-s">Votre voiture</h2>
+                    <div class="form-row">
+                        {{ form_row(form.vehicle) }}
+                        {{ form_row(form.seatsOffered) }}
+                    </div>
+                </section>
+            </div>
+
+            <aside class="price-box stack">
+                <div class="map-slot" data-map>Bientôt : la carte du trajet et un prix conseillé selon la distance.</div>
+                <p class="small muted">Vous fixez le prix par place de chaque tronçon. Un passager ne paie que la partie du trajet qu'il fait.</p>
+                {{ form_widget(form.save, {attr: {class: 'btn btn--primary btn--block'}}) }}
+            </aside>
+        </div>
+    {{ form_end(form) }}
+</div>
+{% endblock %}

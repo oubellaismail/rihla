@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+{% block title %}Annuler la réservation{% endblock %}
+{% block body %}
+<div class="page"><div class="container container--narrow">
+    <div class="page-head">
+        <h1>Annuler la réservation</h1>
+        <p>{{ booking.fromStop.city.name }} → {{ booking.toStop.city.name }}, {{ booking.fromStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }} à {{ booking.fromStop.departureAt|date('H:i') }}</p>
+    </div>
+    <div class="card stack">
+        <p>Si vous annulez maintenant, vous serez remboursé de</p>
+        <p class="price-big">{{ refund }} MAD <span class="muted small">({{ percent }} % de {{ booking.totalPrice }} MAD)</span></p>
+        <p class="muted">Le remboursement est de 100 % jusqu'à 24 h avant votre départ, de 50 % ensuite, et nul une fois que la voiture est partie.</p>
+        <form method="post" class="row">
+            <input type="hidden" name="_token" value="{{ csrf_token('cancel_booking_' ~ booking.id) }}">
+            <button type="submit" class="btn btn--danger">Confirmer l'annulation</button>
+            <a class="btn btn--ghost" href="{{ path('app_booking_show', {id: booking.id}) }}">Garder ma réservation</a>
+        </form>
+    </div>
+</div></div>
+{% endblock %}

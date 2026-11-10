@@ -1,0 +1,120 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as ui %}
+
+{% set first = trip.firstStop %}
+{% set last = trip.lastStop %}
+{% set stops = trip.stops %}
+
+{% block title %}{{ first.city.name }} vers {{ last.city.name }}{% endblock %}
+
+{% block body %}
+<div class="container page">
+    <header class="trip-head">
+        <a class="btn btn--ghost" href="{{ path('app_trip_search', {from: from.city.name, to: to.city.name, date: first.departureAt|date('Y-m-d')}) }}">Retour aux résultats</a>
+        <h1>{{ ui.route(first.city.name, last.city.name) }}</h1>
+        <p class="muted">{{ first.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}, départ {{ first.departureAt|date('H:i') }} · arrivée prévue {{ last.departureAt|date('H:i') }}. {{ stops|length - 2 > 0 ? (stops|length - 2) ~ (stops|length - 2 > 1 ? ' arrêts' : ' arrêt') ~ ' en route, ' : '' }}{{ trip.seatsOffered }} {{ trip.seatsOffered > 1 ? 'places' : 'place' }} dans la voiture.</p>
+        {% if trip.status.value == 'CANCELLED' %}
+            <span class="badge badge--warn">Trajet annulé</span>
+        {% elseif trip.status.value == 'COMPLETED' %}
+            <span class="badge badge--off">Trajet terminé</span>
+        {% elseif departed %}
+            <span class="badge badge--off">Déjà parti</span>
+        {% endif %}
+    </header>
+
+    <div class="split">
+        <div>
+            <section class="trip-section">
+                <h2>Votre bout de route</h2>
+                {% if isOpen and not isDriver %}
+                    <form class="portion-form" action="{{ path('app_trip_show', {id: trip.id}) }}" method="get">
+                        <div class="field">
+                            <label for="from">Je monte à</label>
+                            <select id="from" name="from">
+                                {% for stop in stops|slice(0, stops|length - 1) %}<option value="{{ stop.position }}"{% if stop.position == from.position %} selected{% endif %}>{{ stop.city.name }} · {{ stop.departureAt|date('H:i') }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="to">Je descends à</label>
+                            <select id="to" name="to">
+                                {% for stop in stops|slice(1) %}<option value="{{ stop.position }}"{% if stop.position == to.position %} selected{% endif %}>{{ stop.city.name }} · {{ stop.departureAt|date('H:i') }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <button class="btn btn--outline" type="submit">Changer de portion</button>
+                    </form>
+                {% endif %}
+
+                <ol class="timeline">
+                    {% for stop in stops %}
+                        {% set mine = stop.position >= from.position and stop.position <= to.position %}
+                        <li class="{{ mine ? 'is-mine' : '' }}{{ stop.position == to.position ? ' is-last-mine' : '' }}">
+                            <time datetime="{{ stop.departureAt|date('c') }}">{{ stop.departureAt|date('H:i') }}</time>
+                            <span class="dot"></span>
+                            <span>
+                                <span class="stop-city">{{ stop.city.name }}</span>
+                                {% if stop.position == from.position %}<span class="badge">vous montez</span>{% elseif stop.position == to.position %}<span class="badge badge--warn">vous descendez</span>{% endif %}
+                                <br><span class="stop-meta">{{ stop.meetingPoint }}</span>
+                            </span>
+                            {% if not loop.last %}
+                                {% set free = legSeats[stop.position] ?? 0 %}
+                                <span class="leg-seats{{ free == 0 ? ' is-full' : '' }}">{{ free == 0 ? 'Complet' : free ~ (free > 1 ? ' places libres' : ' place libre') }}</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ol>
+            </section>
+
+            <section class="trip-section">
+                <h2>Le conducteur</h2>
+                <div class="card driver-card">
+                    {{ ui.avatar(trip.driver, 'avatar--l') }}
+                    <div class="stack stack--tight">
+                        <strong>{{ trip.driver.publicName }}</strong>
+                        <span>{{ ui.rating(rating) }}</span>
+                        <span class="muted small">{{ trip.vehicle.model }}, {{ trip.vehicle.color }}</span>
+                        <a href="{{ path('app_user_profile', {id: trip.driver.id}) }}">Voir son profil</a>
+                    </div>
+                </div>
+            </section>
+
+            <section class="trip-section">
+                <div class="map-slot" data-map>La carte du trajet arrive bientôt.</div>
+            </section>
+        </div>
+
+        <aside class="card price-box">
+            <div class="stack stack--tight">
+                <span class="small muted">Votre trajet</span>
+                <span class="route">{{ from.city.name }}{{ ui.arrow() }}{{ to.city.name }}</span>
+                <span class="small muted">{{ from.departureAt|date('H:i') }} à {{ to.departureAt|date('H:i') }}</span>
+            </div>
+            <div>
+                <span class="price-big">{{ price }} MAD</span>
+                <span class="muted"> par place</span>
+            </div>
+
+            {% if isDriver %}
+                <p class="note">C’est votre trajet.</p>
+                <a class="btn btn--outline btn--block" href="{{ path('app_driver_trip_show', {id: trip.id}) }}">Gérer ce trajet</a>
+            {% elseif not isOpen %}
+                <p class="note">Ce trajet n’est plus ouvert à la réservation.</p>
+            {% elseif freeSeats == 0 %}
+                <p class="note"><strong>Complet sur cette portion</strong>. Essayez de descendre plus tôt ou de monter plus tard.</p>
+            {% else %}
+                <form class="form" action="/trips/{{ trip.id }}/book" method="post">
+                    <input type="hidden" name="_token" value="{{ csrf_token('book-trip-' ~ trip.id) }}">
+                    <input type="hidden" name="from" value="{{ from.position }}">
+                    <input type="hidden" name="to" value="{{ to.position }}">
+                    <div class="field seats-field">
+                        <label for="seats">Places</label>
+                        <select id="seats" name="seats">{% for n in 1..maxSeats %}<option value="{{ n }}">{{ n }}</option>{% endfor %}</select>
+                    </div>
+                    <p class="note">{{ freeSeats }} {{ freeSeats > 1 ? 'places libres' : 'place libre' }} sur votre bout de route.</p>
+                    <button class="btn btn--primary btn--block" type="submit">Réserver</button>
+                </form>
+            {% endif %}
+            <p class="note">Le trajet complet coûte {{ tripPrice }} MAD par place. Vous ne payez que votre portion. Paiement simulé.</p>
+        </aside>
+    </div>
+</div>
+{% endblock %}

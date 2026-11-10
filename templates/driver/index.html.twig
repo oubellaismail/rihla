@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as ui %}
+{% block title %}Mes trajets conducteur{% endblock %}
+{% macro item(it) %}
+{% import 'macros.html.twig' as ui %}
+{% set trip = it.trip %}
+<a class="card card--link booking-item" href="{{ path('app_driver_trip_show', {id: trip.id}) }}">
+    <div class="booking-item__when">
+        <strong>{{ trip.firstStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}</strong>
+        <span class="muted small">{{ trip.firstStop.departureAt|date('H:i') }}</span>
+    </div>
+    <div class="booking-item__main">
+        {{ ui.route(trip.firstStop.city.name, trip.lastStop.city.name) }}
+        <span class="muted small">{{ it.stops }} arrêts · {{ it.taken }} / {{ trip.seatsOffered }} places réservées</span>
+    </div>
+    <div class="booking-item__side">
+        <span class="badge {{ trip.status.value == 'PUBLISHED' ? 'badge--ok' : (trip.status.value == 'CANCELLED' ? 'badge--off' : '') }}">{{ trip.status.label }}</span>
+    </div>
+</a>
+{% endmacro %}
+{% block body %}
+<div class="page"><div class="container container--narrow">
+    <div class="page-head"><h1>Mes trajets</h1></div>
+    {% include 'booking/_tabs.html.twig' with {active: 'driver'} %}
+
+    {% if upcoming is empty and past is empty %}
+        <div class="empty card">
+            <h2>Vous n'avez publié aucun trajet</h2>
+            <p>Vous faites déjà la route ? Proposez vos places libres et partagez les frais.</p>
+            <a class="btn btn--primary" href="{{ path('app_trip_new') }}">Publier un trajet</a>
+        </div>
+    {% else %}
+        <section class="stack" aria-labelledby="upcoming">
+            <h2 id="upcoming" class="section-title">À venir</h2>
+            {% for it in upcoming %}{{ _self.item(it) }}{% else %}
+                <p class="muted">Aucun trajet à venir. <a href="{{ path('app_trip_new') }}">Publier un trajet</a></p>
+            {% endfor %}
+        </section>
+        {% if past is not empty %}
+        <section class="stack booking-past" aria-labelledby="past">
+            <h2 id="past" class="section-title">Passés et annulés</h2>
+            {% for it in past %}{{ _self.item(it) }}{% endfor %}
+        </section>
+        {% endif %}
+    {% endif %}
+</div></div>
+{% endblock %}

@@ -1,1 +1,30 @@
 /* Page styles: booking pages. Shared tokens and components live in app.css. */
+.section-title { font-size: 24px; margin-bottom: 16px; }
+.stack > .section-title { margin-bottom: 0; }
+.booking-past { margin-top: 36px; }
+.booking-item { display: grid; grid-template-columns: 170px minmax(0, 1fr) auto; gap: 20px; align-items: center; }
+.booking-item__when, .booking-item__main, .booking-item__side { display: flex; flex-direction: column; gap: 4px; }
+.booking-item__side { align-items: flex-end; }
+.booking-item__when strong { font-family: var(--font-display); color: var(--ink); text-transform: capitalize; }
+.facts { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.facts > div { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; font-weight: 600; }
+.passenger { display: flex; align-items: flex-start; gap: 12px; margin-top: 10px; }
+.timeline .leg-seats.is-warn { color: var(--sunset-text); }
+.cancelled-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+
+/* Rating: five radio buttons shown as numbered discs */
+.rating-choice { border: 0; margin: 0; padding: 0; }
+.rating-choice legend { padding: 0; margin-bottom: 8px; }
+.rating-choice__options { display: flex; gap: 10px; }
+.rating-choice__option { position: relative; }
+.rating-choice__option input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; min-height: 0; margin: 0; cursor: pointer; }
+.rating-choice__option label { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; border: 1.5px solid #DCCFBE; background: var(--white); font: 700 20px var(--font-display); color: var(--ink); }
+.rating-choice__option input:checked + label { background: var(--saffron); border-color: #C98B1E; }
+.rating-choice__option input:focus-visible + label { outline: 3px solid var(--sunset); outline-offset: 3px; }
+
+@media (max-width: 640px) {
+    .booking-item { grid-template-columns: 1fr; gap: 10px; }
+    .booking-item__side { flex-direction: row; justify-content: space-between; align-items: center; }
+}

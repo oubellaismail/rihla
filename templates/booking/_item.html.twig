@@ -1,0 +1,15 @@
+{% import 'macros.html.twig' as ui %}
+<a class="card card--link booking-item" href="{{ path('app_booking_show', {id: booking.id}) }}">
+    <div class="booking-item__when">
+        <strong>{{ booking.fromStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}</strong>
+        <span class="muted small">{{ booking.fromStop.departureAt|date('H:i') }} – {{ booking.toStop.departureAt|date('H:i') }}</span>
+    </div>
+    <div class="booking-item__main">
+        {{ ui.route(booking.fromStop.city.name, booking.toStop.city.name) }}
+        <span class="muted small">avec {{ booking.trip.driver.publicName }} · {{ booking.seats }} {{ booking.seats > 1 ? 'places' : 'place' }}</span>
+    </div>
+    <div class="booking-item__side">
+        <span class="num">{{ booking.totalPrice }} MAD</span>
+        {% include 'booking/_status.html.twig' %}
+    </div>
+</a>

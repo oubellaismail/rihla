@@ -37,4 +37,35 @@ class ReviewRepository extends ServiceEntityRepository
 
         return new RatingSummary($count > 0 ? round((float) $row['average'], 1) : null, $count);
     }
+
+    /**
+     * Latest reviews that come with a written comment.
+     *
+     * @return list<Review>
+     */
+    public function findLatestWithComment(int $limit): array
+    {
+        return $this->createQueryBuilder('r')
+            ->where('r.comment IS NOT NULL')
+            ->andWhere("r.comment <> ''")
+            ->orderBy('r.createdAt', 'DESC')
+            ->addOrderBy('r.id', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /** @return list<Review> reviews received by a user, newest first */
+    public function receivedBy(User $target): array
+    {
+        return $this->createQueryBuilder('r')
+            ->addSelect('a')
+            ->join('r.author', 'a')
+            ->where('r.target = :target')
+            ->setParameter('target', $target)
+            ->orderBy('r.createdAt', 'DESC')
+            ->addOrderBy('r.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

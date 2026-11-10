@@ -1,0 +1,2 @@
+{% set s = booking.status.value %}
+<span class="badge {{ s == 'CONFIRMED' ? 'badge--ok' : (s == 'COMPLETED' ? '' : 'badge--off') }}">{{ booking.status.label }}</span>

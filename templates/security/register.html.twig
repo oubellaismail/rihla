@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+{% form_theme form 'form/rihla.html.twig' %}
+
+{% block title %}Créer un compte{% endblock %}
+
+{% block body %}
+<div class="container container--narrow page">
+    <div class="auth-card card stack">
+        <h1 class="auth-title">Créer un compte</h1>
+        <p class="muted">Un compte suffit pour réserver une place ou publier un trajet.</p>
+
+        {{ form_start(form, {attr: {class: 'form', novalidate: false}}) }}
+            {% for e in form.vars.errors %}<p class="flash flash--error" role="alert">{{ e.message }}</p>{% endfor %}
+            <div class="form-row">
+                {{ form_row(form.firstName) }}
+                {{ form_row(form.lastName) }}
+            </div>
+            {{ form_row(form.email) }}
+            {{ form_row(form.phone) }}
+            {{ form_row(form.plainPassword) }}
+            {{ form_widget(form.save) }}
+        {{ form_end(form) }}
+
+        <p class="small muted">Vous avez déjà un compte ? <a href="{{ path('app_login') }}">Se connecter</a></p>
+    </div>
+</div>
+{% endblock %}

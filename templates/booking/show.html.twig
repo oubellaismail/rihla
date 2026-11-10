@@ -1,0 +1,72 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as ui %}
+{% set driver = booking.trip.driver %}
+{% set payment = booking.payment %}
+{% block title %}Réservation {{ booking.fromStop.city.name }} → {{ booking.toStop.city.name }}{% endblock %}
+{% block body %}
+<div class="page"><div class="container">
+    <div class="page-head">
+        <p class="muted small"><a href="{{ path('app_booking_index') }}">Mes trajets</a></p>
+        <h1>{{ booking.fromStop.city.name }} → {{ booking.toStop.city.name }}</h1>
+        <p class="row">{{ booking.fromStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }} {% include 'booking/_status.html.twig' %}</p>
+    </div>
+
+    <div class="split">
+        <div class="stack stack--l">
+            <section class="card">
+                <h2 class="section-title">Votre portion</h2>
+                <ol class="timeline">
+                    {% set last = booking.toStop.position %}
+                    {% for stop in booking.trip.stops %}
+                        {% set mine = stop.position >= booking.fromStop.position and stop.position <= last %}
+                        <li class="{{ mine ? 'is-mine' : '' }} {{ stop.position == last ? 'is-last-mine' : '' }}">
+                            <time>{{ stop.departureAt|date('H:i') }}</time>
+                            <span class="dot"></span>
+                            <div>
+                                <div class="stop-city">{{ stop.city.name }}</div>
+                                {% if stop.position == booking.fromStop.position %}<div class="stop-meta">Montée{% if stop.meetingPoint %} · Rendez-vous : {{ stop.meetingPoint }}{% endif %}</div>{% endif %}
+                                {% if stop.position == last %}<div class="stop-meta">Descente</div>{% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ol>
+                <div class="map-slot" data-map>La carte du trajet arrive bientôt.</div>
+            </section>
+
+            <section class="card">
+                <h2 class="section-title">Conducteur</h2>
+                <div class="row">
+                    {{ ui.avatar(driver, 'avatar--l') }}
+                    <div>
+                        <a href="{{ path('app_user_profile', {id: driver.id}) }}"><strong>{{ driver.publicName }}</strong></a>
+                        {% if booking.trip.vehicle %}<div class="muted small">{{ booking.trip.vehicle.model }}{% if booking.trip.vehicle.color %}, {{ booking.trip.vehicle.color }}{% endif %}</div>{% endif %}
+                        {% if booking.status.value == 'CONFIRMED' and driver.phone %}
+                            <div class="small">Téléphone : <a href="tel:{{ driver.phone }}">{{ driver.phone }}</a></div>
+                        {% elseif booking.status.value == 'CONFIRMED' %}
+                        {% else %}
+                            <div class="muted small">Les coordonnées ne sont visibles que pour une réservation confirmée.</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <aside class="card price-box">
+            <dl class="facts">
+                <div><dt>Places</dt><dd>{{ booking.seats }}</dd></div>
+                <div><dt>Total</dt><dd class="price-big">{{ booking.totalPrice }} MAD</dd></div>
+                {% if payment %}
+                <div><dt>Paiement</dt><dd>{{ payment.status.label }}</dd></div>
+                {% if payment.refundedAmount > 0 %}<div><dt>Remboursé</dt><dd class="num">{{ payment.refundedAmount }} MAD</dd></div>{% endif %}
+                {% endif %}
+            </dl>
+            {% if can_review %}
+                <a class="btn btn--primary btn--block" href="{{ path('app_booking_review', {id: booking.id}) }}">Laisser un avis</a>
+            {% endif %}
+            {% if can_cancel %}
+                <a class="btn btn--danger btn--block" href="{{ path('app_booking_cancel', {id: booking.id}) }}">Annuler la réservation</a>
+            {% endif %}
+        </aside>
+    </div>
+</div></div>
+{% endblock %}

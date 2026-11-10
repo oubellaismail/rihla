@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block body %}
+<div class="container container--narrow page">
+    <div class="auth-card card stack">
+        <h1 class="auth-title">Connexion</h1>
+
+        {% if error %}
+            <p class="flash flash--error" role="alert">{{ error.messageKey|trans(error.messageData, 'security') }}</p>
+        {% endif %}
+
+        <form method="post" action="{{ path('app_login') }}" class="form">
+            <div class="field">
+                <label for="username">Adresse e-mail</label>
+                <input type="email" id="username" name="_username" value="{{ last_username }}" autocomplete="email" required autofocus>
+            </div>
+            <div class="field">
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" name="_password" autocomplete="current-password" required>
+            </div>
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}" data-controller="csrf-protection">
+            <button type="submit" class="btn btn--primary btn--block">Se connecter</button>
+        </form>
+
+        <p class="small muted">Pas encore de compte ? <a href="{{ path('app_register') }}">Créer un compte</a></p>
+    </div>
+</div>
+{% endblock %}

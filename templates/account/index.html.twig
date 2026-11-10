@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+{% form_theme form 'form/rihla.html.twig' %}
+
+{% block title %}Mon compte{% endblock %}
+
+{% block body %}
+<div class="container container--narrow page">
+    <div class="page-head">
+        <h1 class="h1-m">Mon compte</h1>
+        <p>Ces informations servent à vous identifier auprès des personnes avec qui vous voyagez.</p>
+    </div>
+
+    <div class="card stack">
+        <div class="field">
+            <span class="label-like">Adresse e-mail</span>
+            <span class="readonly-value">{{ user.email }}</span>
+            <span class="help">Elle vous sert à vous connecter et ne peut pas être modifiée ici.</span>
+        </div>
+
+        {{ form_start(form, {attr: {class: 'form'}}) }}
+            {% for e in form.vars.errors %}<p class="flash flash--error" role="alert">{{ e.message }}</p>{% endfor %}
+            <div class="form-row">
+                {{ form_row(form.firstName) }}
+                {{ form_row(form.lastName) }}
+            </div>
+            {{ form_row(form.phone) }}
+            <div>{{ form_widget(form.save) }}</div>
+        {{ form_end(form) }}
+    </div>
+
+    <ul class="link-list">
+        <li><a href="{{ path('app_vehicles') }}">Mes véhicules</a></li>
+        <li><a href="{{ path('app_user_profile', {id: user.id}) }}">Voir mon profil public</a></li>
+    </ul>
+</div>
+{% endblock %}

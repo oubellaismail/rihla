@@ -1,0 +1,17 @@
+{# One stop of the trip form; also used for the prototype (see stop_list_controller.js). #}
+{% import 'macros.html.twig' as ui %}
+<li class="stop-row" data-stop-list-target="item">
+    <div class="stop-head">
+        <strong class="stop-label" data-stop-list-target="label">Arrêt</strong>
+        <button type="button" class="btn btn--ghost stop-remove" data-action="stop-list#remove" data-stop-list-target="removeButton" aria-label="Retirer cet arrêt">{{ ui.icon('trash') }} Retirer</button>
+    </div>
+    {% for e in stop.vars.errors %}<p class="flash flash--error" role="alert">{{ e.message }}</p>{% endfor %}
+    <div class="form-row">
+        {{ form_row(stop.city) }}
+        {{ form_row(stop.departureAt) }}
+    </div>
+    {{ form_row(stop.meetingPoint) }}
+    <div class="stop-price" data-stop-list-target="price">
+        {{ form_row(stop.legPriceToNext) }}
+    </div>
+</li>

@@ -1,0 +1,68 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as ui %}
+{% block title %}Trajet {{ trip.firstStop.city.name }} → {{ trip.lastStop.city.name }}{% endblock %}
+{% block body %}
+<div class="page"><div class="container container--narrow">
+    <div class="page-head">
+        <p class="muted small"><a href="{{ path('app_driver_trips') }}">Mes trajets</a></p>
+        <h1>{{ trip.firstStop.city.name }} → {{ trip.lastStop.city.name }}</h1>
+        <p class="row">{{ trip.firstStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}
+            <span class="badge {{ trip.status.value == 'PUBLISHED' ? 'badge--ok' : (trip.status.value == 'CANCELLED' ? 'badge--off' : '') }}">{{ trip.status.label }}</span>
+            <a href="{{ path('app_trip_show', {id: trip.id}) }}">Voir la page publique</a></p>
+    </div>
+
+    <section class="card stack">
+        <h2 class="section-title">Arrêts et passagers</h2>
+        <ol class="timeline">
+            {% for stop in stops %}
+                {% set pos = stop.position %}
+                <li>
+                    <time>{{ stop.departureAt|date('H:i') }}</time>
+                    <span class="dot"></span>
+                    <div>
+                        <div class="stop-city">{{ stop.city.name }}</div>
+                        {% if stop.meetingPoint %}<div class="stop-meta">{{ stop.meetingPoint }}</div>{% endif %}
+                        {% for b in boarding[pos] ?? [] %}
+                            <div class="passenger">
+                                {{ ui.avatar(b.passenger) }}
+                                <div>
+                                    <strong>{{ b.passenger.publicName }}</strong>
+                                    <span class="muted small">jusqu'à {{ b.toStop.city.name }} · {{ b.seats }} {{ b.seats > 1 ? 'places' : 'place' }}</span>
+                                    {% if b.passenger.phone %}<div class="small"><a href="tel:{{ b.passenger.phone }}">{{ b.passenger.phone }}</a></div>{% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if not loop.last %}
+                        {% set t = taken[pos] ?? 0 %}
+                        {% set free = trip.seatsOffered - t %}
+                        <span class="leg-seats {{ free <= 0 ? 'is-full' : (free == 1 ? 'is-warn' : '') }}">{{ t }} / {{ trip.seatsOffered }} places</span>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ol>
+    </section>
+
+    {% if cancelled is not empty %}
+    <section class="stack booking-past" style="margin-top: 28px">
+        <h2 class="section-title">Réservations annulées</h2>
+        <ul class="cancelled-list">
+            {% for b in cancelled %}
+                <li class="muted">{{ b.passenger.publicName }} · {{ b.fromStop.city.name }} → {{ b.toStop.city.name }} · {{ b.seats }} {{ b.seats > 1 ? 'places' : 'place' }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    {% if can_cancel %}
+    <section class="card stack" style="margin-top: 28px">
+        <h2 class="section-title">Annuler le trajet</h2>
+        <p class="muted">Tous les passagers ayant réservé seront remboursés à 100 %.</p>
+        <form method="post" action="{{ path('app_driver_trip_cancel', {id: trip.id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('cancel_trip_' ~ trip.id) }}">
+            <button type="submit" class="btn btn--danger">Annuler le trajet</button>
+        </form>
+    </section>
+    {% endif %}
+</div></div>
+{% endblock %}

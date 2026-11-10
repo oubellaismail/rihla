@@ -15,4 +15,29 @@ class CityRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, City::class);
     }
+
+    /** Finds a city by name, ignoring the case ("essaouira" finds "Essaouira"). */
+    public function findOneByNameInsensitive(string $name): ?City
+    {
+        $name = trim($name);
+        if ('' === $name) {
+            return null;
+        }
+
+        return $this->createQueryBuilder('c')
+            ->where('LOWER(c.name) = LOWER(:name)')
+            ->setParameter('name', $name)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /** @return list<string> every city name, alphabetically */
+    public function findAllNames(): array
+    {
+        return array_column(
+            $this->createQueryBuilder('c')->select('c.name')->orderBy('c.name')->getQuery()->getScalarResult(),
+            'name'
+        );
+    }
 }

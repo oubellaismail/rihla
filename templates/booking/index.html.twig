@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+{% block title %}Mes trajets{% endblock %}
+{% block body %}
+<div class="page"><div class="container container--narrow">
+    <div class="page-head"><h1>Mes trajets</h1></div>
+    {% include 'booking/_tabs.html.twig' with {active: 'passenger'} %}
+
+    {% if upcoming is empty and past is empty %}
+        <div class="empty card">
+            <h2>Aucune réservation pour l'instant</h2>
+            <p>Cherchez un trajet entre deux villes : vous ne payez que votre portion de route.</p>
+            <a class="btn btn--primary" href="{{ path('app_home') }}">Rechercher un trajet</a>
+        </div>
+    {% else %}
+        <section class="stack" aria-labelledby="upcoming">
+            <h2 id="upcoming" class="section-title">À venir</h2>
+            {% for booking in upcoming %}
+                {% include 'booking/_item.html.twig' %}
+            {% else %}
+                <p class="muted">Aucun trajet à venir. <a href="{{ path('app_home') }}">Rechercher un trajet</a></p>
+            {% endfor %}
+        </section>
+        {% if past is not empty %}
+        <section class="stack booking-past" aria-labelledby="past">
+            <h2 id="past" class="section-title">Passés et annulés</h2>
+            {% for booking in past %}
+                {% include 'booking/_item.html.twig' %}
+            {% endfor %}
+        </section>
+        {% endif %}
+    {% endif %}
+</div></div>
+{% endblock %}

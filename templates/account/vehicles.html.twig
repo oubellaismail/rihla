@@ -1,0 +1,53 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as ui %}
+{% form_theme form 'form/rihla.html.twig' %}
+
+{% block title %}Mes véhicules{% endblock %}
+
+{% block body %}
+<div class="container container--narrow page">
+    <div class="page-head">
+        <h1 class="h1-m">Mes véhicules</h1>
+        <p>Il vous faut un véhicule pour publier un trajet.</p>
+    </div>
+
+    <div class="stack stack--l">
+        {% if vehicles is not empty %}
+            <ul class="vehicle-list">
+                {% for vehicle in vehicles %}
+                    <li class="card">
+                        <span class="vehicle-icon">{{ ui.icon('car', 24) }}</span>
+                        <div>
+                            <strong>{{ vehicle.model }}</strong>, {{ vehicle.color }}<br>
+                            <span class="small muted">{{ vehicle.passengerSeats }} place{{ vehicle.passengerSeats > 1 ? 's' : '' }} passagers</span>
+                        </div>
+                        {% if vehicle.id not in usedIds %}
+                            <form method="post" action="{{ path('app_vehicle_delete', {id: vehicle.id}) }}" onsubmit="return confirm('Supprimer ce véhicule ?')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete-vehicle-' ~ vehicle.id) }}">
+                                <button type="submit" class="btn btn--ghost" aria-label="Supprimer {{ vehicle.model }}">{{ ui.icon('trash') }} Supprimer</button>
+                            </form>
+                        {% else %}
+                            <span class="small muted">Utilisé par un trajet</span>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <section class="card stack">
+            <h2 class="h2-s">Ajouter un véhicule</h2>
+            {{ form_start(form, {attr: {class: 'form'}}) }}
+                {% for e in form.vars.errors %}<p class="flash flash--error" role="alert">{{ e.message }}</p>{% endfor %}
+                {{ form_row(form.model) }}
+                <div class="form-row">
+                    {{ form_row(form.color) }}
+                    {{ form_row(form.passengerSeats) }}
+                </div>
+                <div>{{ form_widget(form.save) }}</div>
+            {{ form_end(form) }}
+        </section>
+
+        <p><a href="{{ path('app_account') }}">Retour à mon compte</a></p>
+    </div>
+</div>
+{% endblock %}

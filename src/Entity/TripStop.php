@@ -77,7 +77,7 @@ class TripStop
         return $this->city;
     }
 
-    public function setCity(City $city): static
+    public function setCity(?City $city): static
     {
         $this->city = $city;
 
@@ -101,7 +101,7 @@ class TripStop
         return $this->departureAt;
     }
 
-    public function setDepartureAt(\DateTimeImmutable $departureAt): static
+    public function setDepartureAt(?\DateTimeImmutable $departureAt): static
     {
         $this->departureAt = $departureAt;
 
@@ -113,7 +113,7 @@ class TripStop
         return $this->meetingPoint;
     }
 
-    public function setMeetingPoint(string $meetingPoint): static
+    public function setMeetingPoint(?string $meetingPoint): static
     {
         $this->meetingPoint = $meetingPoint;
 

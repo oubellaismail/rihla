@@ -1,1 +1,35 @@
 /* Page styles: trip pages. Shared tokens and components live in app.css. */
+
+.stack--tight { gap: 0; }
+.measure { max-width: 640px; }
+.section-head { margin-bottom: 28px; }
+.section-title { margin-bottom: 32px; }
+.quote { margin: 0; }
+.quote blockquote { margin: 0; }
+.band--dusk .container { color: var(--white); }
+
+/* Search results */
+.searchbar + .search-results { margin-top: 40px; }
+.result { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) auto; gap: 20px 32px; align-items: center; }
+.result-times { display: flex; flex-direction: column; gap: 4px; }
+.result-times .num { margin-right: 8px; font-size: 20px; }
+.result-price { display: flex; flex-direction: column; align-items: flex-end; }
+.result-price .num { font-size: 26px; }
+
+/* Trip page */
+.trip-head { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+.trip-head h1 { font-size: clamp(34px, 5vw, 52px); }
+.trip-head .badge { align-self: flex-start; }
+.trip-section + .trip-section { margin-top: 40px; }
+.portion-form { display: flex; flex-wrap: wrap; gap: 16px; align-items: end; }
+.portion-form .field { flex: 1 1 200px; }
+.driver-card { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+.price-box .seats-field { max-width: 160px; }
+.price-box .note { color: var(--muted); font-size: 15px; }
+
+@media (max-width: 640px) {
+    .result { grid-template-columns: 1fr; }
+    .result-price { align-items: flex-start; }
+}
+.trip-section h2 + * { margin-top: 20px; }
+.timeline { margin-top: 28px; }

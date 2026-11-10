@@ -1,0 +1,4 @@
+<nav class="tabs" aria-label="Mes trajets">
+    <a href="{{ path('app_booking_index') }}" {{ active == 'passenger' ? 'aria-current="page"' : '' }}>En tant que passager</a>
+    <a href="{{ path('app_driver_trips') }}" {{ active == 'driver' ? 'aria-current="page"' : '' }}>En tant que conducteur</a>
+</nav>

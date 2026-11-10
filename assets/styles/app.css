@@ -49,7 +49,7 @@ p { margin: 0; text-wrap: pretty; }
 /* Layout */
 .container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
 .container--narrow { max-width: 760px; }
-.page { padding: 56px 0 96px; }
+.page { padding-top: 56px; padding-bottom: 96px; }
 .page-head { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
 .page-head p { font-size: 18px; color: var(--soft); }
 .band { background: var(--sand-deep); }
@@ -175,7 +175,7 @@ p { margin: 0; text-wrap: pretty; }
 .empty p { color: var(--soft); max-width: 32em; }
 
 /* Home */
-.hero { display: flex; flex-wrap: wrap; gap: 56px; align-items: center; padding: 72px 0 64px; }
+.hero { display: flex; flex-wrap: wrap; gap: 56px; align-items: center; padding-top: 72px; padding-bottom: 64px; }
 .hero-text { flex: 1 1 470px; min-width: 0; display: flex; flex-direction: column; gap: 26px; }
 .hero-text h1 span { color: var(--sunset); }
 .hero-text > p { font-size: 20px; color: var(--soft); max-width: 30em; }
@@ -206,8 +206,8 @@ p { margin: 0; text-wrap: pretty; }
 }
 @media (max-width: 640px) {
     .container { padding: 0 16px; }
-    .page { padding: 32px 0 64px; }
-    .hero { padding: 40px 0; gap: 32px; }
+    .page { padding-top: 32px; padding-bottom: 64px; }
+    .hero { padding-top: 40px; padding-bottom: 40px; gap: 32px; }
     .float-note--top { left: 8px; }
     .float-note--bottom { right: 8px; }
     .searchbar label + label { border-left: 0; border-top: 1px solid var(--line); }

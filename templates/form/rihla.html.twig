@@ -1,0 +1,23 @@
+{# Form theme: Rihla's .field wrapper around every row. #}
+{% use 'form_div_layout.html.twig' %}
+
+{% block form_row -%}
+    <div class="field">
+        {{- form_label(form) -}}
+        {{- form_widget(form) -}}
+        {{- form_help(form) -}}
+        {{- form_errors(form) -}}
+    </div>
+{%- endblock form_row %}
+
+{% block form_errors -%}
+    {%- if errors|length > 0 -%}
+    <ul>{% for error in errors %}<li>{{ error.message }}</li>{% endfor %}</ul>
+    {%- endif -%}
+{%- endblock form_errors %}
+
+{% block form_help -%}
+    {%- if help is not empty -%}
+    <span id="{{ id }}_help" class="help">{{ help }}</span>
+    {%- endif -%}
+{%- endblock form_help %}

@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as ui %}
+{% block title %}Laisser un avis{% endblock %}
+{% block body %}
+<div class="page"><div class="container container--narrow">
+    <div class="page-head">
+        <h1>Laisser un avis</h1>
+        <p class="row">{{ ui.avatar(target) }} <span>Vous évaluez <strong>{{ target.publicName }}</strong> pour le trajet {{ booking.fromStop.city.name }} → {{ booking.toStop.city.name }}.</span></p>
+    </div>
+    <div class="card">
+        {{ form_start(form, {attr: {class: 'form', novalidate: 'novalidate'}}) }}
+            <div class="field">
+                <fieldset class="rating-choice">
+                    <legend>{{ form.rating.vars.label }}</legend>
+                    <div class="rating-choice__options">
+                        {% for choice in form.rating %}
+                            <span class="rating-choice__option">
+                                {{ form_widget(choice) }}
+                                <label for="{{ choice.vars.id }}"><span class="visually-hidden">{{ choice.vars.label }}</span><span aria-hidden="true">{{ choice.vars.value }}</span></label>
+                            </span>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+                {{ form_errors(form.rating) }}
+            </div>
+            <div class="field">
+                {{ form_label(form.comment) }}
+                {{ form_widget(form.comment) }}
+                {{ form_errors(form.comment) }}
+            </div>
+            <div class="row">
+                <button type="submit" class="btn btn--primary">Publier mon avis</button>
+                <a class="btn btn--ghost" href="{{ path('app_booking_show', {id: booking.id}) }}">Retour</a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+</div></div>
+{% endblock %}

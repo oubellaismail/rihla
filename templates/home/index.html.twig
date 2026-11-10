@@ -1,0 +1,120 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as ui %}
+
+
+{% block body %}
+<section class="container hero">
+    <div class="hero-text">
+        <h1>Yalla, on partage la <span>route.</span></h1>
+        <p>Trouvez une place dans une voiture qui fait déjà le chemin. Montez à Essaouira, descendez à Marrakech : vous ne payez que votre bout de route.</p>
+
+        <form class="searchbar" action="{{ path('app_trip_search') }}" method="get">
+            <label><span>Départ</span><input type="text" name="from" list="city-names" placeholder="Agadir" autocomplete="off" required></label>
+            <label><span>Arrivée</span><input type="text" name="to" list="city-names" placeholder="Marrakech" autocomplete="off" required></label>
+            <label><span>Quand</span><input type="date" name="date" value="{{ today }}" min="{{ today }}" required></label>
+            <button class="btn btn--primary" type="submit">{{ ui.icon('search') }} C’est parti</button>
+            <datalist id="city-names">{% for name in cityNames %}<option value="{{ name }}">{% endfor %}</datalist>
+        </form>
+    </div>
+
+    <div class="hero-photo">
+        <img src="{{ asset('images/hero-sunset-al-haouz.jpg') }}" alt="Une voiture sur une route de montagne d’Al Haouz au coucher du soleil">
+
+        {% if latestBooking %}
+            <div class="float-note float-note--top">
+                {{ ui.avatar(latestBooking.passenger) }}
+                <span class="stack stack--tight">
+                    <strong>{{ latestBooking.passenger.firstName }} monte à {{ latestBooking.fromStop.city.name }}</strong>
+                    <span class="small muted">réservé {{ latestBookingAgo }} · <span class="num">{{ latestBooking.totalPrice }} MAD</span></span>
+                </span>
+            </div>
+        {% endif %}
+
+        {% if spotlight %}
+            <div class="float-note float-note--bottom">
+                <span class="small muted">Places libres par tronçon · {{ spotlight.trip.firstStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}</span>
+                <div class="leg-counts">
+                    {% for leg in spotlight.legs|slice(0, 4) %}
+                        <span><strong{% if leg.free == 0 %} class="is-full"{% endif %}>{{ leg.free }}</strong>{{ leg.from|slice(0, 3) }} · {{ leg.to|slice(0, 3) }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="band">
+    <div class="container page">
+        <div class="row row--between section-head">
+            <div class="stack stack--tight">
+                <h2>Les routes du moment</h2>
+                <p class="muted">Des conducteurs partent bientôt. Il reste de la place.</p>
+            </div>
+            <a class="btn btn--outline" href="{{ path('app_trip_search') }}">Voir toutes les routes {{ ui.icon('arrow') }}</a>
+        </div>
+
+        {% if cards %}
+            <div class="grid">
+                {% for card in cards %}
+                    {% set trip = card.trip %}
+                    <a class="card card--link card--flush route-card" href="{{ path('app_trip_show', {id: trip.id}) }}">
+                        <img src="{{ asset(card.photo) }}" alt="" loading="lazy">
+                        <div class="body">
+                            {{ ui.route(trip.firstStop.city.name, trip.lastStop.city.name) }}
+                            <span class="muted small">{{ trip.firstStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}, {{ trip.firstStop.departureAt|date('H:i') }} · {{ trip.driver.publicName }}</span>
+                            <div class="foot">
+                                <span class="small"><span class="num">{{ card.price }} MAD</span> <span class="muted">· trajet complet</span></span>
+                                <span class="small {{ card.freeSeats ? 'muted' : '' }}">{{ card.freeSeats > 0 ? card.freeSeats ~ (card.freeSeats > 1 ? ' places libres' : ' place libre') : 'Complet' }}</span>
+                            </div>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty card">
+                <h3>Aucun départ annoncé pour le moment</h3>
+                <p>Vous faites la route bientôt ? Publiez votre trajet, les passagers viendront à vous.</p>
+                <a class="btn btn--primary" href="{{ path('app_trip_new') }}">Publier un trajet</a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="band--dusk band">
+    <div class="container page">
+        <div class="stack stack--l measure">
+            <h2>Une place libérée à Essaouira repart avec quelqu’un d’autre.</h2>
+            <p>Rihla compte les places tronçon par tronçon. Vous payez votre bout de route, le conducteur remplit sa voiture jusqu’au bout.</p>
+        </div>
+    </div>
+</section>
+
+<section class="container page">
+    <h2 class="section-title">Comment ça marche</h2>
+    <div class="steps">
+        <div class="stack"><span class="n">1</span><h3>Cherchez votre bout de route</h3><p>Indiquez où vous montez et où vous descendez, même si la voiture va plus loin.</p></div>
+        <div class="stack"><span class="n">2</span><h3>Réservez en deux clics</h3><p>Votre place est bloquée dès que vous confirmez. Personne ne peut vous la prendre.</p></div>
+        <div class="stack"><span class="n n--end">3</span><h3>Voyagez, puis notez</h3><p>Après le trajet, conducteur et passagers se laissent un avis. La confiance se construit route après route.</p></div>
+    </div>
+</section>
+
+{% if reviews %}
+    <section class="band">
+        <div class="container page">
+            <h2 class="section-title">Ils ont pris la route avec Rihla</h2>
+            <div class="grid">
+                {% for review in reviews %}
+                    <figure class="card stack quote">
+                        {{ ui.stars(review.rating) }}
+                        <blockquote>{{ review.comment }}</blockquote>
+                        <figcaption class="row">
+                            {{ ui.avatar(review.author) }}
+                            <span class="stack stack--tight"><strong>{{ review.author.publicName }}</strong><span class="small muted">{{ review.booking.fromStop.city.name }} vers {{ review.booking.toStop.city.name }}</span></span>
+                        </figcaption>
+                    </figure>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+{% endif %}
+{% endblock %}
