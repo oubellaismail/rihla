@@ -79,3 +79,25 @@ Every business function follows the same loop, visible in the Git history:
 3. **Claude Opus reviews the code** and sends feedback to the same agent until it is right; only then is it committed (`feat: …` commits, with both `Co-Authored-By` trailers and the review notes in the message).
 
 Examples from Level 2: the seat-count error message was sent back because it described the whole trip instead of the passenger's portion and used incorrect French; the cancellation agent found that private services were missing from the test container and that the Docker `APP_ENV=dev` variable overrode PHPUnit's, which led to a fix in the test configuration.
+
+## 2026-11-10 — How the map is used (studied before Level 3)
+
+Before designing the pages we looked at how competitors use maps. **Uber** and inDrive's city rides are on-demand (a car in five minutes), while Rihla is scheduled intercity carpooling booked days ahead. The closest references are **BlaBlaCar** and **inDrive Intercity**.
+
+| Seen at | What their map does | Kept for Rihla? |
+|---|---|---|
+| Uber | Suggests a precise, easy-to-reach pickup spot, with walking guidance | Yes, as an exact meeting point plus a link to the passenger's own GPS app |
+| Uber, BlaBlaCar "Ease Pickup" | Live tracking of the car approaching | No: needs a mobile app and live GPS (future work) |
+| BlaBlaCar "Ride Map" | The driver marks the exact departure spot on a map | Yes, for every stop, not only the departure |
+| BlaBlaCar search | Exact points, so any point on the road can be a meeting point | Already covered by intermediate stops |
+| inDrive Intercity | Passenger sets pickup on a map and proposes a price; drivers bid | No: haggling conflicts with the price being frozen at booking |
+
+**What Rihla does with the map** (Level 4, with Nominatim, OSRM and Leaflet; the Level 3 pages keep a space for it):
+
+1. **Trip page: the passenger's portion is highlighted.** Full route in grey, the booked portion in orange, with boarding and drop-off pins. It shows partial booking, the core idea of the project, at a glance.
+2. **Exact meeting point with "Ouvrir dans Google Maps / Waze".** One tap and the passenger's own navigation app guides them there; no tracking needed.
+3. **Privacy: exact pin only after booking.** Before booking, the passenger sees the city and an approximate area; the driver's exact address is not public.
+4. **Publishing a trip: the route is drawn as stops are added.** The driver clicks the map to place each meeting point; for every leg Rihla fills in the road distance, the **suggested price** (0.35 MAD/km, see `PriceCalculator`) and the **suggested time of the next stop** from the driving time. The driver can change all of them.
+5. **Driver's trip: legs coloured by occupancy** (seats left, almost full, full), so the driver sees where seats free up.
+
+**Future work** (only if time allows): live tracking on the day of the trip, map-based search ("trips passing near me"), price negotiation.
