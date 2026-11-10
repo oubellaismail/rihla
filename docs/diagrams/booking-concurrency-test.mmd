@@ -1,0 +1,22 @@
+---
+title: Concurrency test — two passengers, one last seat
+---
+sequenceDiagram
+  participant T as PHPUnit test
+  participant P1 as Process 1 (Salma)
+  participant P2 as Process 2 (Youssef)
+  participant DB as MySQL (test database)
+  T->>DB: create trip with 1 free seat on leg 1
+  par started at the same moment
+    T->>P1: bin/console app:booking:book (hold lock 1.5 s)
+    T->>P2: bin/console app:booking:book
+  end
+  P1->>DB: SELECT trip FOR UPDATE (gets the lock)
+  P2->>DB: SELECT trip FOR UPDATE (blocked, waits)
+  P1->>DB: 1 seat free, INSERT booking, COMMIT
+  DB-->>P2: lock released
+  P2->>DB: 0 seats free, ROLLBACK
+  P1-->>T: exit 0 (booked)
+  P2-->>T: exit 3 (NotEnoughSeats)
+  T->>DB: count CONFIRMED bookings on the trip
+  Note over T,DB: Assert exactly 1 success, 1 refusal, never 2 bookings

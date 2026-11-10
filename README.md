@@ -39,15 +39,24 @@ The full guide (troubleshooting, reset) will live in `INSTALL.md`.
 | Level | Scope | Status |
 |---|---|---|
 | 1 — Model | Entities, migrations, demo data, back-office | Done |
-| 2 — Rules | Seats per leg, no overbooking, cancellations, reviews, tests | To do |
+| 2 — Rules | Seats per leg, no overbooking, cancellations, reviews, tests | Done (83 tests) |
 | 3 — Product | Accounts, search, booking, driver space, profiles | To do |
 | 4 — External API | Nominatim and OSRM: suggested price and map | To do |
 | 5 — Delivery | Docker, `INSTALL.md` | Docker skeleton in place |
+
+## Tests
+
+```bash
+docker compose exec php composer test
+```
+
+Runs the unit tests (pure rules, no database) and the integration tests on a separate `rihla_test` MySQL database, including a real concurrency test where two processes book the last seat at the same time. Each integration test is rolled back, so the demo data is never touched.
 
 ## Documentation
 
 - [`docs/MODELE.md`](docs/MODELE.md): data model and design choices
 - [`docs/DECISIONS.md`](docs/DECISIONS.md): dated decision log, including answers to the brief's open questions
+- [`docs/diagrams/`](docs/diagrams/): approved design diagrams (classes, booking lifecycle, use cases, sequences, Level 2 services)
 - [`docs/design/`](docs/design/): visual identity, mockup and photos
 
 Code, documentation and commits are in English. The application's interface is in French, the language of its Moroccan users.

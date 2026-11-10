@@ -58,3 +58,24 @@ To book, the service opens a transaction, **locks the trip row** (`SELECT … FO
 - **Users, bookings, payments and reviews cannot be created by hand in the back-office.** They come from the application flows (sign-up, booking service), so the business rules and the overbooking lock cannot be bypassed from `/admin`. Trips, stops, vehicles and cities stay editable for support.
 - **Demo data loads automatically** on an empty database in dev, so `docker compose up` gives a working demo straight away. Dates are relative to today, so there are always upcoming trips.
 - **Table name `app_user`**: `user` is reserved in several SQL dialects.
+
+## 2026-11-10 — Level 2: business rules
+
+- **Design approved first** (Level 2 services diagram and concurrency test sequence), then implemented.
+- **No Symfony Workflow component.** Bookings have four statuses; each transition lives in one service method guarded by explicit checks (`BookingService`, `CancellationService`, `TripCompletionService`). That is easier to read and to test than a state machine configuration for so few states.
+- **Pure rules are separate from the services.** `SeatAvailabilityCalculator`, `PriceCalculator`, `CancellationPolicy` and `ReviewPolicy` take plain values (including "now") and never touch the database, so they are unit-tested without a kernel. Services only load data, lock, call the rules and save.
+- **Time comes from Symfony's `ClockInterface`.** Tests freeze it (`ClockSensitiveTrait`), so the 24-hour refund limit and the 14-day review window are tested to the minute.
+- **The lock covers every write that changes seat counts or the trip status**: booking and the driver cancelling the trip both lock the trip row first. Bookings are always reloaded from the database inside the lock, never taken from a possibly stale in-memory collection.
+- **Cancelling after departure is allowed for a passenger but refunds nothing** (policy band 0 %); a driver can no longer cancel once the trip has started.
+- **Trip completion runs as a command** (`app:trips:complete`, for a cron job): it completes trips whose last stop's time has passed, which opens the 14-day review window.
+- **Concurrency is proven, not assumed**: an integration test starts two real PHP processes booking the last seat at the same time; one keeps the lock for 1.5 s. Exactly one booking exists afterwards.
+
+## 2026-11-10 — How business code is written (AI workflow)
+
+Every business function follows the same loop, visible in the Git history:
+
+1. **Claude Opus writes the tests first** and they are committed failing (`test: …` commits).
+2. **Claude Sonnet subagents write the implementation** against those tests, one class per agent, without touching the tests and without committing.
+3. **Claude Opus reviews the code** and sends feedback to the same agent until it is right; only then is it committed (`feat: …` commits, with both `Co-Authored-By` trailers and the review notes in the message).
+
+Examples from Level 2: the seat-count error message was sent back because it described the whole trip instead of the passenger's portion and used incorrect French; the cancellation agent found that private services were missing from the test container and that the Docker `APP_ENV=dev` variable overrode PHPUnit's, which led to a fix in the test configuration.
