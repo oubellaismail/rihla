@@ -10,6 +10,8 @@ Link: <https://claude.ai/artifact/A32XRcGEbhedSzzrTqBmYe>
 
 The mockup's text is in French, like the application's interface.
 
+Added on 11 November 2026, after clicking through Level 4: **finished trip** (driver and passenger) and **cancelled trip**. A trip that is over is a summary, not something to organise: no seat counters, no phone numbers, and the driver can now review each passenger.
+
 ## Identity
 
 | Role | Colour | Use |
