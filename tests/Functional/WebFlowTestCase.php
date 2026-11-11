@@ -4,6 +4,7 @@ namespace App\Tests\Functional;
 
 use App\Entity\User;
 use App\Tests\Support\DbTrips;
+use App\Tests\Support\FakeGeoApis;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -23,6 +24,7 @@ abstract class WebFlowTestCase extends WebTestCase
 
     protected function setUp(): void
     {
+        FakeGeoApis::reset(); // Nominatim and OSRM are faked in tests (see FakeGeoApis)
         $this->client = static::createClient();
         $this->client->disableReboot(); // keep one EntityManager across requests, like the rollback transaction
         static::mockTime('2026-11-10 10:00');

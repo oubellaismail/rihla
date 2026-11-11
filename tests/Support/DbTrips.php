@@ -20,6 +20,15 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 final class DbTrips
 {
+    /** Real coordinates, so maps and routes have something to draw. name => [latitude, longitude] */
+    private const COORDINATES = [
+        'Agadir' => [30.4278, -9.5981],
+        'Essaouira' => [31.5085, -9.7595],
+        'Marrakech' => [31.6295, -7.9811],
+        'Casablanca' => [33.5731, -7.5898],
+        'Rabat' => [34.0209, -6.8416],
+    ];
+
     public function __construct(private readonly EntityManagerInterface $em)
     {
     }
@@ -98,6 +107,9 @@ final class DbTrips
         $city = $this->em->getRepository(City::class)->findOneBy(['name' => $name]);
         if (!$city) {
             $city = (new City())->setName($name);
+            if (isset(self::COORDINATES[$name])) {
+                $city->setLatitude(self::COORDINATES[$name][0])->setLongitude(self::COORDINATES[$name][1]);
+            }
             $this->em->persist($city);
         }
 
