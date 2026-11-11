@@ -107,10 +107,10 @@ final class DbTrips
         $city = $this->em->getRepository(City::class)->findOneBy(['name' => $name]);
         if (!$city) {
             $city = (new City())->setName($name);
-            if (isset(self::COORDINATES[$name])) {
-                $city->setLatitude(self::COORDINATES[$name][0])->setLongitude(self::COORDINATES[$name][1]);
-            }
             $this->em->persist($city);
+        }
+        if (null === $city->getLatitude() && isset(self::COORDINATES[$name])) { // also fixes rows left by older runs
+            $city->setLatitude(self::COORDINATES[$name][0])->setLongitude(self::COORDINATES[$name][1]);
         }
 
         return $city;

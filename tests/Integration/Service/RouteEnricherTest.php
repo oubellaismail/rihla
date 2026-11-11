@@ -102,6 +102,15 @@ final class RouteEnricherTest extends KernelTestCase
         self::assertNull(DbTrips::stop($trip, 0)->getLegGeometry());
     }
 
+    public function testWhenOsrmIsDownTheOtherLegsAreNotTriedSoPublishingStaysFast(): void
+    {
+        FakeGeoApis::$down = true;
+
+        $this->publish($this->draft(['Agadir', 'Essaouira', 'Marrakech', 'Casablanca']));
+
+        self::assertCount(1, FakeGeoApis::$calls, 'one failed call (up to 3 s) is enough, not one per leg');
+    }
+
     public function testALegBetweenCitiesWithoutCoordinatesIsLeftEmpty(): void
     {
         $trip = $this->publish($this->draft(['Agadir', 'Tafraout'])); // Tafraout: no coordinates in the test database
