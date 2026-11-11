@@ -12,3 +12,4 @@ Approved on 10 November 2026, before the entities were implemented.
 | [`level4-map.drawio`](level4-map.drawio) | **Level 4**: components (Leaflet, our `/api` proxy, Nominatim, OSRM, cache), publish sequence (meeting point, suggested price and time), who sees what on the map, data model changes, and what happens when an API fails. |
 | [`finished-trips.drawio`](finished-trips.drawio) | **Finished and cancelled trips**: what changes in the code (screens are on the mockup canvas). |
 | [`meeting-picker.drawio`](meeting-picker.drawio) | **Meeting-point picker**: 15 km rule, city-aware API, picker on the publish page (screens are on the mockup canvas). |
+| [`seat-choice.drawio`](seat-choice.drawio) | **Seat choice**: car plans and comfort order, seat states on a portion, booking with chosen seats under the trip lock, pages (screens are on the mockup canvas, boards « Choisir ses places » and « Place déjà réservée », v2). |

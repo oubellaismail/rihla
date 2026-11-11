@@ -34,3 +34,5 @@ Added on 11 November 2026, after clicking through Level 4: **finished trip** (dr
 - Flat backgrounds, rhythm from full-width colour bands, no decorative gradients.
 
 Added on 11 November 2026, after a UX critique of « Publier un trajet » (15/40: pins landed silently in the wrong city, and on a phone the map was 1,000 px away from the field): **meeting-point picker**, desktop and phone. Each stop gets « Choisir sur la carte », which opens a large map centred on that city with a fixed centre pin; a point more than 15 km from the city cannot be validated.
+
+Added on 11 November 2026: **seat choice, v2** (« Choisir ses places », « Place déjà réservée »). Built on the first seat boards, with one seat to tap per place booked, seats the driver does not offer shown « Non proposée » (hatched), and no names on taken seats. Code changes: [`../diagrams/seat-choice.drawio`](../diagrams/seat-choice.drawio).
