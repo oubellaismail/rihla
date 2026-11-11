@@ -44,6 +44,8 @@ h3 { font-size: 22px; font-weight: 700; letter-spacing: -0.015em; }
 p { margin: 0; text-wrap: pretty; }
 ::selection { background: var(--saffron); color: var(--ink); }
 :focus-visible { outline: 3px solid var(--sunset); outline-offset: 3px; border-radius: 10px; }
+.show-sm { display: none; }
+@media (max-width: 640px) { .show-sm { display: inline; } }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* Layout */
@@ -93,7 +95,7 @@ p { margin: 0; text-wrap: pretty; }
 .btn--primary:hover { background: var(--sunset-dark); color: var(--ink); }
 .btn--outline { border-color: var(--dusk); color: var(--dusk); background: transparent; }
 .btn--outline:hover { background: rgba(34, 48, 92, 0.06); }
-.btn--ghost { color: var(--dusk); background: transparent; padding-left: 0; padding-right: 0; text-decoration: underline; }
+.btn--ghost { color: var(--dusk); background: transparent; padding-left: 0; padding-right: 0; text-decoration: underline; align-self: flex-start; }
 .btn--danger { border-color: var(--red); color: var(--red); background: transparent; }
 .btn--danger:hover { background: var(--red-bg); }
 .btn--block { width: 100%; }
@@ -125,6 +127,7 @@ p { margin: 0; text-wrap: pretty; }
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label, .field legend { font-size: 15px; font-weight: 600; color: #6B5B4B; }
 .field input, .field select, .field textarea { width: 100%; min-height: 48px; padding: 10px 14px; border-radius: var(--radius-s); border: 1.5px solid #DCCFBE; background: var(--white); font: 500 17px var(--font-body); color: var(--ink); caret-color: var(--sunset); }
+.field input::placeholder, .field textarea::placeholder, .searchbar input::placeholder { color: #A39584; font-weight: 400; }
 .field textarea { min-height: 110px; resize: vertical; }
 .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--dusk); box-shadow: 0 0 0 3px rgba(34, 48, 92, 0.15); }
 .field .help { font-size: 14px; color: var(--muted); }
@@ -210,7 +213,14 @@ p { margin: 0; text-wrap: pretty; }
     .hero { padding-top: 40px; padding-bottom: 40px; gap: 32px; }
     .float-note--top { left: 8px; }
     .float-note--bottom { right: 8px; }
+    .searchbar { grid-template-columns: 1fr; }
     .searchbar label + label { border-left: 0; border-top: 1px solid var(--line); }
+    .searchbar .btn { margin-top: 4px; }
+    .site-header nav { padding-top: 12px; padding-bottom: 12px; row-gap: 10px; }
+    .brand span { font-size: 23px; }
+    .nav-links { gap: 14px; font-size: 15px; }
+    .nav-links .btn { min-height: 40px; padding: 8px 12px; }
+    .hide-sm { display: none; }
     .timeline li { grid-template-columns: 52px 24px 1fr; }
     .timeline li:not(:last-child)::after { left: calc(52px + 14px + 11px); }
     .timeline .leg-seats { grid-column: 3; }

@@ -27,7 +27,7 @@
                     <a href="{{ path('app_trip_search') }}" {% if route == 'app_trip_search' %}aria-current="page"{% endif %}>Rechercher</a>
                     {% if app.user %}
                         <a href="{{ path('app_booking_index') }}" {% if route starts with 'app_booking' or route starts with 'app_driver' %}aria-current="page"{% endif %}>Mes trajets</a>
-                        <a class="btn btn--outline" href="{{ path('app_trip_new') }}">{{ ui.icon('plus') }} Publier un trajet</a>
+                        <a class="btn btn--outline" href="{{ path('app_trip_new') }}">{{ ui.icon('plus') }} <span class="hide-sm">Publier un trajet</span><span class="show-sm">Publier</span></a>
                         <details class="menu">
                             <summary aria-label="Menu du compte">{{ ui.avatar(app.user) }}</summary>
                             <div class="menu-panel">

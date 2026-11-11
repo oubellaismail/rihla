@@ -30,9 +30,8 @@
                         <a class="card card--link row row--between" href="{{ path('app_trip_show', {id: trip.id}) }}">
                             <span>
                                 {{ ui.route(trip.firstStop.city.name, trip.lastStop.city.name) }}<br>
-                                <span class="small muted">{{ trip.firstStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }} à {{ trip.firstStop.departureAt|date('H:i') }}</span>
+                                <span class="small muted">{{ trip.firstStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }} à {{ trip.firstStop.departureAt|date('H:i') }} · {{ trip.stops|length - 2 > 0 ? (trip.stops|length - 2) ~ ' arrêt' ~ (trip.stops|length - 2 > 1 ? 's' : '') ~ ' en route' : 'direct' }}</span>
                             </span>
-                            <span class="small">{{ trip.stops|length - 2 > 0 ? (trip.stops|length - 2) ~ ' arrêt' ~ (trip.stops|length - 2 > 1 ? 's' : '') ~ ' intermédiaire' ~ (trip.stops|length - 2 > 1 ? 's' : '') : 'Sans arrêt intermédiaire' }}</span>
                         </a>
                     </li>
                 {% endfor %}

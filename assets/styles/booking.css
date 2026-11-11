@@ -5,7 +5,8 @@
 .booking-item { display: grid; grid-template-columns: 170px minmax(0, 1fr) auto; gap: 20px; align-items: center; }
 .booking-item__when, .booking-item__main, .booking-item__side { display: flex; flex-direction: column; gap: 4px; }
 .booking-item__side { align-items: flex-end; }
-.booking-item__when strong { font-family: var(--font-display); color: var(--ink); text-transform: capitalize; }
+.booking-item__when strong::first-letter { text-transform: uppercase; }
+.booking-item__when strong { display: block; font-family: var(--font-display); color: var(--ink);  }
 .facts { margin: 0; display: flex; flex-direction: column; gap: 12px; }
 .facts > div { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
 .facts dt { color: var(--muted); }

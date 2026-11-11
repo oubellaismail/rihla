@@ -34,7 +34,13 @@ final class DriverTripController extends AbstractController
         foreach ($trips->findForDriver($this->currentUser()) as $trip) {
             $stops = $trip->getStops()->toArray();
             $taken = $calculator->takenPerLeg(max(0, \count($stops) - 1), $trip->getBookings());
-            $item = ['trip' => $trip, 'stops' => \count($stops), 'taken' => [] === $taken ? 0 : max($taken)];
+            $carried = 0;
+            foreach ($trip->getBookings() as $booking) {
+                if (BookingStatus::Completed === $booking->getStatus()) {
+                    $carried += $booking->getSeats();
+                }
+            }
+            $item = ['trip' => $trip, 'stops' => \count($stops), 'taken' => [] === $taken ? 0 : max($taken), 'carried' => $carried];
             if (TripStatus::Published === $trip->getStatus() && $trip->getFirstStop()->getDepartureAt() > $now) {
                 $upcoming[] = $item;
             } else {
