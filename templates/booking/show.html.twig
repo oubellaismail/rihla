@@ -14,7 +14,8 @@
             {% if finished %}Trajet effectué le {{ booking.fromStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}
             {% elseif cancelled %}Réservation annulée, le trajet était prévu le {{ booking.fromStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}
             {% else %}{{ booking.fromStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}{% endif %}
-            {% include 'booking/_status.html.twig' %}</p>
+            {% if finished %}<span class="badge badge--ok">{{ ui.icon('check', 14) }} {{ booking.status.label }}</span>
+            {% else %}{% include 'booking/_status.html.twig' %}{% endif %}</p>
     </div>
 
     <div class="split">

@@ -46,7 +46,8 @@ body.picker-open { overflow: hidden; }
 .picker-canvas { position: absolute; inset: 0; background: var(--sand-deep); font: inherit; z-index: 0; }
 .picker-canvas.leaflet-container { font: inherit; }
 .picker-canvas .leaflet-bar { border: 1px solid rgba(60, 38, 20, 0.2); border-radius: var(--radius-s); box-shadow: none; overflow: hidden; }
-.picker-canvas .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; font-size: 20px; color: var(--dusk); background: var(--white); }
+.picker-canvas:focus-visible { outline: 3px solid var(--sunset); outline-offset: -3px; }
+.picker-canvas .leaflet-control.leaflet-bar a { width: 44px; height: 44px; line-height: 44px; font-size: 20px; color: var(--dusk); background: var(--white); }
 .picker-canvas .leaflet-control-attribution { background: rgba(251, 245, 236, 0.85); color: var(--muted); font-size: 11px; border-bottom-right-radius: 8px; }
 .picker-canvas .leaflet-control-attribution a { color: var(--dusk); }
 

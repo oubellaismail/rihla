@@ -8,6 +8,9 @@ const ROW = '[data-stop-list-target="item"]';
 const SETTLE_MS = 400;
 const START_ZOOM = 15;
 const FALLBACK_CENTRE = [31.8, -7.1];
+/** « de Marrakech » but « d'Essaouira »: French elides « de » before a vowel. */
+const ofCity = (name) => (/^[aeiouyàâéèêîôûh]/i.test(name) ? `d'${name}` : `de ${name}`);
+
 const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
 
 /*
@@ -350,9 +353,9 @@ export default class extends Controller {
         this.addressTarget.textContent = state.label ?? 'Adresse inconnue, vous pourrez la préciser';
         const km = this.formatKm(state.distanceKm);
         if (far) {
-            this.farTextTarget.textContent = `Ce lieu est trop loin de ${name} (${km} km). Choisissez un endroit dans la ville.`;
+            this.farTextTarget.textContent = `Ce lieu est trop loin ${ofCity(name)} (${km} km). Choisissez un endroit dans la ville.`;
         } else {
-            this.detailTarget.textContent = state.distanceKm === undefined ? '' : `${km} km du centre de ${name}`;
+            this.detailTarget.textContent = state.distanceKm === undefined ? '' : `${km} km du centre ${ofCity(name)}`;
         }
     }
 

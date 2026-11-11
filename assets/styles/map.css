@@ -15,7 +15,7 @@
 
 /* Leaflet controls: rounded and flat, in the palette. */
 .map-slot .leaflet-bar { border: 1px solid var(--line); border-radius: var(--radius-s); box-shadow: none; overflow: hidden; }
-.map-slot .leaflet-bar a { color: var(--dusk); background: var(--sand); border-bottom-color: var(--line); }
+.map-slot .leaflet-control.leaflet-bar a { width: 44px; height: 44px; line-height: 44px; font-size: 20px; color: var(--dusk); background: var(--sand); border-bottom-color: var(--line); }
 .map-slot .leaflet-bar a:hover { background: var(--sand-deep); color: var(--dusk-dark); }
 .map-slot .leaflet-control-attribution { background: rgba(251, 245, 236, 0.85); color: var(--muted); font-size: 11px; border-top-left-radius: 8px; }
 .map-slot .leaflet-control-attribution a { color: var(--dusk); }

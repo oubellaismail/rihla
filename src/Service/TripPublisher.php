@@ -137,7 +137,7 @@ final class TripPublisher
             $centre = new GeoPoint($city->getLatitude(), $city->getLongitude());
             if (!$this->meetingPointRule->isNear($meeting, $centre)) {
                 throw new TripNotPublishableException(sprintf(
-                    'Le point de rendez-vous de %s est à %d km de la ville. Choisissez un endroit à moins de %d km.',
+                    'Le point de rendez-vous choisi pour %s est à %d km de la ville. Choisissez un endroit à moins de %d km.',
                     $city->getName(),
                     (int) round($this->meetingPointRule->distanceKm($meeting, $centre)),
                     MeetingPointRule::MAX_KM,

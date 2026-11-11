@@ -43,8 +43,8 @@ The full guide (configuration, tests, reset, troubleshooting) is in [`INSTALL.md
 | 1 — Model | Entities, migrations, demo data, back-office | Done |
 | 2 — Rules | Seats per leg, no overbooking, cancellations, reviews, tests | Done |
 | 3 — Product | Accounts, search, booking, driver space, profiles | Done (149 tests in total) |
-| 4 — External API | Nominatim and OSRM: suggested price and map | Done (215 tests in total) |
-| 5 — Delivery | Docker, `INSTALL.md` | Done |
+| 4 — External API | Nominatim and OSRM: suggested price and map | Done |
+| 5 — Delivery | Docker, `INSTALL.md` | Done (251 tests in total) |
 
 ## Tests
 
