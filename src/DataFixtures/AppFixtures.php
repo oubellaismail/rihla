@@ -12,6 +12,7 @@ use App\Entity\User;
 use App\Entity\Vehicle;
 use App\Enum\BookingStatus;
 use App\Enum\TripStatus;
+use App\Service\Geo\RouteEnricher;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -42,10 +43,27 @@ class AppFixtures extends Fixture
         'El Jadida' => [33.2316, -8.5007],
     ];
 
+    /** "city|meeting point" => [latitude, longitude] of the exact meeting place (real places). */
+    private const MEETING_POINTS = [
+        'Agadir|Gare routière, avenue des FAR' => [30.4202, -9.5982],
+        'Agadir|Marina d\'Agadir' => [30.4194, -9.6310],
+        'Essaouira|Bab Marrakech' => [31.5126, -9.7700],
+        'Essaouira|Place Moulay Hassan' => [31.5120, -9.7692],
+        'Marrakech|Gare ferroviaire' => [31.6301, -8.0089],
+        'Marrakech|Bab Doukkala' => [31.6392, -8.0189],
+        'Marrakech|Gare routière de Bab Doukkala' => [31.6392, -8.0189],
+        'Casablanca|Casa Voyageurs' => [33.5899, -7.5911],
+        'Ouarzazate|Place Al Mouahidine' => [30.9203, -6.8929],
+        'Tiznit|Bab Oulad Jarrar' => [29.7000, -9.7330],
+    ];
+
     /** @var array<string, City> */
     private array $cities = [];
 
-    public function __construct(private readonly UserPasswordHasherInterface $hasher)
+    public function __construct(
+        private readonly UserPasswordHasherInterface $hasher,
+        private readonly RouteEnricher $routeEnricher,
+    )
     {
     }
 
@@ -168,13 +186,18 @@ class AppFixtures extends Fixture
 
         foreach ($stops as [$city, $time, $meetingPoint, $km, $price]) {
             [$h, $m] = array_map('intval', explode(':', $time));
+            $exact = self::MEETING_POINTS[$city . '|' . $meetingPoint] ?? [null, null];
             $trip->addStop((new TripStop())
                 ->setCity($this->cities[$city])
+                ->setMeetingLatitude($exact[0])
+                ->setMeetingLongitude($exact[1])
                 ->setDepartureAt($date->setTime($h, $m))
                 ->setMeetingPoint($meetingPoint)
                 ->setLegDistanceKmToNext($km)
                 ->setLegPriceToNext($price));
         }
+        // Real road distance, time and line when the network is up; degrades to the km given above offline.
+        $this->routeEnricher->enrich($trip);
         $manager->persist($trip);
 
         return $trip;

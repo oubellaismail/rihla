@@ -8,6 +8,7 @@ use App\Entity\TripStop;
 use App\Entity\User;
 use App\Enum\TripStatus;
 use App\Exception\TripNotPublishableException;
+use App\Service\Geo\RouteEnricher;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockInterface;
 
@@ -19,6 +20,7 @@ final class TripPublisher
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly ClockInterface $clock,
+        private readonly RouteEnricher $routeEnricher,
     ) {
     }
 
@@ -36,6 +38,7 @@ final class TripPublisher
         $this->assertLegsArePriced($trip);
 
         $this->finalize($trip, $driver);
+        $this->routeEnricher->enrich($trip); // best effort: never blocks publishing
 
         $this->em->persist($trip);
         $this->em->flush();
@@ -127,6 +130,8 @@ final class TripPublisher
         $last = $trip->getLastStop();
         $last->setLegPriceToNext(null);
         $last->setLegDistanceKmToNext(null);
+        $last->setLegDurationMinToNext(null);
+        $last->setLegGeometry(null);
 
         $trip->setDriver($driver)->setStatus(TripStatus::Published);
     }

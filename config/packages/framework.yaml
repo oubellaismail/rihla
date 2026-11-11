@@ -5,11 +5,62 @@ framework:
     # Note that the session will be started ONLY if you read or write from it.
     session: true
 
+    http_client:
+        scoped_clients:
+            # Public map services, called from our server only (usage policies: identifying User-Agent, cache, few calls).
+            nominatim.client:
+                base_uri: 'https://nominatim.openstreetmap.org'
+                headers:
+                    User-Agent: 'Rihla/1.0 (PFE student project; +https://github.com/oubellaismail/rihla)'
+                    Accept-Language: 'fr'
+            osrm.client:
+                base_uri: 'https://router.project-osrm.org'
+                headers:
+                    User-Agent: 'Rihla/1.0 (PFE student project; +https://github.com/oubellaismail/rihla)'
+                    Accept-Language: 'fr'
+
+    cache:
+        pools:
+            geo.cache:
+                adapter: cache.app
+                default_lifetime: 2592000 # 30 days
+
+    rate_limiter:
+        # Nominatim policy: at most 1 request per second for the whole app.
+        nominatim:
+            policy: fixed_window
+            limit: 1
+            interval: '1 second'
+        # Our own JSON API, per logged-in user.
+        map_api:
+            policy: sliding_window
+            limit: 30
+            interval: '1 minute'
+
     #esi: true
     #fragments: true
 
 when@test:
     framework:
         test: true
+        http_client:
+            mock_response_factory: App\Tests\Support\FakeGeoApis
+        cache:
+            pools:
+                geo.cache:
+                    adapter: cache.adapter.array
+                    default_lifetime: 2592000
+        rate_limiter:
+            nominatim:
+                policy: fixed_window
+                limit: 1000
+                interval: '1 second'
+                storage_service: app.test_rate_limiter_storage
+            map_api:
+                policy: sliding_window
+                limit: 30
+                interval: '1 minute'
+                # In memory and not reset between requests, so tests do not leak into each other
+                storage_service: app.test_rate_limiter_storage
         session:
             storage_factory_id: session.storage.factory.mock_file

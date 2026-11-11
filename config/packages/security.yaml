@@ -31,6 +31,7 @@ security:
     access_control:
         - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/(bookings|driver|account)(/|$), roles: ROLE_USER }
+        - { path: ^/api(/|$), roles: ROLE_USER }
         - { path: ^/trips/new$, roles: ROLE_USER }
         - { path: ^/trips/\d+/book$, roles: ROLE_USER }
 

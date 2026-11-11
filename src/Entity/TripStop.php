@@ -50,6 +50,24 @@ class TripStop
     #[Assert\PositiveOrZero]
     private ?int $legDistanceKmToNext = null;
 
+    /** Exact meeting point placed on the map by the driver (private: shown to booked passengers only). */
+    #[ORM\Column(nullable: true)]
+    #[Assert\Range(min: -90, max: 90, notInRangeMessage: 'La latitude doit être comprise entre -90 et 90.')]
+    private ?float $meetingLatitude = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Assert\Range(min: -180, max: 180, notInRangeMessage: 'La longitude doit être comprise entre -180 et 180.')]
+    private ?float $meetingLongitude = null;
+
+    /** Driving time in minutes to the next stop (from OSRM). */
+    #[ORM\Column(nullable: true)]
+    #[Assert\PositiveOrZero]
+    private ?int $legDurationMinToNext = null;
+
+    /** Encoded polyline of the road to the next stop (from OSRM). */
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $legGeometry = null;
+
     public function __toString(): string
     {
         return sprintf('%s (%s)', $this->city, $this->departureAt?->format('d/m H:i'));
@@ -140,6 +158,54 @@ class TripStop
     public function setLegDistanceKmToNext(?int $legDistanceKmToNext): static
     {
         $this->legDistanceKmToNext = $legDistanceKmToNext;
+
+        return $this;
+    }
+
+    public function getMeetingLatitude(): ?float
+    {
+        return $this->meetingLatitude;
+    }
+
+    public function setMeetingLatitude(?float $meetingLatitude): static
+    {
+        $this->meetingLatitude = $meetingLatitude;
+
+        return $this;
+    }
+
+    public function getMeetingLongitude(): ?float
+    {
+        return $this->meetingLongitude;
+    }
+
+    public function setMeetingLongitude(?float $meetingLongitude): static
+    {
+        $this->meetingLongitude = $meetingLongitude;
+
+        return $this;
+    }
+
+    public function getLegDurationMinToNext(): ?int
+    {
+        return $this->legDurationMinToNext;
+    }
+
+    public function setLegDurationMinToNext(?int $legDurationMinToNext): static
+    {
+        $this->legDurationMinToNext = $legDurationMinToNext;
+
+        return $this;
+    }
+
+    public function getLegGeometry(): ?string
+    {
+        return $this->legGeometry;
+    }
+
+    public function setLegGeometry(?string $legGeometry): static
+    {
+        $this->legGeometry = $legGeometry;
 
         return $this;
     }

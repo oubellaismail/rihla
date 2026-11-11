@@ -11,3 +11,9 @@ services:
 
     App\Repository\:
         resource: '../src/Repository/'
+
+    App\Tests\Support\FakeGeoApis: ~
+
+    # Rate limiter state kept in memory (not reset between requests of one test, gone between tests).
+    app.test_rate_limiter_storage:
+        class: Symfony\Component\RateLimiter\Storage\InMemoryStorage

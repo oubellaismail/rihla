@@ -8,8 +8,11 @@ use Doctrine\ORM\EntityRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\CallbackTransformer;
+use Symfony\Component\Form\Exception\TransformationFailedException;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\NotNull;
@@ -44,7 +47,36 @@ final class TripStopType extends AbstractType
                 'required' => false,
                 'help' => 'Prix par place jusqu\'à l\'arrêt suivant (MAD)',
                 'attr' => ['min' => 0, 'inputmode' => 'numeric'],
-            ]);
+            ])
+            ->add('meetingLatitude', HiddenType::class, self::coordinateOptions())
+            ->add('meetingLongitude', HiddenType::class, self::coordinateOptions());
+
+        // Hidden fields carry text: turn it into a float (empty → null); the range is checked by the entity.
+        foreach (['meetingLatitude', 'meetingLongitude'] as $field) {
+            $builder->get($field)->addModelTransformer(new CallbackTransformer(
+                static fn (?float $value): string => null === $value ? '' : (string) $value,
+                static function (?string $value): ?float {
+                    if (null === $value || '' === trim($value)) {
+                        return null;
+                    }
+                    if (!is_numeric($value)) {
+                        throw new TransformationFailedException('Not a number.');
+                    }
+
+                    return (float) $value;
+                },
+            ));
+        }
+    }
+
+    /** Hidden coordinate filled by the map: empty means "not placed"; anything else must be a real coordinate. */
+    private static function coordinateOptions(): array
+    {
+        return [
+            'required' => false,
+            'empty_data' => null,
+            'invalid_message' => 'Coordonnée invalide.',
+        ];
     }
 
     public function configureOptions(OptionsResolver $resolver): void
