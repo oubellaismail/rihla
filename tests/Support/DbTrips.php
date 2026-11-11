@@ -48,10 +48,10 @@ final class DbTrips
     /**
      * @param list<array{0: string, 1: string, 2: ?int}>|null $stops [city, HH:MM, price to next]
      */
-    public function trip(int $seatsOffered = 3, ?User $driver = null, ?array $stops = null, string $day = TripBuilder::DAY): Trip
+    public function trip(int $seatsOffered = 3, ?User $driver = null, ?array $stops = null, string $day = TripBuilder::DAY, int $passengerSeats = 4): Trip
     {
         $driver ??= $this->user('Karim');
-        $vehicle = (new Vehicle())->setOwner($driver)->setModel('Dacia Logan')->setColor('bleue')->setPassengerSeats(4);
+        $vehicle = (new Vehicle())->setOwner($driver)->setModel('Dacia Logan')->setColor('bleue')->setPassengerSeats($passengerSeats);
         $this->em->persist($vehicle);
         $trip = (new Trip())->setDriver($driver)->setVehicle($vehicle)->setSeatsOffered($seatsOffered);
 
@@ -70,7 +70,8 @@ final class DbTrips
     }
 
     /** An existing booking created directly (bypassing the service), e.g. to fill a leg. */
-    public function booking(Trip $trip, int $from, int $to, int $seats = 1, BookingStatus $status = BookingStatus::Confirmed, ?User $passenger = null): Booking
+    /** @param list<string> $seatCodes seats held (empty: a booking made before seat choice existed) */
+    public function booking(Trip $trip, int $from, int $to, int $seats = 1, BookingStatus $status = BookingStatus::Confirmed, ?User $passenger = null, array $seatCodes = []): Booking
     {
         $booking = (new Booking())
             ->setTrip($trip)
@@ -80,6 +81,9 @@ final class DbTrips
             ->setSeats($seats)
             ->setTotalPrice(100 * $seats)
             ->setStatus($status);
+        if ([] !== $seatCodes) {
+            $booking->setSeatCodes($seatCodes);
+        }
         $booking->setPayment((new Payment())->setAmount($booking->getTotalPrice()));
         $trip->getBookings()->add($booking);
         $this->em->persist($booking);

@@ -31,7 +31,7 @@ final class TripBuilder
     /**
      * @param list<array{0: string, 1: string, 2: ?int}> $stops [city, HH:MM, price to next]
      */
-    public static function trip(int $seatsOffered = 3, ?array $stops = null, ?User $driver = null): Trip
+    public static function trip(int $seatsOffered = 3, ?array $stops = null, ?User $driver = null, int $passengerSeats = 4): Trip
     {
         $stops ??= [
             ['Agadir', '08:00', 60],
@@ -40,7 +40,7 @@ final class TripBuilder
             ['Casablanca', '15:00', null],
         ];
         $driver ??= self::user('Karim');
-        $vehicle = (new Vehicle())->setOwner($driver)->setModel('Dacia Logan')->setColor('bleue')->setPassengerSeats(4);
+        $vehicle = (new Vehicle())->setOwner($driver)->setModel('Dacia Logan')->setColor('bleue')->setPassengerSeats($passengerSeats);
         $trip = (new Trip())->setDriver($driver)->setVehicle($vehicle)->setSeatsOffered($seatsOffered);
 
         foreach ($stops as [$city, $time, $price]) {
@@ -59,7 +59,8 @@ final class TripBuilder
         return $trip->getStops()->get($position) ?? throw new \OutOfRangeException("No stop at position $position");
     }
 
-    public static function booking(Trip $trip, int $from, int $to, int $seats = 1, BookingStatus $status = BookingStatus::Confirmed, ?User $passenger = null): Booking
+    /** @param list<string> $seatCodes seats held (empty: a booking made before seat choice existed) */
+    public static function booking(Trip $trip, int $from, int $to, int $seats = 1, BookingStatus $status = BookingStatus::Confirmed, ?User $passenger = null, array $seatCodes = []): Booking
     {
         $booking = (new Booking())
             ->setTrip($trip)
@@ -68,6 +69,9 @@ final class TripBuilder
             ->setToStop(self::stop($trip, $to))
             ->setSeats($seats)
             ->setStatus($status);
+        if ([] !== $seatCodes) {
+            $booking->setSeatCodes($seatCodes);
+        }
         $trip->getBookings()->add($booking);
 
         return $booking;

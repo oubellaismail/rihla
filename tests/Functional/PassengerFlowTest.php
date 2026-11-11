@@ -68,7 +68,7 @@ final class PassengerFlowTest extends WebFlowTestCase
         foreach (['Agadir', 'Essaouira', 'Marrakech', 'Casablanca', 'Karim T.'] as $expected) {
             self::assertStringContainsString($expected, $text);
         }
-        self::assertSelectorExists(sprintf('form[action="/trips/%d/book"] select[name="seats"]', $trip->getId()));
+        self::assertSelectorExists(sprintf('form[action="/trips/%d/seats"][method="get"] select[name="seats"]', $trip->getId()), 'Réserver opens the seat page');
     }
 
     public function testAnAnonymousVisitorIsSentToTheLoginPageToBook(): void
@@ -88,7 +88,8 @@ final class PassengerFlowTest extends WebFlowTestCase
         $this->login($salma);
 
         $crawler = $this->client->request('GET', sprintf('/trips/%d?from=1&to=2', $trip->getId()));
-        $this->client->submit($crawler->selectButton('Réserver')->form(['seats' => 2]));
+        $crawler = $this->client->submit($crawler->selectButton('Réserver')->form(['seats' => 2]));
+        $this->client->submit($crawler->selectButton('Pas de préférence, choisir pour moi')->form());
 
         $booking = $this->em->getRepository(Booking::class)->findOneBy(['passenger' => $salma]);
         self::assertNotNull($booking, 'the booking is saved');
