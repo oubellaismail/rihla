@@ -2,11 +2,15 @@
 
 namespace App\Controller;
 
+use App\Entity\City;
 use App\Entity\User;
 use App\Model\GeoPlace;
 use App\Model\GeoPoint;
 use App\Service\Geo\ArrivalTimeSuggester;
+use App\Repository\CityRepository;
+use App\Repository\TripStopRepository;
 use App\Service\Geo\GeoProvider;
+use App\Service\Geo\MeetingPointRule;
 use App\Service\Geo\PriceSuggester;
 use App\Service\Geo\RouteProvider;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -31,10 +35,14 @@ final class MapApiController extends AbstractController
     }
 
     #[Route('/geocode', name: 'app_api_geocode')]
-    public function geocode(Request $request, GeoProvider $geo): JsonResponse
+    public function geocode(Request $request, GeoProvider $geo, CityRepository $cities, MeetingPointRule $rule): JsonResponse
     {
         if ($limited = $this->tooManyRequests()) {
             return $limited;
+        }
+        $city = null;
+        if ($request->query->has('city') && null === ($city = $this->findCity($request, $cities))) {
+            return new JsonResponse(['error' => 'Ville inconnue.'], 404);
         }
 
         $query = trim((string) $request->query->get('q', ''));
@@ -42,14 +50,22 @@ final class MapApiController extends AbstractController
             return new JsonResponse(['places' => []]);
         }
 
-        return new JsonResponse(['places' => array_map(self::placeToArray(...), $geo->search($query))]);
+        if (null !== $city) {
+            $query .= ', '.$city->getName();
+        }
+
+        return new JsonResponse(['places' => array_map(fn (GeoPlace $p): array => $this->placeToArray($p, $city, $rule), $geo->search($query))]);
     }
 
     #[Route('/reverse', name: 'app_api_reverse')]
-    public function reverse(Request $request, GeoProvider $geo): JsonResponse
+    public function reverse(Request $request, GeoProvider $geo, CityRepository $cities, MeetingPointRule $rule): JsonResponse
     {
         if ($limited = $this->tooManyRequests()) {
             return $limited;
+        }
+        $city = null;
+        if ($request->query->has('city') && null === ($city = $this->findCity($request, $cities))) {
+            return new JsonResponse(['error' => 'Ville inconnue.'], 404);
         }
 
         $lat = self::number($request->query->get('lat'));
@@ -60,7 +76,21 @@ final class MapApiController extends AbstractController
 
         $place = $geo->reverse($lat, $lng);
 
-        return new JsonResponse(['place' => null === $place ? null : self::placeToArray($place)]);
+        return new JsonResponse(['place' => null === $place ? null : $this->placeToArray($place, $city, $rule)]);
+    }
+
+    #[Route('/meeting-points', name: 'app_api_meeting_points')]
+    public function meetingPoints(Request $request, CityRepository $cities, TripStopRepository $stops): JsonResponse
+    {
+        if ($limited = $this->tooManyRequests()) {
+            return $limited;
+        }
+        $city = $this->findCity($request, $cities);
+        if (null === $city) {
+            return new JsonResponse(['error' => 'Ville inconnue.'], 404);
+        }
+
+        return new JsonResponse(['places' => $stops->popularMeetingPoints($city)]);
     }
 
     #[Route('/route', name: 'app_api_route')]
@@ -116,10 +146,25 @@ final class MapApiController extends AbstractController
         return new JsonResponse(['error' => 'Trop de requêtes, réessayez dans un instant.'], 429);
     }
 
-    /** @return array{label: string, lat: float, lng: float} */
-    private static function placeToArray(GeoPlace $place): array
+    private function findCity(Request $request, CityRepository $cities): ?City
     {
-        return ['label' => $place->label, 'lat' => $place->latitude, 'lng' => $place->longitude];
+        $id = $request->query->get('city');
+
+        return \is_string($id) && ctype_digit($id) ? $cities->find((int) $id) : null;
+    }
+
+    /** @return array{label: string, lat: float, lng: float, distanceKm?: float, tooFar?: bool} */
+    private function placeToArray(GeoPlace $place, ?City $city, MeetingPointRule $rule): array
+    {
+        $data = ['label' => $place->label, 'lat' => $place->latitude, 'lng' => $place->longitude];
+        if (null !== $city && $city->isGeocoded()) {
+            $point = new GeoPoint($place->latitude, $place->longitude);
+            $centre = new GeoPoint($city->getLatitude(), $city->getLongitude());
+            $data['distanceKm'] = round($rule->distanceKm($point, $centre), 1);
+            $data['tooFar'] = !$rule->isNear($point, $centre);
+        }
+
+        return $data;
     }
 
     private static function number(mixed $value): ?float

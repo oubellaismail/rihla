@@ -8,6 +8,8 @@ use App\Entity\TripStop;
 use App\Entity\User;
 use App\Enum\TripStatus;
 use App\Exception\TripNotPublishableException;
+use App\Model\GeoPoint;
+use App\Service\Geo\MeetingPointRule;
 use App\Service\Geo\RouteEnricher;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Clock\ClockInterface;
@@ -21,6 +23,7 @@ final class TripPublisher
         private readonly EntityManagerInterface $em,
         private readonly ClockInterface $clock,
         private readonly RouteEnricher $routeEnricher,
+        private readonly MeetingPointRule $meetingPointRule,
     ) {
     }
 
@@ -36,6 +39,7 @@ final class TripPublisher
         $this->assertFirstDepartureIsInTheFuture($trip);
         $this->assertStopsAreConsistent($trip);
         $this->assertLegsArePriced($trip);
+        $this->assertMeetingPointsAreInTheirCity($trip);
 
         $this->finalize($trip, $driver);
         $this->routeEnricher->enrich($trip); // best effort: never blocks publishing
@@ -116,6 +120,28 @@ final class TripPublisher
             $price = $stop->getLegPriceToNext();
             if (null === $price || $price < 0) {
                 throw new TripNotPublishableException('Chaque tronçon doit avoir un prix positif ou nul.');
+            }
+        }
+    }
+
+    /** A meeting point placed on the map must be at most MeetingPointRule::MAX_KM from its city. */
+    private function assertMeetingPointsAreInTheirCity(Trip $trip): void
+    {
+        foreach ($trip->getStops() as $stop) {
+            $city = $stop->getCity();
+            if (null === $city || !$city->isGeocoded()
+                || null === $stop->getMeetingLatitude() || null === $stop->getMeetingLongitude()) {
+                continue;
+            }
+            $meeting = new GeoPoint($stop->getMeetingLatitude(), $stop->getMeetingLongitude());
+            $centre = new GeoPoint($city->getLatitude(), $city->getLongitude());
+            if (!$this->meetingPointRule->isNear($meeting, $centre)) {
+                throw new TripNotPublishableException(sprintf(
+                    'Le point de rendez-vous de %s est à %d km de la ville. Choisissez un endroit à moins de %d km.',
+                    $city->getName(),
+                    (int) round($this->meetingPointRule->distanceKm($meeting, $centre)),
+                    MeetingPointRule::MAX_KM,
+                ));
             }
         }
     }

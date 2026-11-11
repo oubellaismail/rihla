@@ -9,18 +9,16 @@ const ROUTE_DELAY_MS = 600;
 const ROW = '[data-stop-list-target="item"]';
 
 /*
- * Map of the publish form. The driver clicks the map to place the meeting point of a stop
- * (or searches it by name), the route is drawn between the stops and the server suggests
- * a price and an arrival time per leg. Everything is optional: without JavaScript, or when
- * the map services are down, the form still works.
+ * Route preview of the publish form: the route is drawn between the stops (placed meeting points
+ * shown as small dots) and the server suggests a price and an arrival time per leg. Meeting points
+ * are chosen in the picker (meeting_picker_controller.js). Everything is optional: without
+ * JavaScript, or when the map services are down, the form still works.
  */
 export default class extends Controller {
-    static targets = ['canvas', 'note', 'hint'];
+    static targets = ['canvas', 'note'];
     static values = { cities: Object };
 
     connect() {
-        this.active = null;
-        this.markers = new Map();
         this.routeSeq = 0;
         this.timer = null;
         this.abort = null;
@@ -36,14 +34,8 @@ export default class extends Controller {
         this.cityLayer = L.layerGroup().addTo(this.map);
         this.legLayer = L.layerGroup().addTo(this.map);
 
-        this.map.on('click', (event) => this.place(event.latlng));
-
         this.onChange = (event) => this.handleChange(event);
-        this.onFocus = (event) => this.handleFocus(event);
-        this.onKeydown = (event) => this.handleKeydown(event);
         this.element.addEventListener('change', this.onChange);
-        this.element.addEventListener('focusin', this.onFocus);
-        this.element.addEventListener('keydown', this.onKeydown);
 
         // Rows added or removed by the stop-list controller.
         const list = this.element.querySelector('.stop-list');
@@ -52,7 +44,6 @@ export default class extends Controller {
             this.observer.observe(list, { childList: true });
         }
 
-        this.setActive(this.rows()[0] ?? null);
         this.syncMarkers();
         this.fit();
         this.scheduleRoute();
@@ -64,8 +55,6 @@ export default class extends Controller {
         this.abort?.abort();
         this.observer?.disconnect();
         this.element.removeEventListener('change', this.onChange);
-        this.element.removeEventListener('focusin', this.onFocus);
-        this.element.removeEventListener('keydown', this.onKeydown);
         this.map?.remove();
         this.map = null;
     }
@@ -91,34 +80,6 @@ export default class extends Controller {
         return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
     }
 
-    cityName(row) {
-        const select = this.field(row, 'city');
-        return select && select.value ? select.options[select.selectedIndex].text.trim() : '';
-    }
-
-    setActive(row) {
-        this.active = row;
-        this.rows().forEach((r) => r.classList.toggle('is-active', r === row));
-        this.markers.forEach((marker, r) => marker.getElement()?.classList.toggle('is-active', r === row));
-    }
-
-    // ----- events -------------------------------------------------------------------------
-
-    handleFocus(event) {
-        const row = event.target.closest?.(ROW);
-        if (row && event.target.matches('[name$="[meetingPoint]"]')) {
-            this.setActive(row);
-        }
-    }
-
-    handleKeydown(event) {
-        // Enter in the meeting point field searches the place instead of submitting the form.
-        if (event.key === 'Enter' && event.target.matches?.('[name$="[meetingPoint]"]')) {
-            event.preventDefault();
-            this.searchRow(event.target.closest(ROW));
-        }
-    }
-
     handleChange(event) {
         const target = event.target;
         if (target.matches('[name$="[legPriceToNext]"]')) {
@@ -133,9 +94,6 @@ export default class extends Controller {
     }
 
     rowsChanged() {
-        if (this.active && !this.rows().includes(this.active)) {
-            this.setActive(this.rows()[0] ?? null);
-        }
         this.syncMarkers();
         this.fit();
         this.scheduleRoute();
@@ -144,45 +102,17 @@ export default class extends Controller {
     // ----- markers ------------------------------------------------------------------------
 
     syncMarkers() {
-        const rows = this.rows();
-        if (this.hasHintTarget) {
-            this.hintTarget.hidden = rows.some((row) => this.meetingPoint(row));
-        }
-        this.markers.forEach((marker, row) => {
-            if (!rows.includes(row) || !this.meetingPoint(row)) {
-                marker.remove();
-                this.markers.delete(row);
-            }
-        });
-        rows.forEach((row, i) => {
-            const point = this.meetingPoint(row);
-            if (!point) {
-                return;
-            }
-            let marker = this.markers.get(row);
-            if (!marker) {
-                marker = L.marker(point, { draggable: true, keyboard: false, icon: this.pinIcon(i + 1) }).addTo(this.map);
-                marker.on('dragend', () => this.moved(row, marker.getLatLng()));
-                marker.on('click', () => this.setActive(row));
-                this.markers.set(row, marker);
-            } else {
-                marker.setLatLng(point);
-                marker.setIcon(this.pinIcon(i + 1));
-            }
-            marker.getElement()?.classList.toggle('is-active', row === this.active);
-        });
-
         this.cityLayer.clearLayers();
-        rows.forEach((row) => {
+        this.rows().forEach((row) => {
             const city = this.cityPoint(row);
             if (city) {
                 L.circleMarker(city, { radius: 5, weight: 2, color: this.color('--dusk', '#22305C'), fillColor: '#fff', fillOpacity: 1, interactive: false }).addTo(this.cityLayer);
             }
+            const meeting = this.meetingPoint(row);
+            if (meeting) {
+                L.circleMarker(meeting, { radius: 4, weight: 2, color: '#fff', fillColor: this.color('--dusk', '#22305C'), fillOpacity: 1, interactive: false }).addTo(this.cityLayer);
+            }
         });
-    }
-
-    pinIcon(number) {
-        return L.divIcon({ className: 'map-pin map-pin--numbered', html: `<span>${number}</span>`, iconSize: [28, 28], iconAnchor: [14, 14] });
     }
 
     color(name, fallback) {
@@ -201,90 +131,6 @@ export default class extends Controller {
             this.map.setView(points[0], 11);
         } else if (points.length > 1) {
             this.map.fitBounds(L.latLngBounds(points), { padding: [32, 32], maxZoom: 13 });
-        }
-    }
-
-    // ----- placing a meeting point ------------------------------------------------------
-
-    place(latlng) {
-        const row = this.active ?? this.rows()[0];
-        if (!row) {
-            return;
-        }
-        this.setPoint(row, latlng.lat, latlng.lng);
-        this.reverse(row, latlng.lat, latlng.lng);
-    }
-
-    moved(row, latlng) {
-        this.setPoint(row, latlng.lat, latlng.lng);
-        this.reverse(row, latlng.lat, latlng.lng);
-    }
-
-    setPoint(row, lat, lng) {
-        this.field(row, 'meetingLatitude').value = lat.toFixed(6);
-        this.field(row, 'meetingLongitude').value = lng.toFixed(6);
-        this.syncMarkers();
-        this.scheduleRoute();
-    }
-
-    async reverse(row, lat, lng) {
-        const input = this.field(row, 'meetingPoint');
-        if (!input || input.value.trim() !== '') {
-            return;
-        }
-        try {
-            const response = await fetch(`/api/reverse?lat=${lat}&lng=${lng}`, { headers: { Accept: 'application/json' } });
-            if (!response.ok) {
-                return;
-            }
-            const { place } = await response.json();
-            // The driver may have typed something while we were waiting.
-            if (place?.label && input.value.trim() === '' && this.rows().includes(row)) {
-                input.value = place.label;
-            }
-        } catch (error) {
-            // No label: the driver types it.
-        }
-    }
-
-    search(event) {
-        this.searchRow(event.currentTarget.closest(ROW));
-    }
-
-    async searchRow(row) {
-        if (!row) {
-            return;
-        }
-        this.setActive(row);
-        const status = row.querySelector('[data-role="meeting-status"]');
-        const text = this.field(row, 'meetingPoint').value.trim();
-        const query = [text, this.cityName(row)].filter(Boolean).join(' ');
-        if (query.length < 3) {
-            this.say(status, 'Indiquez un lieu ou une ville.');
-            return;
-        }
-        this.say(status, 'Recherche…');
-        try {
-            const response = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`, { headers: { Accept: 'application/json' } });
-            if (!response.ok) {
-                throw new Error(String(response.status));
-            }
-            const { places } = await response.json();
-            if (!places || places.length === 0) {
-                this.say(status, 'Lieu introuvable. Cliquez sur la carte pour le placer.');
-                return;
-            }
-            this.say(status, '');
-            this.setPoint(row, places[0].lat, places[0].lng);
-            this.map.setView([places[0].lat, places[0].lng], 15);
-        } catch (error) {
-            this.say(status, 'Recherche indisponible. Cliquez sur la carte pour placer le point.');
-        }
-    }
-
-    say(element, text) {
-        if (element) {
-            element.textContent = text;
         }
     }
 

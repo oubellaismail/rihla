@@ -11,12 +11,20 @@
         {{ form_row(stop.departureAt) }}
     </div>
     <p class="small suggestion" data-role="time-suggestion" hidden></p>
-    <div class="stop-meeting" data-publish-map-target="meeting">
-        {{ form_row(stop.meetingPoint) }}
-        <div class="stop-meeting-actions">
-            <button type="button" class="btn btn--ghost btn--small" data-action="publish-map#search">{{ ui.icon('search') }} Chercher sur la carte</button>
-            <span class="small muted" data-role="meeting-status"></span>
+    <div class="stop-meeting" data-role="meeting">
+        <div class="meeting-ui">
+            <div class="meeting-empty" data-role="meeting-empty">
+                <span class="meeting-text" data-role="meeting-text">Point de rendez-vous à choisir</span>
+                <button type="button" class="btn btn--outline meeting-open" data-action="meeting-picker#open" data-role="meeting-choose">{{ ui.icon('map') }} Choisir sur la carte</button>
+                <span class="small muted" data-role="meeting-hint">Choisissez d'abord la ville</span>
+            </div>
+            <div class="meeting-placed" data-role="meeting-placed" hidden>
+                <span class="meeting-place">{{ ui.icon('pin') }}<strong data-role="meeting-label"></strong></span>
+                <button type="button" class="btn btn--outline meeting-open" data-action="meeting-picker#open" data-role="meeting-edit">Modifier</button>
+                <button type="button" class="btn btn--ghost meeting-clear" data-action="meeting-picker#clear">Retirer le point</button>
+            </div>
         </div>
+        {{ form_row(stop.meetingPoint) }}
     </div>
     {{ form_widget(stop.meetingLatitude) }}
     {{ form_widget(stop.meetingLongitude) }}

@@ -1,0 +1,90 @@
+/* Meeting-point picker: row summary on the publish page and the big map dialog (desktop and phone). */
+
+/* ---- row summary (only with JavaScript: .has-picker is set by the controller) ---- */
+.meeting-ui { display: none; }
+.has-picker .meeting-ui { display: block; }
+.meeting-empty, .meeting-placed { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
+.meeting-empty[hidden], .meeting-placed[hidden] { display: none; }
+.meeting-text { color: var(--sunset-text); font-size: 15px; }
+.meeting-text.is-typed { color: var(--ink); font-weight: 600; }
+.meeting-place { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); min-width: 0; }
+.meeting-place svg { flex: none; color: var(--dusk); }
+.meeting-open { min-height: 44px; padding: 10px 16px; font-size: 15px; }
+.meeting-clear { min-height: 44px; font-size: 15px; font-weight: 600; }
+.has-picker .stop-meeting .field { margin-top: 10px; }
+
+/* ---- dialog ---- */
+body.picker-open { overflow: hidden; }
+.picker-backdrop { position: fixed; inset: 0; z-index: 1000; display: flex; justify-content: center; align-items: center; padding: 24px 40px; background: rgba(31, 26, 23, 0.45); }
+.picker-backdrop[hidden] { display: none; }
+.picker { width: 100%; max-width: 1120px; max-height: 100%; background: var(--white); border-radius: var(--radius-l); box-shadow: 0 30px 80px -20px rgba(31, 26, 23, 0.5); display: grid; grid-template-columns: minmax(300px, 360px) minmax(0, 1fr); overflow: hidden; }
+
+.picker-side { padding: 28px; display: flex; flex-direction: column; gap: 18px; border-right: 1px solid var(--line); overflow-y: auto; min-height: 0; }
+.picker-head { display: flex; gap: 12px; align-items: flex-start; }
+.picker-titles { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.picker-titles h2 { font-size: 28px; }
+.picker-eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.picker-close { display: none; flex: none; width: 44px; height: 44px; align-items: center; justify-content: center; border: 1px solid rgba(60, 38, 20, 0.2); border-radius: var(--radius-s); background: var(--white); color: var(--ink); cursor: pointer; }
+
+.picker-search { display: flex; flex-direction: column; gap: 6px; }
+.picker-search label, .picker-label { font-size: 14px; font-weight: 600; color: var(--soft); }
+.picker-search-row { display: flex; gap: 8px; }
+.picker-search-row input { flex: 1; min-width: 0; min-height: 48px; padding: 10px 14px; border-radius: var(--radius-s); border: 1.5px solid #DCCFBE; background: var(--white); font: 500 16px var(--font-body); color: var(--ink); }
+.picker-search-row input:focus { outline: none; border-color: var(--dusk); box-shadow: 0 0 0 3px rgba(34, 48, 92, 0.15); }
+.picker-go { flex: none; width: 48px; padding: 0; }
+.picker-note[hidden], .picker-list[hidden], .picker-popular[hidden] { display: none; }
+.picker-popular { display: flex; flex-direction: column; gap: 8px; }
+.picker-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.picker-choice { width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; min-height: 44px; padding: 10px 14px; border-radius: var(--radius-s); border: 1px solid rgba(60, 38, 20, 0.2); background: var(--white); color: var(--ink); font: inherit; cursor: pointer; }
+.picker-choice:hover { background: var(--sand); }
+.picker-choice-name { font-size: 16px; font-weight: 600; }
+.picker-choice-detail { font-size: 14px; color: var(--muted); }
+.picker-hint { line-height: 1.5; }
+
+/* ---- map ---- */
+.picker-map { position: relative; min-height: 560px; background: var(--sand-deep); overflow: hidden; }
+.picker-canvas { position: absolute; inset: 0; background: var(--sand-deep); font: inherit; z-index: 0; }
+.picker-canvas.leaflet-container { font: inherit; }
+.picker-canvas .leaflet-bar { border: 1px solid rgba(60, 38, 20, 0.2); border-radius: var(--radius-s); box-shadow: none; overflow: hidden; }
+.picker-canvas .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; font-size: 20px; color: var(--dusk); background: var(--white); }
+.picker-canvas .leaflet-control-attribution { background: rgba(251, 245, 236, 0.85); color: var(--muted); font-size: 11px; border-bottom-right-radius: 8px; }
+.picker-canvas .leaflet-control-attribution a { color: var(--dusk); }
+
+/* Fixed centre pin: the tip sits on the centre of the map. */
+.picker-pin { position: absolute; left: 50%; top: 50%; z-index: 500; width: 44px; height: 56px; transform: translate(-50%, -100%); pointer-events: none; }
+.picker-pin path { fill: var(--sunset); }
+.picker-map.is-far .picker-pin path { fill: var(--sunset-text); }
+.picker-pin-shadow { position: absolute; left: 50%; top: calc(50% - 3px); z-index: 499; width: 12px; height: 6px; margin-left: -6px; border-radius: 50%; background: rgba(31, 26, 23, 0.3); pointer-events: none; }
+
+.picker-card { position: absolute; left: 20px; right: 20px; bottom: 20px; z-index: 600; background: var(--white); border-radius: var(--radius-m); padding: 16px 20px; box-shadow: 0 10px 30px -10px rgba(31, 26, 23, 0.35); display: flex; justify-content: space-between; align-items: center; gap: 12px 16px; flex-wrap: wrap; }
+.picker-status { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 260px; }
+.picker-address { font: 700 22px/1.2 var(--font-display); color: var(--ink); overflow-wrap: anywhere; }
+.picker-detail { font-size: 15px; color: var(--soft); }
+.picker-far { display: inline-flex; align-items: flex-start; gap: 6px; font-size: 15px; font-weight: 600; color: var(--sunset-text); }
+.picker-far svg { flex: none; margin-top: 3px; }
+.picker-far[hidden], .picker-detail[hidden] { display: none; }
+.picker-actions { display: flex; gap: 10px; }
+.picker-actions .btn { min-height: 48px; }
+
+/* ---- phone: the same picker, full screen ---- */
+@media (max-width: 639px) {
+    .picker-backdrop { padding: 0; background: var(--sand-deep); }
+    .picker { position: relative; display: block; height: 100%; max-width: none; border-radius: 0; box-shadow: none; }
+    .picker-map { position: absolute; inset: 0; min-height: 0; }
+    .picker-side { position: absolute; top: 0; left: 0; right: 0; z-index: 700; max-height: 55%; padding: 12px 16px 14px; gap: 10px; border: 0; border-bottom: 1px solid var(--line); background: var(--white); border-radius: 0 0 var(--radius-m) var(--radius-m); box-shadow: 0 10px 30px -14px rgba(31, 26, 23, 0.4); }
+    .picker-close { display: inline-flex; }
+    .picker-titles h2 { font-size: 20px; }
+    .picker-search label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .picker-popular { flex-direction: row; }
+    .picker-popular .picker-label, .picker-hint { display: none; }
+    .picker-list--chips { flex-direction: row; overflow-x: auto; gap: 8px; padding-bottom: 2px; }
+    .picker-list--chips .picker-choice { width: auto; white-space: nowrap; border-radius: 999px; padding: 8px 14px; }
+    .picker-list--chips .picker-choice-detail { display: none; }
+    .picker-canvas .leaflet-top.leaflet-right { top: 50%; bottom: auto; transform: translateY(-50%); }
+    .picker-card { left: 0; right: 0; bottom: 0; border-radius: var(--radius-l) var(--radius-l) 0 0; padding: 16px 16px max(16px, env(safe-area-inset-bottom)); flex-direction: column; align-items: stretch; }
+    .picker-card .picker-status { flex: 0 0 auto; }
+    .picker-address { font-size: 19px; }
+    .picker-actions { flex-direction: column-reverse; }
+    .picker-actions .btn { width: 100%; min-height: 56px; }
+    .picker-actions .btn--outline { display: none; } /* the ✕ at the top closes the picker */
+}
