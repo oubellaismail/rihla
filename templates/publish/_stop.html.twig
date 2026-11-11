@@ -10,8 +10,18 @@
         {{ form_row(stop.city) }}
         {{ form_row(stop.departureAt) }}
     </div>
-    {{ form_row(stop.meetingPoint) }}
+    <p class="small suggestion" data-role="time-suggestion" hidden></p>
+    <div class="stop-meeting" data-publish-map-target="meeting">
+        {{ form_row(stop.meetingPoint) }}
+        <div class="stop-meeting-actions">
+            <button type="button" class="btn btn--ghost btn--small" data-action="publish-map#search">{{ ui.icon('search') }} Chercher sur la carte</button>
+            <span class="small muted" data-role="meeting-status"></span>
+        </div>
+    </div>
+    {{ form_widget(stop.meetingLatitude) }}
+    {{ form_widget(stop.meetingLongitude) }}
     <div class="stop-price" data-stop-list-target="price">
         {{ form_row(stop.legPriceToNext) }}
+        <p class="small suggestion" data-role="price-suggestion" hidden></p>
     </div>
 </li>

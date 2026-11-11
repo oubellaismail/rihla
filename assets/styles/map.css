@@ -1,0 +1,52 @@
+/* Level 4 maps: trip, booking, driver and publish pages. */
+:root {
+    --map-free: #2f855a;
+    --map-full: #c0392b;
+}
+
+.map-slot--trip, .map-slot--publish { position: relative; isolation: isolate; height: 260px; min-height: 0; padding: 24px; overflow: hidden; }
+.map-slot--trip.is-live, .map-slot--publish.is-live { padding: 0; display: block; text-align: left; }
+.map-slot--publish { height: 320px; }
+.map-canvas { width: 100%; height: 100%; background: var(--sand-deep); font-family: var(--font-body); }
+.map-slot .leaflet-container { width: 100%; height: 100%; background: var(--sand-deep); font: inherit; }
+
+@media (min-width: 900px) { .map-slot--trip { height: 320px; } }
+@media (max-width: 600px) { .map-slot--trip, .map-slot--publish { height: 220px; } }
+
+/* Leaflet controls: rounded and flat, in the palette. */
+.map-slot .leaflet-bar { border: 1px solid var(--line); border-radius: var(--radius-s); box-shadow: none; overflow: hidden; }
+.map-slot .leaflet-bar a { color: var(--dusk); background: var(--sand); border-bottom-color: var(--line); }
+.map-slot .leaflet-bar a:hover { background: var(--sand-deep); color: var(--dusk-dark); }
+.map-slot .leaflet-control-attribution { background: rgba(251, 245, 236, 0.85); color: var(--muted); font-size: 11px; border-top-left-radius: 8px; }
+.map-slot .leaflet-control-attribution a { color: var(--dusk); }
+.map-slot .leaflet-tooltip { background: var(--sand); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; box-shadow: none; font: 600 13px var(--font-body); padding: 4px 8px; }
+.map-slot .leaflet-tooltip-top::before { border-top-color: var(--sand); }
+.map-slot .leaflet-popup-content-wrapper { border-radius: var(--radius-s); box-shadow: 0 2px 10px rgba(60, 38, 20, 0.15); color: var(--ink); }
+.map-slot .leaflet-popup-content { margin: 10px 14px; font: 600 14px/1.4 var(--font-body); }
+
+/* Exact meeting point (trip pages) and numbered pins (publish page). */
+.map-pin { background: none; border: 0; }
+.map-pin span { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--sunset); border: 3px solid var(--white); box-shadow: 0 1px 4px rgba(60, 38, 20, 0.35); box-sizing: border-box; color: var(--white); font: 700 13px var(--font-display); }
+.map-pin:not(.map-pin--numbered) span::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--white); }
+.map-pin--numbered span { background: var(--dusk); cursor: grab; }
+.map-pin--numbered.is-active span { background: var(--sunset); }
+
+/* Driver legend */
+.map-legend { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--muted); }
+.map-legend li { display: inline-flex; align-items: center; gap: 8px; }
+.map-legend-dot { width: 20px; height: 5px; border-radius: 3px; background: var(--map-free); }
+.map-legend-dot--warn { background: var(--saffron); }
+.map-legend-dot--full { background: var(--map-full); }
+
+/* Navigation buttons of the booking page */
+.map-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+
+/* Publish form: search, active stop and suggestions */
+.stop-row.is-active { border-left-color: var(--sunset); }
+.stop-meeting { display: flex; flex-direction: column; gap: 6px; }
+.stop-meeting-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; }
+.btn--small { min-height: 36px; padding: 6px 0; font-size: 15px; }
+.suggestion { margin: 0; color: var(--muted); }
+.suggestion[hidden] { display: none; }
+.suggest-use { border: 0; background: none; padding: 0 2px; color: var(--dusk); font: 700 14px var(--font-body); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.suggest-use:hover { color: var(--dusk-dark); }

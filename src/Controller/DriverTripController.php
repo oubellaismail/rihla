@@ -10,6 +10,7 @@ use App\Exception\CancellationNotAllowedException;
 use App\Repository\TripRepository;
 use App\Security\TripVoter;
 use App\Service\CancellationService;
+use App\Service\Geo\TripMapBuilder;
 use App\Service\SeatAvailabilityCalculator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockInterface;
@@ -54,7 +55,7 @@ final class DriverTripController extends AbstractController
     }
 
     #[Route('/driver/trips/{id<\d+>}', name: 'app_driver_trip_show', methods: ['GET'])]
-    public function show(Trip $trip, SeatAvailabilityCalculator $calculator): Response
+    public function show(Trip $trip, SeatAvailabilityCalculator $calculator, TripMapBuilder $mapBuilder): Response
     {
         $this->denyAccessUnlessGranted(TripVoter::VIEW_PASSENGERS, $trip);
 
@@ -80,6 +81,7 @@ final class DriverTripController extends AbstractController
             'boarding' => $boarding,
             'cancelled' => $cancelled,
             'can_cancel' => $canCancel,
+            'map' => $mapBuilder->build($trip, $this->currentUser()),
         ]);
     }
 

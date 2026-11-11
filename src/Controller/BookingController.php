@@ -13,6 +13,7 @@ use App\Repository\ReviewRepository;
 use App\Security\BookingVoter;
 use App\Service\CancellationPolicy;
 use App\Service\CancellationService;
+use App\Service\Geo\TripMapBuilder;
 use App\Service\ReviewPolicy;
 use App\Service\ReviewService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -49,7 +50,7 @@ final class BookingController extends AbstractController
     }
 
     #[Route('/bookings/{id<\d+>}', name: 'app_booking_show', methods: ['GET'])]
-    public function show(Booking $booking, ReviewRepository $reviews, ReviewPolicy $policy): Response
+    public function show(Booking $booking, ReviewRepository $reviews, ReviewPolicy $policy, TripMapBuilder $mapBuilder): Response
     {
         $this->denyAccessUnlessGranted(BookingVoter::VIEW, $booking);
         $user = $this->currentUser();
@@ -62,6 +63,7 @@ final class BookingController extends AbstractController
             'is_passenger' => $booking->getPassenger() === $user,
             'can_cancel' => $this->isGranted(BookingVoter::CANCEL, $booking),
             'can_review' => $canReview,
+            'map' => $mapBuilder->build($booking->getTrip(), $user),
         ]);
     }
 

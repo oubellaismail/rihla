@@ -11,6 +11,7 @@ use App\Exception\NotEnoughSeatsException;
 use App\Repository\CityRepository;
 use App\Repository\ReviewRepository;
 use App\Service\BookingService;
+use App\Service\Geo\TripMapBuilder;
 use App\Service\PriceCalculator;
 use App\Service\SeatAvailabilityCalculator;
 use App\Service\TripSearch;
@@ -74,6 +75,7 @@ final class TripController extends AbstractController
         SeatAvailabilityCalculator $seatAvailability,
         PriceCalculator $priceCalculator,
         ReviewRepository $reviews,
+        TripMapBuilder $mapBuilder,
     ): Response {
         $stops = $trip->getStops()->toArray();
         $lastPosition = $trip->getLastStop()->getPosition();
@@ -116,6 +118,7 @@ final class TripController extends AbstractController
             'isOpen' => TripStatus::Published === $trip->getStatus() && !$departed,
             'departed' => $departed,
             'rating' => $reviews->summaryFor($driver),
+            'map' => $mapBuilder->build($trip, $this->getUser() instanceof User ? $this->getUser() : null, $from, $to),
         ]);
     }
 

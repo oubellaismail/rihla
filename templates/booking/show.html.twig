@@ -30,7 +30,14 @@
                         </li>
                     {% endfor %}
                 </ol>
-                <div class="map-slot" data-map>La carte du trajet arrive bientôt.</div>
+                <div class="map-slot map-slot--trip" data-controller="trip-map" data-trip-map-data-value="{{ map|json_encode }}">Carte du trajet</div>
+                {% set boarding = booking.fromStop %}
+                {% if booking.status.value == 'CONFIRMED' and boarding.meetingLatitude is not null and boarding.meetingLongitude is not null %}
+                    <div class="map-actions">
+                        <a class="btn btn--outline" href="https://www.google.com/maps/dir/?api=1&destination={{ boarding.meetingLatitude }},{{ boarding.meetingLongitude }}" target="_blank" rel="noopener">{{ ui.icon('pin') }} Ouvrir dans Google Maps</a>
+                        <a class="btn btn--outline" href="https://waze.com/ul?ll={{ boarding.meetingLatitude }},{{ boarding.meetingLongitude }}&navigate=yes" target="_blank" rel="noopener">{{ ui.icon('pin') }} Ouvrir dans Waze</a>
+                    </div>
+                {% endif %}
             </section>
 
             <section class="card">

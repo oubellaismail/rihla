@@ -112,3 +112,16 @@ Before designing the pages we looked at how competitors use maps. **Uber** and i
 - **No invented numbers** on the home page: free seats per leg, the latest booking and the reviews shown are read from the database.
 - **Search is by city name, in any case**, and on a day; a trip is found for any portion served in the right direction with enough free seats on every leg of that portion.
 - **Not in Level 3**: editing a trip once published (a driver cancels it instead, which refunds everyone), choosing a specific seat (bonus), the map (Level 4 fills the reserved space).
+
+## 2026-11-11 — Level 4: map, geocoding and routing
+
+Design: [`docs/diagrams/level4-map.drawio`](diagrams/level4-map.drawio).
+
+- **Free services, no key.** Nominatim (OpenStreetMap) for addresses, OSRM for road distance, time and the line to draw, OpenStreetMap tiles in Leaflet. No account or secret is needed, so the project runs on any machine.
+- **The browser never calls Nominatim or OSRM.** It calls our `/api/geocode`, `/api/reverse` and `/api/route` (logged-in users, 30 calls per minute). The server sends an identifying User-Agent, caches answers for 30 days and calls Nominatim at most once per second, as their usage policies ask. Only the map tiles come straight from OpenStreetMap, with the attribution.
+- **The route is saved when the trip is published** (distance, time and line per leg). Trip pages never call OSRM: they stay fast and keep working if OSRM is down later.
+- **One call per leg**, not one for the whole trip: each leg gets its own line, so the map can draw a passenger's portion in orange.
+- **Suggestions, not rules.** Suggested price: 0.35 MAD per km, rounded to 5 MAD (175 km gives 60 MAD, close to the prices drivers already set in the demo data). Suggested time at the next stop: driving time plus a 10-minute pause, rounded up to 5 minutes. The driver can type anything; the Level 3 checks decide.
+- **Privacy decided on the server.** The exact meeting point is only put in the page for the driver and for passengers with a confirmed or completed booking, and a passenger only gets their own two stops. Hiding it with JavaScript would still leak it in the page source; a test checks the HTML of a visitor.
+- **When a service fails** (timeout of 3 s, error, garbage): no exception reaches the user. The publish page shows « Suggestions indisponibles pour le moment. », the map draws dashed straight lines between cities, and publishing still works. After one failed leg the others are not tried, so publishing never waits more than 3 s for OSRM.
+- **Tests never use the network.** `tests/Support/FakeGeoApis.php` answers in place of Nominatim and OSRM, and can simulate an outage.

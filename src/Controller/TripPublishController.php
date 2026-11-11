@@ -7,6 +7,7 @@ use App\Entity\TripStop;
 use App\Entity\User;
 use App\Exception\TripNotPublishableException;
 use App\Form\TripPublishType;
+use App\Repository\CityRepository;
 use App\Repository\VehicleRepository;
 use App\Service\TripPublisher;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -18,7 +19,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class TripPublishController extends AbstractController
 {
     #[Route('/trips/new', name: 'app_trip_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, TripPublisher $publisher, VehicleRepository $vehicles): Response
+    public function new(Request $request, TripPublisher $publisher, VehicleRepository $vehicles, CityRepository $cities): Response
     {
         /** @var User $user */
         $user = $this->getUser();
@@ -45,6 +46,19 @@ final class TripPublishController extends AbstractController
             }
         }
 
-        return $this->render('publish/new.html.twig', ['form' => $form], new Response(null, $form->isSubmitted() ? 422 : 200));
+        return $this->render('publish/new.html.twig', ['form' => $form, 'cityCoordinates' => $this->cityCoordinates($cities)], new Response(null, $form->isSubmitted() ? 422 : 200));
+    }
+
+    /** @return array<int, array{float, float}> city id => [latitude, longitude], cities without coordinates left out */
+    private function cityCoordinates(CityRepository $cities): array
+    {
+        $coordinates = [];
+        foreach ($cities->findAll() as $city) {
+            if ($city->isGeocoded()) {
+                $coordinates[$city->getId()] = [$city->getLatitude(), $city->getLongitude()];
+            }
+        }
+
+        return $coordinates;
     }
 }

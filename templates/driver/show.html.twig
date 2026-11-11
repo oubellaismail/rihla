@@ -11,6 +11,11 @@
             <a href="{{ path('app_trip_show', {id: trip.id}) }}">Voir la page publique</a></p>
     </div>
 
+    <section class="card stack" style="margin-bottom: 28px">
+        <h2 class="section-title">Carte du trajet</h2>
+        <div class="map-slot map-slot--trip" data-controller="trip-map" data-trip-map-data-value="{{ map|json_encode }}">Carte du trajet</div>
+    </section>
+
     <section class="card stack">
         <h2 class="section-title">Arrêts et passagers</h2>
         <ol class="timeline">

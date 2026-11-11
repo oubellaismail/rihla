@@ -11,7 +11,7 @@
         <p>Ajoutez les villes où vous pouvez vous arrêter. Chaque arrêt permet à quelqu'un de monter ou de descendre, et remplit votre voiture plus longtemps.</p>
     </div>
 
-    {{ form_start(form, {attr: {class: 'form', 'data-controller': 'stop-list', 'data-stop-list-prototype-value': include('publish/_stop.html.twig', {stop: form.stops.vars.prototype}) ~ '', 'data-stop-list-index-value': form.stops|length}}) }}
+    {{ form_start(form, {attr: {class: 'form', 'data-controller': 'stop-list publish-map', 'data-publish-map-cities-value': cityCoordinates|json_encode, 'data-stop-list-prototype-value': include('publish/_stop.html.twig', {stop: form.stops.vars.prototype}) ~ '', 'data-stop-list-index-value': form.stops|length}}) }}
         <div class="split">
             <div class="stack stack--l">
                 {% for e in form.vars.errors %}<p class="flash flash--error" role="alert">{{ e.message }}</p>{% endfor %}
@@ -37,7 +37,9 @@
             </div>
 
             <aside class="price-box stack">
-                <div class="map-slot" data-map>Bientôt : la carte du trajet et un prix conseillé selon la distance.</div>
+                <div class="map-slot map-slot--publish" data-publish-map-target="canvas">Carte de l'itinéraire</div>
+                <p class="small muted" data-publish-map-target="hint">Cliquez sur la carte pour placer le point de rendez-vous de l'arrêt choisi. Vous pouvez ensuite le déplacer.</p>
+                <p class="small muted" data-publish-map-target="note" hidden>Suggestions indisponibles pour le moment.</p>
                 <p class="small muted">Vous fixez le prix par place de chaque tronçon. Un passager ne paie que la partie du trajet qu'il fait.</p>
                 {{ form_widget(form.save, {attr: {class: 'btn btn--primary btn--block'}}) }}
             </aside>
