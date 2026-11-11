@@ -5,6 +5,7 @@ namespace App\Tests\Integration\Service;
 use App\Entity\Trip;
 use App\Entity\User;
 use App\Enum\BookingStatus;
+use App\Enum\TripStatus;
 use App\Service\Geo\TripMapBuilder;
 use App\Tests\Support\DbTrips;
 use Doctrine\ORM\EntityManagerInterface;
@@ -151,12 +152,17 @@ final class TripMapBuilderTest extends KernelTestCase
         self::assertSame([1, 3, 0], array_column($map['legs'], 'seatsTaken'));
     }
 
-    public function testOnACompletedTripTheDriverStillSeesHowFullEachLegWas(): void
+    public function testOnceTheTripIsOverTheDriverMapHasNoOccupancy(): void
     {
         $this->db->booking($this->trip, 0, 2, 1, BookingStatus::Completed);
-        $this->db->booking($this->trip, 0, 2, 1, BookingStatus::Completed);
+        $this->trip->setStatus(TripStatus::Completed);
+        $this->em->flush();
 
-        self::assertSame([2, 2, 0], array_column($this->build($this->driver)['legs'], 'seatsTaken'));
+        $map = $this->build($this->driver);
+
+        self::assertSame('driver', $map['viewer']);
+        self::assertSame([null, null, null], array_column($map['legs'], 'seatsTaken'), 'seats left no longer matter');
+        self::assertNotContains(null, self::exactPins($map), 'the meeting points stay');
     }
 
     public function testAStopWithoutMeetingCoordinatesHasNoExactPinEvenForTheDriver(): void
