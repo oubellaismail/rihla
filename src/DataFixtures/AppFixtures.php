@@ -99,12 +99,12 @@ class AppFixtures extends Fixture
             ['Marrakech', '12:00', 'Gare ferroviaire', 240, 85],
             ['Casablanca', '15:00', 'Casa Voyageurs', null, null],
         ]);
-        $this->book($manager, $flagship, $youssef, 0, 1);
-        $this->book($manager, $flagship, $mehdi, 0, 1);
-        $this->book($manager, $flagship, $rachid, 0, 3);
-        $this->book($manager, $flagship, $salma, 1, 2);
-        $this->book($manager, $flagship, $lina, 2, 3);
-        $this->book($manager, $flagship, $omar, 2, 3);
+        $this->book($manager, $flagship, $youssef, 0, 1, 1, BookingStatus::Confirmed, ['A1']);
+        $this->book($manager, $flagship, $mehdi, 0, 1, 1, BookingStatus::Confirmed, ['B3']); // gets off at Essaouira: B3 is freed on the way
+        $this->book($manager, $flagship, $rachid, 0, 3, 1, BookingStatus::Confirmed, ['B1']);
+        $this->book($manager, $flagship, $salma, 1, 2, 1, BookingStatus::Confirmed, ['B3']);
+        $this->book($manager, $flagship, $lina, 2, 3, 1, BookingStatus::Confirmed, ['A1']);
+        $this->book($manager, $flagship, $omar, 2, 3, 1, BookingStatus::Confirmed, ['B3']);
 
         $this->trip($manager, $nadia, $clio, 3, '+2 days', [
             ['Essaouira', '07:30', 'Place Moulay Hassan', 190, 70],
@@ -115,7 +115,7 @@ class AppFixtures extends Fixture
             ['Marrakech', '09:00', 'Gare routière de Bab Doukkala', 200, 110],
             ['Ouarzazate', '13:00', 'Place Al Mouahidine', null, null],
         ]);
-        $this->book($manager, $ouarzazate, $omar, 0, 1, 2);
+        $this->book($manager, $ouarzazate, $omar, 0, 1, 2, BookingStatus::Confirmed, ['B1', 'B3']);
 
         $this->trip($manager, $imane, $i20, 3, '+4 days', [
             ['Agadir', '17:00', 'Marina d\'Agadir', 90, 35],
@@ -127,8 +127,8 @@ class AppFixtures extends Fixture
             ['Agadir', '08:00', 'Gare routière, avenue des FAR', 250, 90],
             ['Marrakech', '11:10', 'Gare ferroviaire', null, null],
         ], TripStatus::Completed);
-        $b1 = $this->book($manager, $past, $mehdi, 0, 1, 1, BookingStatus::Completed);
-        $b2 = $this->book($manager, $past, $salma, 0, 1, 1, BookingStatus::Completed);
+        $b1 = $this->book($manager, $past, $mehdi, 0, 1, 1, BookingStatus::Completed, ['A1']);
+        $b2 = $this->book($manager, $past, $salma, 0, 1, 1, BookingStatus::Completed, ['B1']);
         $this->review($manager, $b1, $mehdi, $karim, 5, 'Voiture propre, trajet tranquille jusqu\'à Marrakech.');
         $this->review($manager, $b1, $karim, $mehdi, 5, 'Passager ponctuel et agréable.');
         $this->review($manager, $b2, $salma, $karim, 5, 'Ponctuel, prudent, et il connaît toutes les bonnes pauses.');
@@ -137,7 +137,7 @@ class AppFixtures extends Fixture
             ['Agadir', '17:00', 'Marina d\'Agadir', 90, 35],
             ['Tiznit', '18:30', 'Bab Oulad Jarrar', null, null],
         ], TripStatus::Completed);
-        $b3 = $this->book($manager, $pastTiznit, $salma, 0, 1, 1, BookingStatus::Completed);
+        $b3 = $this->book($manager, $pastTiznit, $salma, 0, 1, 1, BookingStatus::Completed, ['A1']);
         $this->review($manager, $b3, $imane, $salma, 5, 'Passagère à l\'heure, merci !');
 
         // Cancelled by the driver: fully refunded.
@@ -145,7 +145,7 @@ class AppFixtures extends Fixture
             ['Agadir', '07:00', 'Gare routière, avenue des FAR', 250, 90],
             ['Marrakech', '10:15', 'Bab Doukkala', null, null],
         ], TripStatus::Cancelled);
-        $b4 = $this->book($manager, $cancelled, $salma, 0, 1, 1, BookingStatus::CancelledByDriver);
+        $b4 = $this->book($manager, $cancelled, $salma, 0, 1, 1, BookingStatus::CancelledByDriver, ['A1']);
         $b4->getPayment()?->refund($b4->getTotalPrice());
 
         $manager->flush();
@@ -203,7 +203,7 @@ class AppFixtures extends Fixture
         return $trip;
     }
 
-    private function book(ObjectManager $manager, Trip $trip, User $passenger, int $from, int $to, int $seats = 1, BookingStatus $status = BookingStatus::Confirmed): Booking
+    private function book(ObjectManager $manager, Trip $trip, User $passenger, int $from, int $to, int $seats = 1, BookingStatus $status = BookingStatus::Confirmed, array $seatCodes = []): Booking
     {
         $stops = $trip->getStops()->getValues();
         $unitPrice = 0;
@@ -217,6 +217,7 @@ class AppFixtures extends Fixture
             ->setFromStop($stops[$from])
             ->setToStop($stops[$to])
             ->setSeats($seats)
+            ->setSeatCodes($seatCodes)
             ->setTotalPrice($unitPrice * $seats)
             ->setStatus($status)
             ->setCreatedAt($trip->getCreatedAt()->modify('+1 day'));

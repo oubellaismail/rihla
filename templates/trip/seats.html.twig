@@ -1,0 +1,128 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as ui %}
+
+{% set first = trip.firstStop %}
+{% set driverFirstName = trip.driver.publicName|split(' ')|first %}
+{# Seat boxes on the car drawing: x, y, width, height in a 320 px wide frame (see seats.css). #}
+{% set spots = kind == 'berline'
+    ? {A1: [174, 196, 84, 92], B1: [52, 350, 70, 96], B2: [125, 350, 70, 96], B3: [198, 350, 70, 96]}
+    : {A1: [176, 196, 84, 92], B1: [52, 340, 70, 96], B2: [125, 340, 70, 96], B3: [198, 340, 70, 96], C1: [72, 500, 78, 96], C2: [170, 500, 78, 96]} %}
+{% set frameHeight = kind == 'berline' ? 600 : 740 %}
+{% set driverSpot = kind == 'berline' ? [62, 196, 84, 92] : [60, 196, 84, 92] %}
+
+{% block title %}Choisir {{ seatCount > 1 ? 'vos places' : 'votre place' }}{% endblock %}
+
+{% block body %}
+<div class="container page seats-page">
+    <header class="seats-head">
+        <a class="back-link" href="{{ path('app_trip_show', {id: trip.id, from: from.position, to: to.position}) }}">{{ ui.icon('arrow') }} Retour au trajet</a>
+        <h1>{{ seatCount > 1 ? 'Choisissez vos ' ~ seatCount ~ ' places' : 'Choisissez votre place' }}</h1>
+        <p class="seats-lede">{{ from.city.name }} {{ from.departureAt|date('H:i') }} vers {{ to.city.name }} {{ to.departureAt|date('H:i') }}, {{ from.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}, avec {{ trip.driver.publicName }}{{ trip.driver.publicName ends with '.' ? '' : '.' }}</p>
+    </header>
+
+    <form class="seats-layout" method="post" action="/trips/{{ trip.id }}/book" data-controller="seat-picker" data-seat-picker-count-value="{{ seatCount }}" >
+        <input type="hidden" name="_token" value="{{ csrf_token('book-trip-' ~ trip.id) }}">
+        <input type="hidden" name="from" value="{{ from.position }}">
+        <input type="hidden" name="to" value="{{ to.position }}">
+        <input type="hidden" name="seats" value="{{ seatCount }}">
+
+        <section class="seats-plan card">
+            <div class="seats-vehicle">
+                <div>
+                    <span class="seats-offer">{{ driverFirstName }} propose {{ offered == trip.vehicle.passengerSeats ? 'ses ' ~ offered : offered }} places{{ offered == trip.vehicle.passengerSeats ? '' : ' sur ' ~ trip.vehicle.passengerSeats }}</span>
+                    <span class="seats-car-name">{{ trip.vehicle.model }}{% if trip.vehicle.color %}, {{ trip.vehicle.color|lower }}{% endif %}</span>
+                </div>
+                <span class="seats-kind">{{ kind|capitalize }}</span>
+            </div>
+
+            <div class="seats-stage">
+                <div class="car car--{{ kind }}" style="--frame-h: {{ frameHeight }}" role="group" aria-label="Plan des sièges vu du dessus, avant du véhicule en haut">
+                    {% if kind == 'berline' %}
+                    <svg class="car__body" viewBox="0 0 320 600" aria-hidden="true">
+                        <ellipse cx="166" cy="310" rx="150" ry="292" fill="rgba(60, 38, 20, 0.16)"/>
+                        <rect x="6" y="104" width="26" height="78" rx="10" fill="#26282E"/><rect x="288" y="104" width="26" height="78" rx="10" fill="#26282E"/>
+                        <rect x="6" y="430" width="26" height="78" rx="10" fill="#26282E"/><rect x="288" y="430" width="26" height="78" rx="10" fill="#26282E"/>
+                        <path d="M62 18 Q160 -4 258 18 Q298 38 300 112 L302 478 Q300 566 250 584 Q160 598 70 584 Q20 566 18 478 L20 112 Q22 38 62 18Z" fill="#3B5A8C" stroke="#243E68" stroke-width="2.5"/>
+                        <path d="M78 28 Q160 12 242 28 L248 104 Q160 94 72 104Z" fill="#4A6CA3"/>
+                        <path d="M160 22 L160 100" stroke="#3B5A8C" stroke-width="2"/>
+                        <path d="M30 46 Q36 26 66 22 L72 44 Q46 50 30 46Z" fill="#FFF4C9" stroke="#243E68" stroke-width="1.5"/>
+                        <path d="M290 46 Q284 26 254 22 L248 44 Q274 50 290 46Z" fill="#FFF4C9" stroke="#243E68" stroke-width="1.5"/>
+                        <ellipse cx="12" cy="168" rx="11" ry="8" fill="#3B5A8C" stroke="#243E68" stroke-width="2"/>
+                        <ellipse cx="308" cy="168" rx="11" ry="8" fill="#3B5A8C" stroke="#243E68" stroke-width="2"/>
+                        <path d="M58 112 Q160 92 262 112 L254 162 Q160 150 66 162Z" fill="#CFE0EE" stroke="#243E68" stroke-width="2"/>
+                        <rect x="44" y="160" width="232" height="306" rx="20" fill="#F7F1E8" stroke="#243E68" stroke-width="3"/>
+                        <rect x="44" y="160" width="232" height="22" rx="10" fill="#DCD1C1"/>
+                        <path d="M66 470 Q160 482 254 470 L260 516 Q160 532 60 516Z" fill="#CFE0EE" stroke="#243E68" stroke-width="2"/>
+                        <path d="M68 526 Q160 540 252 526 L250 572 Q160 586 70 572Z" fill="#4A6CA3"/>
+                        <rect x="26" y="566" width="34" height="11" rx="5" fill="#C9483E"/><rect x="260" y="566" width="34" height="11" rx="5" fill="#C9483E"/>
+                    </svg>
+                    {% else %}
+                    <svg class="car__body" viewBox="0 0 320 740" aria-hidden="true">
+                        <ellipse cx="166" cy="380" rx="150" ry="360" fill="rgba(60, 38, 20, 0.16)"/>
+                        <rect x="6" y="104" width="26" height="80" rx="10" fill="#26282E"/><rect x="288" y="104" width="26" height="80" rx="10" fill="#26282E"/>
+                        <rect x="6" y="566" width="26" height="80" rx="10" fill="#26282E"/><rect x="288" y="566" width="26" height="80" rx="10" fill="#26282E"/>
+                        <path d="M56 20 Q160 0 264 20 Q300 40 302 112 L304 650 Q302 716 256 728 Q160 740 64 728 Q18 716 16 650 L18 112 Q20 40 56 20Z" fill="#8E949C" stroke="#5E646C" stroke-width="2.5"/>
+                        <path d="M74 30 Q160 14 246 30 L250 100 Q160 92 70 100Z" fill="#A2A8AF"/>
+                        <path d="M30 48 Q36 28 64 24 L70 46 Q46 52 30 48Z" fill="#FFF4C9" stroke="#5E646C" stroke-width="1.5"/>
+                        <path d="M290 48 Q284 28 256 24 L250 46 Q274 52 290 48Z" fill="#FFF4C9" stroke="#5E646C" stroke-width="1.5"/>
+                        <ellipse cx="12" cy="168" rx="11" ry="8" fill="#8E949C" stroke="#5E646C" stroke-width="2"/>
+                        <ellipse cx="308" cy="168" rx="11" ry="8" fill="#8E949C" stroke="#5E646C" stroke-width="2"/>
+                        <path d="M56 108 Q160 90 264 108 L256 162 Q160 150 64 162Z" fill="#CFE0EE" stroke="#5E646C" stroke-width="2"/>
+                        <rect x="42" y="160" width="236" height="474" rx="20" fill="#F7F1E8" stroke="#5E646C" stroke-width="3"/>
+                        <rect x="42" y="160" width="236" height="22" rx="10" fill="#DCD1C1"/>
+                        <path d="M64 642 Q160 652 256 642 L260 690 Q160 704 60 690Z" fill="#CFE0EE" stroke="#5E646C" stroke-width="2"/>
+                        <rect x="24" y="706" width="36" height="11" rx="5" fill="#C9483E"/><rect x="260" y="706" width="36" height="11" rx="5" fill="#C9483E"/>
+                    </svg>
+                    {% endif %}
+
+                    <span class="seat seat--driver" style="--x: {{ driverSpot[0] }}; --y: {{ driverSpot[1] }}; --w: {{ driverSpot[2] }}; --h: {{ driverSpot[3] }}" role="img" aria-label="Siège du conducteur">
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/><path d="M12 14.5V21M9.6 11.2L3.4 9.5M14.4 11.2l6.2-1.7"/></svg>
+                        <span class="seat__sub" aria-hidden="true">{{ driverFirstName }}</span>
+                        <span class="seat__back"></span>
+                    </span>
+
+                    {% for seat in plan %}
+                        {% set state = states[seat.code] %}
+                        {% set spot = spots[seat.code] %}
+                        <label class="seat" data-seat="{{ seat.code }}" data-state="{{ state.value }}" style="--x: {{ spot[0] }}; --y: {{ spot[1] }}; --w: {{ spot[2] }}; --h: {{ spot[3] }}">
+                            <input class="seat__input" type="checkbox" name="seatCodes[]" value="{{ seat.code }}" data-action="change->seat-picker#toggle" data-seat-picker-target="seat" data-position="{{ seat.position }}" data-freed="{{ state.value == 'freed' ? '1' : '0' }}"{% if not state.isOpen %} disabled{% endif %}>
+                            <span class="seat__code" aria-hidden="true">{{ seat.code }}</span>
+                            <span class="seat__sub" aria-hidden="true">{% if state.value == 'taken' %}occupée{% elseif state.value == 'not_offered' %}non proposée{% else %}<span class="seat__free">libre</span><span class="seat__picked">choisie</span>{% endif %}</span>
+                            <span class="visually-hidden">{{ seat.code }}, {{ seat.position }}, {{ state.label }}</span>
+                            <span class="seat__back" aria-hidden="true"></span>
+                            {% if state.value == 'freed' %}<span class="seat__dot" aria-hidden="true"></span>{% endif %}
+                        </label>
+                    {% endfor %}
+                </div>
+
+                <ul class="seats-legend">
+                    <li><span class="swatch swatch--free"></span>Libre sur votre bout de route</li>
+                    <li><span class="swatch swatch--picked"></span>Votre choix</li>
+                    <li><span class="swatch swatch--taken"></span>Occupée sur votre bout de route</li>
+                    <li><span class="swatch swatch--closed"></span>Non proposée par le conducteur</li>
+                    <li><span class="swatch swatch--free swatch--freed"><span class="seat__dot"></span></span>Libérée en route : un passager descend avant vous</li>
+                </ul>
+            </div>
+
+            <div class="seats-hint" data-seat-picker-target="hintBox">
+                <p data-seat-picker-target="hint">{{ seatCount > 1 ? 'Touchez ' ~ seatCount ~ ' places libres, une par voyageur.' : 'Touchez une place libre.' }} Un point jaune signale une place libérée en route par un passager qui descend avant vous.</p>
+            </div>
+        </section>
+
+        <aside class="seats-aside card">
+            <div class="seats-chosen" aria-live="polite" aria-atomic="true">
+                <span class="seats-eyebrow">{{ seatCount > 1 ? 'Vos places' : 'Votre place' }}</span>
+                <strong class="seats-chosen__title" data-seat-picker-target="title">Aucune place choisie</strong>
+                <span class="seats-chosen__detail" data-seat-picker-target="detail">Choisissez sur le plan, ou laissez Rihla choisir.</span>
+            </div>
+            <button class="btn btn--outline seats-auto" type="submit" name="auto" value="1">Pas de préférence, choisir pour moi</button>
+            <div class="seats-total">
+                <span>Total</span>
+                <span class="seats-total__amount">{{ total }} MAD</span>
+            </div>
+            <button class="btn btn--primary btn--block" type="submit" data-seat-picker-target="submit">Réserver</button>
+            <p class="seats-note">Le choix de place est gratuit.</p>
+        </aside>
+    </form>
+</div>
+{% endblock %}

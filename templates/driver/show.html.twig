@@ -33,6 +33,7 @@
                                 <div>
                                     <strong>{{ b.passenger.publicName }}</strong>
                                     <span class="muted small">jusqu'à {{ b.toStop.city.name }} · {{ b.seats }} {{ b.seats > 1 ? 'places' : 'place' }}</span>
+                                    {% set seatCodes = seats_of(b) %}<span class="small">{{ seatCodes|length > 1 ? 'Places' : 'Place' }} {{ seatCodes|seat_list }}</span>
                                     {% if b.passenger.phone %}<div class="small"><a href="tel:{{ b.passenger.phone }}">{{ b.passenger.phone }}</a></div>{% endif %}
                                 </div>
                             </div>

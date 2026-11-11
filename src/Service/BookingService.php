@@ -12,6 +12,9 @@ use App\Enum\PaymentStatus;
 use App\Enum\TripStatus;
 use App\Exception\BookingNotAllowedException;
 use App\Exception\NotEnoughSeatsException;
+use App\Exception\SeatTakenException;
+use App\Service\Seat\SeatLayout;
+use App\Service\Seat\SeatMap;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query;
@@ -30,6 +33,8 @@ final class BookingService
         private readonly SeatAvailabilityCalculator $seatAvailability,
         private readonly PriceCalculator $priceCalculator,
         private readonly ClockInterface $clock,
+        private readonly SeatMap $seatMap,
+        private readonly SeatLayout $seatLayout,
     ) {
     }
 
@@ -41,15 +46,17 @@ final class BookingService
      *
      * @param callable|null $onLocked test seam: called once the lock is held, before seats are counted,
      *                                to let a test keep the lock for a while
+     * @param list<string> $seatCodes seats chosen, one per place; empty to let Rihla pick them
      *
      * @throws BookingNotAllowedException when the request breaks a rule (the message is meant for the user)
+     * @throws SeatTakenException         when a chosen seat is held by someone else on that portion
      * @throws NotEnoughSeatsException    when the portion has fewer free seats than requested
      */
-    public function book(Trip $trip, TripStop $from, TripStop $to, int $seats, User $passenger, ?callable $onLocked = null): Booking
+    public function book(Trip $trip, TripStop $from, TripStop $to, int $seats, User $passenger, ?callable $onLocked = null, array $seatCodes = []): Booking
     {
-        $this->assertRequestIsValid($trip, $from, $to, $seats, $passenger);
+        $this->assertRequestIsValid($trip, $from, $to, $seats, $passenger, $seatCodes);
 
-        return $this->em->wrapInTransaction(function () use ($trip, $from, $to, $seats, $passenger, $onLocked): Booking {
+        return $this->em->wrapInTransaction(function () use ($trip, $from, $to, $seats, $passenger, $onLocked, $seatCodes): Booking {
             $this->em->lock($trip, LockMode::PESSIMISTIC_WRITE);
             // The status may have changed while we waited for the lock.
             $this->em->refresh($trip);
@@ -60,15 +67,8 @@ final class BookingService
 
             $this->assertTripIsBookable($trip, $from);
 
-            $freeSeats = $this->seatAvailability->freeSeats(
-                $trip->getSeatsOffered(),
-                $this->loadConfirmedBookings($trip),
-                $from->getPosition(),
-                $to->getPosition(),
-            );
-            if ($freeSeats < $seats) {
-                throw new NotEnoughSeatsException($seats, $freeSeats);
-            }
+            $bookings = $this->loadConfirmedBookings($trip);
+            $seatCodes = $this->resolveSeats($trip, $from, $to, $seats, $seatCodes, $bookings);
 
             $totalPrice = $this->priceCalculator->portionPrice($trip, $from, $to, $seats);
             $booking = (new Booking())
@@ -77,6 +77,7 @@ final class BookingService
                 ->setFromStop($from)
                 ->setToStop($to)
                 ->setSeats($seats)
+                ->setSeatCodes($seatCodes)
                 ->setTotalPrice($totalPrice)
                 ->setStatus(BookingStatus::Confirmed)
                 ->setCreatedAt($this->clock->now());
@@ -95,7 +96,7 @@ final class BookingService
     }
 
     /** Checks that need no database access, so they run before taking the lock. */
-    private function assertRequestIsValid(Trip $trip, TripStop $from, TripStop $to, int $seats, User $passenger): void
+    private function assertRequestIsValid(Trip $trip, TripStop $from, TripStop $to, int $seats, User $passenger, array $seatCodes): void
     {
         if ($seats < self::MIN_SEATS || $seats > self::MAX_SEATS) {
             throw new BookingNotAllowedException(sprintf('Vous pouvez réserver entre %d et %d places.', self::MIN_SEATS, self::MAX_SEATS));
@@ -108,6 +109,63 @@ final class BookingService
         }
         if ($passenger === $trip->getDriver()) {
             throw new BookingNotAllowedException('Le conducteur ne peut pas réserver son propre trajet.');
+        }
+        if ([] !== $seatCodes && (count($seatCodes) !== $seats || count(array_unique($seatCodes)) !== count($seatCodes))) {
+            throw new BookingNotAllowedException(1 === $seats ? 'Choisissez une place.' : sprintf('Choisissez %d places, une par voyageur.', $seats));
+        }
+    }
+
+    /**
+     * The seats of the new booking: Rihla's pick when none was chosen, otherwise the chosen ones
+     * once checked against the seats offered and the fresh state of the portion.
+     *
+     * @param list<string>  $chosen
+     * @param list<Booking> $bookings
+     *
+     * @return list<string>
+     */
+    private function resolveSeats(Trip $trip, TripStop $from, TripStop $to, int $seats, array $chosen, array $bookings): array
+    {
+        $fromPosition = $from->getPosition();
+        $toPosition = $to->getPosition();
+
+        if ([] === $chosen) {
+            $this->assertSeatsLeft($trip, $from, $to, $seats, $bookings);
+            $picked = $this->seatMap->autoPick($trip, $fromPosition, $toPosition, $seats, $bookings);
+            if (count($picked) < $seats) {
+                throw new NotEnoughSeatsException($seats, count($picked));
+            }
+
+            return $picked;
+        }
+
+        $offered = $this->seatLayout->offeredCodes($trip);
+        $states = $this->seatMap->states($trip, $fromPosition, $toPosition, $bookings);
+        // A seat that was just taken is reported first: it is what the passenger needs to know to choose again.
+        $taken = array_values(array_filter($chosen, static fn (string $code) => in_array($code, $offered, true) && !$states[$code]->isOpen()));
+        if ([] !== $taken) {
+            throw new SeatTakenException($taken);
+        }
+        $this->assertSeatsLeft($trip, $from, $to, $seats, $bookings);
+        foreach ($chosen as $code) {
+            if (!in_array($code, $offered, true)) {
+                throw new BookingNotAllowedException(sprintf("La place %s n'est pas proposée sur ce trajet.", $code));
+            }
+        }
+
+        return $chosen;
+    }
+
+    /**
+     * The per-leg seat count rule, unchanged.
+     *
+     * @param list<Booking> $bookings
+     */
+    private function assertSeatsLeft(Trip $trip, TripStop $from, TripStop $to, int $seats, array $bookings): void
+    {
+        $freeSeats = $this->seatAvailability->freeSeats($trip->getSeatsOffered(), $bookings, $from->getPosition(), $to->getPosition());
+        if ($freeSeats < $seats) {
+            throw new NotEnoughSeatsException($seats, $freeSeats);
         }
     }
 

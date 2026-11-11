@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as ui %}
+
+{% block title %}{{ headline }}{% endblock %}
+
+{% block body %}
+<div class="container container--narrow page seat-taken">
+    <section class="card seat-taken__card">
+        <div class="seat-taken__head">
+            <span class="seat-taken__icon" aria-hidden="true">{{ ui.icon('seat', 28) }}</span>
+            <div class="stack stack--tight">
+                <h1>{{ headline }}</h1>
+                <p>Votre réservation n’a pas été enregistrée et rien ne vous a été débité.</p>
+            </div>
+        </div>
+
+        <div class="stack">
+            {% if suggested is not empty %}
+                {% set codes = suggested|map(s => s.code) %}
+                <h2>Il reste de la place dans la voiture de {{ trip.driver.publicName|split(' ')|first }}</h2>
+                <form class="seat-taken__offer" method="post" action="/trips/{{ trip.id }}/book">
+                    <input type="hidden" name="_token" value="{{ csrf_token('book-trip-' ~ trip.id) }}">
+                    <input type="hidden" name="from" value="{{ from.position }}">
+                    <input type="hidden" name="to" value="{{ to.position }}">
+                    <input type="hidden" name="seats" value="{{ seatCount }}">
+                    {% for code in codes %}<input type="hidden" name="seatCodes[]" value="{{ code }}">{% endfor %}
+                    <span class="seat-taken__chip">{{ codes|join(' ') }}</span>
+                    <span class="seat-taken__offer-text">
+                        <strong>{{ suggested|length > 1 ? 'Places ' : 'Place ' }}{{ codes|seat_list }}{% if suggested|length == 1 %}, {{ suggested[0].position|lower }}{% endif %}</strong>
+                        <span>Libre{{ suggested|length > 1 ? 's' : '' }} sur tout votre bout de route, même prix : {{ total }} MAD</span>
+                    </span>
+                    <button class="btn btn--primary" type="submit">Réserver {{ suggested|length > 1 ? 'les places ' : 'la place ' }}{{ codes|seat_list }}</button>
+                </form>
+            {% else %}
+                <h2>La voiture est complète</h2>
+                <p>Il n’y a plus assez de places libres sur votre bout de route. Essayez une autre portion ou un autre trajet.</p>
+            {% endif %}
+            <a class="seat-taken__review" href="{{ path('app_trip_seats', {id: trip.id, from: from.position, to: to.position, seats: seatCount}) }}">Revoir le plan des places</a>
+        </div>
+    </section>
+</div>
+{% endblock %}

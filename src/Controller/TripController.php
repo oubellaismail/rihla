@@ -5,14 +5,19 @@ namespace App\Controller;
 use App\Entity\Trip;
 use App\Entity\TripStop;
 use App\Entity\User;
+use App\Enum\SeatState;
 use App\Enum\TripStatus;
+use App\Model\Seat;
 use App\Exception\BookingNotAllowedException;
 use App\Exception\NotEnoughSeatsException;
+use App\Exception\SeatTakenException;
 use App\Repository\CityRepository;
 use App\Repository\ReviewRepository;
 use App\Service\BookingService;
 use App\Service\Geo\TripMapBuilder;
 use App\Service\PriceCalculator;
+use App\Service\Seat\SeatLayout;
+use App\Service\Seat\SeatMap;
 use App\Service\SeatAvailabilityCalculator;
 use App\Service\TripSearch;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -122,8 +127,60 @@ final class TripController extends AbstractController
         ]);
     }
 
+    #[Route('/trips/{id<\d+>}/seats', name: 'app_trip_seats', methods: ['GET'])]
+    public function seats(
+        Trip $trip,
+        Request $request,
+        ClockInterface $clock,
+        SeatMap $seatMap,
+        SeatLayout $layout,
+        PriceCalculator $priceCalculator,
+    ): Response {
+        $fromPosition = $request->query->getInt('from', -1);
+        $toPosition = $request->query->getInt('to', -1);
+        $seats = $request->query->getInt('seats', 0);
+        $from = $this->stopAt($trip, $fromPosition);
+        $to = $this->stopAt($trip, $toPosition);
+
+        if (null === $from || null === $to || $from->getPosition() >= $to->getPosition() || $seats < 1 || $seats > self::MAX_SEATS) {
+            $this->addFlash('error', 'Cette réservation est invalide. Choisissez votre portion et le nombre de places.');
+
+            return $this->redirectToRoute('app_trip_show', ['id' => $trip->getId()]);
+        }
+
+        $back = $this->redirectToRoute('app_trip_show', ['id' => $trip->getId(), 'from' => $fromPosition, 'to' => $toPosition]);
+        $open = TripStatus::Published === $trip->getStatus() && $trip->getFirstStop()->getDepartureAt() > $clock->now();
+        if (!$open || $this->getUser() === $trip->getDriver()) {
+            $this->addFlash('error', !$open ? 'Ce trajet n’est plus ouvert à la réservation.' : 'C’est votre trajet : vous ne pouvez pas y réserver une place.');
+
+            return $back;
+        }
+
+        $states = $seatMap->states($trip, $fromPosition, $toPosition);
+        $openCount = count(array_filter($states, static fn (SeatState $state): bool => $state->isOpen()));
+        if ($openCount < $seats) {
+            $this->addFlash('error', (new NotEnoughSeatsException($seats, $openCount))->getMessage());
+
+            return $back;
+        }
+
+        $passengerSeats = $trip->getVehicle()->getPassengerSeats();
+
+        return $this->render('trip/seats.html.twig', [
+            'trip' => $trip,
+            'from' => $from,
+            'to' => $to,
+            'seatCount' => $seats,
+            'states' => $states,
+            'plan' => $layout->seats($passengerSeats),
+            'kind' => $layout->kind($passengerSeats),
+            'offered' => count($layout->offeredCodes($trip)),
+            'total' => $priceCalculator->portionPrice($trip, $from, $to, $seats),
+        ]);
+    }
+
     #[Route('/trips/{id<\d+>}/book', name: 'app_trip_book', methods: ['POST'])]
-    public function book(Trip $trip, Request $request, BookingService $bookingService): Response
+    public function book(Trip $trip, Request $request, BookingService $bookingService, SeatMap $seatMap, SeatLayout $layout, PriceCalculator $priceCalculator): Response
     {
         $fromPosition = $request->request->getInt('from', -1);
         $toPosition = $request->request->getInt('to', -1);
@@ -144,13 +201,36 @@ final class TripController extends AbstractController
             return $back;
         }
 
+        $seatCodes = $request->request->has('auto')
+            ? []
+            : array_values(array_filter($request->request->all('seatCodes'), 'is_string'));
+
         /** @var User $user */
         $user = $this->getUser();
 
         try {
-            $booking = $bookingService->book($trip, $from, $to, $seats, $user);
+            $booking = $bookingService->book($trip, $from, $to, $seats, $user, null, $seatCodes);
+        } catch (SeatTakenException $e) {
+            $suggestion = $seatMap->autoPick($trip, $fromPosition, $toPosition, $seats);
+            $suggested = count($suggestion) === $seats
+                ? array_values(array_filter($layout->seats($trip->getVehicle()->getPassengerSeats()), static fn (Seat $seat): bool => in_array($seat->code, $suggestion, true)))
+                : [];
+
+            return $this->render('trip/seat_taken.html.twig', [
+                'trip' => $trip,
+                'from' => $from,
+                'to' => $to,
+                'seatCount' => $seats,
+                'headline' => rtrim($e->getMessage(), '.'),
+                'suggested' => $suggested,
+                'total' => $priceCalculator->portionPrice($trip, $from, $to, $seats),
+            ], new Response(status: Response::HTTP_CONFLICT));
         } catch (NotEnoughSeatsException|BookingNotAllowedException $e) {
             $this->addFlash('error', $e->getMessage());
+
+            if ([] !== $seatCodes) {
+                return $this->redirectToRoute('app_trip_seats', ['id' => $trip->getId(), 'from' => $fromPosition, 'to' => $toPosition, 'seats' => $seats]);
+            }
 
             return $back;
         }

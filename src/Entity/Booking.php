@@ -55,6 +55,10 @@ class Booking
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $cancelledAt = null;
 
+    /** @var list<string>|null seats held, e.g. ["A1", "B3"]; null for bookings made before seat choice existed */
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $seatCodes = null;
+
     #[ORM\OneToOne(mappedBy: 'booking')]
     private ?Payment $payment = null;
 
@@ -200,6 +204,20 @@ class Booking
     public function setCancelledAt(?\DateTimeImmutable $cancelledAt): static
     {
         $this->cancelledAt = $cancelledAt;
+
+        return $this;
+    }
+
+    /** @return list<string> */
+    public function getSeatCodes(): array
+    {
+        return $this->seatCodes ?? [];
+    }
+
+    /** @param list<string> $codes */
+    public function setSeatCodes(array $codes): static
+    {
+        $this->seatCodes = array_values($codes);
 
         return $this;
     }

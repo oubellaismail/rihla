@@ -125,3 +125,21 @@ Design: [`docs/diagrams/level4-map.drawio`](diagrams/level4-map.drawio).
 - **Privacy decided on the server.** The exact meeting point is only put in the page for the driver and for passengers with a confirmed or completed booking, and a passenger only gets their own two stops. Hiding it with JavaScript would still leak it in the page source; a test checks the HTML of a visitor.
 - **When a service fails** (timeout of 3 s, error, garbage): no exception reaches the user. The publish page shows « Suggestions indisponibles pour le moment. », the map draws dashed straight lines between cities, and publishing still works. After one failed leg the others are not tried, so publishing never waits more than 3 s for OSRM.
 - **Tests never use the network.** `tests/Support/FakeGeoApis.php` answers in place of Nominatim and OSRM, and can simulate an outage.
+
+## 2026-11-11 — Meeting-point picker and finished trips
+
+- **Meeting point on a large map, per stop.** « Choisir sur la carte » opens a map centred on the stop's city with a fixed centre pin: the driver moves the map, not the pin. Places other drivers already used in that city are suggested (real data, at most 5).
+- **15 km rule.** A meeting point more than 15 km (straight line) from its city is refused, in the picker and again by `TripPublisher`, so a passenger looking for « Essaouira » never waits in the wrong town.
+- **Finished and cancelled trips get their own pages.** A finished trip is a summary (passengers carried, money received, reviews), not an upcoming trip with seats left; a cancelled one lists who was refunded.
+
+## 2026-11-11 — Seat choice (bonus)
+
+Design: [`docs/diagrams/seat-choice.drawio`](diagrams/seat-choice.drawio), mockup boards « Choisir ses places » and « Place déjà réservée » (v2).
+
+- **Two car plans.** Up to 4 passenger seats is a berline (A1 in front, B1 B2 B3 in the back); 5 or 6 is a monospace with a third row (C1 C2).
+- **Seats open in comfort order** A1, B1, B3, B2, C1, C2. A driver offering 3 seats in a 4-seat car keeps the back middle seat closed; it is shown « Non proposée ». Publishing a trip did not change.
+- **Seats follow the legs, like the seat counts.** A seat taken from Agadir to Essaouira is free from Essaouira on: the plan shows it « libérée en route ». The per-leg count of Level 2 is still checked first; the seat check comes after it, inside the same lock on the trip row, so two people choosing the same seat at the same time cannot both get it. The slower one sees « La place B3 vient d'être réservée » with another free seat to book in one tap.
+- **One seat per place, optional.** Booking two places means choosing two seats; « Pas de préférence, choisir pour moi » lets Rihla pick, side by side in the same row when possible. Every booking ends up with seat numbers.
+- **Privacy.** A taken seat says « occupée », never who sits there.
+- **Older bookings keep working.** A booking made before seat choice has no seat stored; it is given the first free seats in comfort order when the plan is drawn, so no data migration is needed.
+- **Works without JavaScript.** Seats are checkboxes in a form; JavaScript only limits the number ticked and updates the summary.

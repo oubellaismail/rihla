@@ -49,7 +49,7 @@
                     {{ ui.avatar(b.passenger, 'avatar--l') }}
                     <div class="stack">
                         <div class="row row--between">
-                            <span><strong>{{ b.passenger.publicName }}</strong> · {{ b.fromStop.city.name }} → {{ b.toStop.city.name }} · {{ b.seats }} {{ b.seats > 1 ? 'places' : 'place' }}</span>
+                            <span><strong>{{ b.passenger.publicName }}</strong> · {{ b.fromStop.city.name }} → {{ b.toStop.city.name }} · {{ b.seats }} {{ b.seats > 1 ? 'places' : 'place' }}{% set seatCodes = seats_of(b) %} · {{ seatCodes|length > 1 ? 'Places' : 'Place' }} {{ seatCodes|seat_list }}</span>
                             <strong class="num">{{ b.totalPrice }} MAD</strong>
                         </div>
                         {% if row.reviewOfDriver %}

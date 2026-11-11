@@ -8,6 +8,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
@@ -42,6 +43,12 @@ class BookingCrudController extends AbstractCrudController
         yield AssociationField::new('fromStop', 'Monte à');
         yield AssociationField::new('toStop', 'Descend à');
         yield IntegerField::new('seats', 'Places');
+        yield TextField::new('seatCodes', 'Sièges')
+            ->onlyOnIndex()
+            ->formatValue(static fn ($value, Booking $booking) => implode(', ', $booking->getSeatCodes()) ?: '—');
+        yield TextField::new('seatCodes', 'Sièges')
+            ->onlyOnDetail()
+            ->formatValue(static fn ($value, Booking $booking) => implode(', ', $booking->getSeatCodes()) ?: '—');
         yield IntegerField::new('totalPrice', 'Prix total (MAD)');
         yield ChoiceField::new('status', 'Statut');
         yield DateTimeField::new('createdAt', 'Réservée le')->hideOnForm();

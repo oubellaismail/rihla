@@ -101,8 +101,7 @@
             {% elseif freeSeats == 0 %}
                 <p class="note"><strong>Complet sur cette portion</strong>. Essayez de descendre plus tôt ou de monter plus tard.</p>
             {% else %}
-                <form class="form" action="/trips/{{ trip.id }}/book" method="post">
-                    <input type="hidden" name="_token" value="{{ csrf_token('book-trip-' ~ trip.id) }}">
+                <form class="form" action="/trips/{{ trip.id }}/seats" method="get">
                     <input type="hidden" name="from" value="{{ from.position }}">
                     <input type="hidden" name="to" value="{{ to.position }}">
                     <div class="field seats-field">
