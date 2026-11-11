@@ -132,6 +132,22 @@ final class DriverFlowTest extends WebFlowTestCase
         self::assertStringContainsString('Salma T.', $this->pageText());
     }
 
+    public function testACompletedTripShowsTheSeatsThatWereUsed(): void
+    {
+        $karim = $this->db->user('Karim');
+        $trip = $this->db->trip(driver: $karim);
+        $trip->setStatus(TripStatus::Completed);
+        $this->db->booking($trip, 0, 2, 1, BookingStatus::Completed);
+        $this->db->booking($trip, 0, 2, 1, BookingStatus::Completed);
+        $this->login($karim);
+
+        $this->client->request('GET', sprintf('/driver/trips/%d', $trip->getId()));
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('2 / 3 places', $this->pageText());
+        self::assertStringNotContainsString('0 / 3 places', $this->client->getCrawler()->filter('.leg-seats')->first()->text());
+    }
+
     public function testOnlyTheDriverSeesThePassengerList(): void
     {
         $trip = $this->db->trip();

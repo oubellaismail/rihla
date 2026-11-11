@@ -151,6 +151,14 @@ final class TripMapBuilderTest extends KernelTestCase
         self::assertSame([1, 3, 0], array_column($map['legs'], 'seatsTaken'));
     }
 
+    public function testOnACompletedTripTheDriverStillSeesHowFullEachLegWas(): void
+    {
+        $this->db->booking($this->trip, 0, 2, 1, BookingStatus::Completed);
+        $this->db->booking($this->trip, 0, 2, 1, BookingStatus::Completed);
+
+        self::assertSame([2, 2, 0], array_column($this->build($this->driver)['legs'], 'seatsTaken'));
+    }
+
     public function testAStopWithoutMeetingCoordinatesHasNoExactPinEvenForTheDriver(): void
     {
         DbTrips::stop($this->trip, 3)->setMeetingLatitude(null)->setMeetingLongitude(null);

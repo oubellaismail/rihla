@@ -60,6 +60,23 @@ final class SeatAvailabilityCalculatorTest extends TestCase
         self::assertSame([1, 1, 1], $this->calculator->takenPerLeg(3, $bookings));
     }
 
+    /**
+     * For showing how full a trip was (driver pages, maps), passengers who already travelled
+     * count too; cancelled bookings still do not. Free seats for booking keep using takenPerLeg.
+     */
+    public function testOccupiedPerLegAlsoCountsPassengersWhoTravelled(): void
+    {
+        $trip = B::trip();
+        $bookings = [
+            B::booking($trip, 0, 3, 1, BookingStatus::Confirmed),
+            B::booking($trip, 0, 3, 1, BookingStatus::CancelledByPassenger),
+            B::booking($trip, 0, 3, 1, BookingStatus::CancelledByDriver),
+            B::booking($trip, 0, 2, 2, BookingStatus::Completed),
+        ];
+
+        self::assertSame([3, 3, 1], $this->calculator->occupiedPerLeg(3, $bookings));
+    }
+
     public function testFreeSeatsOnAnEmptyTripEqualsSeatsOffered(): void
     {
         self::assertSame(3, $this->calculator->freeSeats(3, [], 0, 3));
