@@ -38,7 +38,28 @@ export default class extends Controller {
             this.drawLegend();
         }
 
-        this.map.fitBounds(L.latLngBounds(bounds), { padding: [32, 32], maxZoom: 13 });
+        this.map.fitBounds(L.latLngBounds(this.focus(data) ?? bounds), { padding: [32, 32], maxZoom: 13 });
+    }
+
+    /** The passenger's portion when there is one, so it fills the map; null means the whole trip. */
+    focus(data) {
+        const h = data.highlight;
+        if (!h) {
+            return null;
+        }
+        const points = [];
+        for (const s of data.stops || []) {
+            if (s.position < h.from || s.position > h.to) {
+                continue;
+            }
+            if (this.hasPoint(s.lat, s.lng)) {
+                points.push([s.lat, s.lng]);
+            }
+            if (s.exact) {
+                points.push([s.exact.lat, s.exact.lng]);
+            }
+        }
+        return points.length >= 2 ? points : null;
     }
 
     disconnect() {
