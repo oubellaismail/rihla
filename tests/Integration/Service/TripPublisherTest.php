@@ -184,4 +184,53 @@ final class TripPublisherTest extends KernelTestCase
         $this->assertRefused($this->draft($stops, seats: 5), '5 seats in a 4-seat car');
         $this->assertRefused($this->draft($stops, seats: 0), 'no seat offered');
     }
+
+    // ---- meeting point near its city (at most 15 km) -------------------------------------------
+
+    private function withMeetingPoint(Trip $trip, int $index, float $lat, float $lng): Trip
+    {
+        $trip->getStops()->get($index)->setMeetingLatitude($lat)->setMeetingLongitude($lng);
+
+        return $trip;
+    }
+
+    private function agadirToEssaouira(): Trip
+    {
+        return $this->draft([['Agadir', '2026-11-12 08:00', 60], ['Essaouira', '2026-11-12 10:15', null]]);
+    }
+
+    public function testAMeetingPointInTheCityIsAccepted(): void
+    {
+        $trip = $this->publish($this->withMeetingPoint($this->agadirToEssaouira(), 1, 31.5126, -9.77)); // Bab Marrakech
+
+        self::assertNotNull($trip->getId());
+    }
+
+    public function testAMeetingPointFarFromItsCityIsRefusedWithTheDistance(): void
+    {
+        $trip = $this->withMeetingPoint($this->agadirToEssaouira(), 1, 31.5311, -9.4383); // Ounagha, about 30 km away
+
+        $this->assertRefused($trip, 'meeting point 30 km from Essaouira');
+
+        try {
+            $this->publish($this->withMeetingPoint($this->agadirToEssaouira(), 1, 31.5311, -9.4383));
+            self::fail('refused');
+        } catch (TripNotPublishableException $e) {
+            self::assertMatchesRegularExpression('/Essaouira.*\b(29|30|31) km/u', $e->getMessage(), 'names the city and the distance');
+        }
+    }
+
+    public function testAMeetingPointPlacedInTheNextCityIsRefused(): void
+    {
+        // The arrival in Essaouira with its pin left in Agadir: the bug found by the UX critique.
+        $this->assertRefused($this->withMeetingPoint($this->agadirToEssaouira(), 1, 30.4202, -9.5982), 'pin in Agadir for Essaouira');
+    }
+
+    public function testAStopWithoutMeetingPointOrCityCoordinatesIsNotChecked(): void
+    {
+        $trip = $this->draft([['Agadir', '2026-11-12 08:00', 60], ['Tafraout', '2026-11-12 11:00', null]]); // Tafraout: no coordinates in tests
+        $this->withMeetingPoint($trip, 1, 29.7231, -8.9734);
+
+        self::assertNotNull($this->publish($trip)->getId());
+    }
 }
