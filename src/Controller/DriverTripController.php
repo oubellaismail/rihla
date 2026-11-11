@@ -10,7 +10,11 @@ use App\Exception\CancellationNotAllowedException;
 use App\Repository\TripRepository;
 use App\Security\TripVoter;
 use App\Service\CancellationService;
+use App\Model\PassengerRow;
+use App\Repository\ReviewRepository;
 use App\Service\Geo\TripMapBuilder;
+use App\Service\ReviewPolicy;
+use App\Service\TripSummaryBuilder;
 use App\Service\SeatAvailabilityCalculator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockInterface;
@@ -55,9 +59,40 @@ final class DriverTripController extends AbstractController
     }
 
     #[Route('/driver/trips/{id<\d+>}', name: 'app_driver_trip_show', methods: ['GET'])]
-    public function show(Trip $trip, SeatAvailabilityCalculator $calculator, TripMapBuilder $mapBuilder): Response
+    public function show(Trip $trip, SeatAvailabilityCalculator $calculator, TripMapBuilder $mapBuilder, TripSummaryBuilder $summaryBuilder, ReviewPolicy $policy, ReviewRepository $reviews): Response
     {
         $this->denyAccessUnlessGranted(TripVoter::VIEW_PASSENGERS, $trip);
+
+        if (TripStatus::Completed === $trip->getStatus()) {
+            $summary = $summaryBuilder->build($trip);
+            $now = $this->clock->now();
+            $driver = $this->currentUser();
+            $cancelledBookings = array_values(array_filter(
+                $trip->getBookings()->toArray(),
+                static fn ($b) => $b->getStatus()->isCancelled(),
+            ));
+
+            return $this->render('driver/finished.html.twig', [
+                'trip' => $trip,
+                'summary' => $summary,
+                'cancelled' => $cancelledBookings,
+                'can_review' => array_map(
+                    static fn (PassengerRow $row) => $policy->canReview($row->booking, $driver, $now, null !== $row->reviewOfPassenger),
+                    $summary->passengers,
+                ),
+                'map' => $mapBuilder->build($trip, $driver),
+            ]);
+        }
+
+        if (TripStatus::Cancelled === $trip->getStatus()) {
+            $bookings = array_values(array_filter(
+                $trip->getBookings()->toArray(),
+                static fn ($b) => $b->getStatus()->isCancelled(),
+            ));
+            usort($bookings, static fn ($a, $b) => [$a->getFromStop()->getPosition(), $a->getId()] <=> [$b->getFromStop()->getPosition(), $b->getId()]);
+
+            return $this->render('driver/cancelled.html.twig', ['trip' => $trip, 'bookings' => $bookings]);
+        }
 
         $stops = $trip->getStops()->toArray();
         $taken = $calculator->occupiedPerLeg(max(0, \count($stops) - 1), $trip->getBookings());

@@ -33,3 +33,14 @@
 }
 .trip-section h2 + * { margin-top: 20px; }
 .timeline { margin-top: 28px; }
+
+/* Finished and cancelled trips (driver) */
+.summary-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.summary-strip__item { display: flex; flex-direction: column; gap: 4px; }
+.summary-strip__item .num { font-size: 30px; display: inline-flex; align-items: center; gap: 8px; color: var(--ink); }
+.trip-ends { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; }
+.finished-passenger { display: flex; gap: 16px; align-items: flex-start; }
+.finished-passenger > .stack { flex: 1; min-width: 0; gap: 6px; }
+.finished-passenger + .finished-passenger { border-top: 1px solid var(--line); padding-top: 16px; }
+.finished-passenger p { margin: 0; }
+@media (max-width: 640px) { .summary-strip { grid-template-columns: 1fr; } }

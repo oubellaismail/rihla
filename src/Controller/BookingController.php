@@ -58,8 +58,20 @@ final class BookingController extends AbstractController
         $canReview = $this->isGranted(BookingVoter::REVIEW, $booking)
             && $policy->canReview($booking, $user, $this->clock->now(), null !== $reviews->findOneBy(['booking' => $booking, 'author' => $user]));
 
+        $reviewOfDriver = null;
+        $reviewOfMe = null;
+        foreach ($reviews->findBy(['booking' => $booking]) as $review) {
+            if ($review->getAuthor() === $user) {
+                $reviewOfMe = $review;
+            } else {
+                $reviewOfDriver = $review; // the other party's review of the viewer
+            }
+        }
+
         return $this->render('booking/show.html.twig', [
             'booking' => $booking,
+            'review_from_driver' => $reviewOfDriver,
+            'my_review' => $reviewOfMe,
             'is_passenger' => $booking->getPassenger() === $user,
             'can_cancel' => $this->isGranted(BookingVoter::CANCEL, $booking),
             'can_review' => $canReview,
@@ -120,7 +132,9 @@ final class BookingController extends AbstractController
                 $service->review($booking, $user, (int) $data['rating'], $data['comment'] ?? null);
                 $this->addFlash('success', 'Merci, votre avis a été publié.');
 
-                return $this->redirectToRoute('app_user_profile', ['id' => $target->getId()]);
+                return $user === $booking->getTrip()->getDriver()
+                    ? $this->redirectToRoute('app_driver_trip_show', ['id' => $booking->getTrip()->getId()])
+                    : $this->redirectToRoute('app_booking_show', ['id' => $booking->getId()]);
             } catch (ReviewNotAllowedException $e) {
                 $this->addFlash('error', $e->getMessage());
 

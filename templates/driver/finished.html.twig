@@ -1,0 +1,76 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as ui %}
+{% block title %}Trajet {{ trip.firstStop.city.name }} → {{ trip.lastStop.city.name }}{% endblock %}
+{% block body %}
+<div class="page"><div class="container container--narrow">
+    <div class="page-head">
+        <p class="muted small"><a href="{{ path('app_driver_trips') }}">Mes trajets</a></p>
+        <h1>{{ trip.firstStop.city.name }} → {{ trip.lastStop.city.name }}</h1>
+        <p class="row">Trajet effectué le {{ trip.firstStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}
+            <span class="badge badge--ok">{{ ui.icon('check', 14) }} Terminé</span>
+            <a href="{{ path('app_trip_show', {id: trip.id}) }}">Voir la page publique</a></p>
+    </div>
+
+    <div class="stack stack--l">
+        <section class="card summary-strip" aria-label="Bilan du trajet">
+            <div class="summary-strip__item">
+                <span class="num">{{ summary.passengersCarried }}</span>
+                <span class="muted">{{ summary.passengersCarried > 1 ? 'passagers transportés' : 'passager transporté' }}</span>
+            </div>
+            <div class="summary-strip__item">
+                <span class="num">{{ summary.amountReceived }} MAD</span>
+                <span class="muted">reçus pour ce trajet</span>
+            </div>
+            <div class="summary-strip__item">
+                {% if summary.rating.count > 0 %}
+                    <span class="num">{{ ui.stars(summary.rating.average|round) }} {{ summary.rating.average|number_format(1, ',') }}</span>
+                    <span class="muted">note de ce trajet, {{ summary.rating.count }} avis</span>
+                {% else %}
+                    <span class="num muted">Pas encore d'avis</span>
+                    <span class="muted">note de ce trajet</span>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="card stack">
+            <h2 class="section-title">Le trajet</h2>
+            <div class="map-slot map-slot--trip" data-controller="trip-map" data-trip-map-data-value="{{ map|json_encode }}">Carte du trajet</div>
+            <div class="trip-ends">
+                <span><strong class="num">{{ trip.firstStop.departureAt|date('H:i') }}</strong> {{ trip.firstStop.city.name }}{% if trip.firstStop.meetingPoint %}, {{ trip.firstStop.meetingPoint }}{% endif %}</span>
+                <span><strong class="num">{{ trip.lastStop.departureAt|date('H:i') }}</strong> {{ trip.lastStop.city.name }}{% if trip.lastStop.meetingPoint %}, {{ trip.lastStop.meetingPoint }}{% endif %}</span>
+            </div>
+        </section>
+
+        <section class="card stack">
+            <h2 class="section-title">Passagers et avis</h2>
+            {% for row in summary.passengers %}
+                {% set b = row.booking %}
+                <div class="finished-passenger">
+                    {{ ui.avatar(b.passenger, 'avatar--l') }}
+                    <div class="stack">
+                        <div class="row row--between">
+                            <span><strong>{{ b.passenger.publicName }}</strong> · {{ b.fromStop.city.name }} → {{ b.toStop.city.name }} · {{ b.seats }} {{ b.seats > 1 ? 'places' : 'place' }}</span>
+                            <strong class="num">{{ b.totalPrice }} MAD</strong>
+                        </div>
+                        {% if row.reviewOfDriver %}
+                            <p class="small"><span class="muted">Son avis :</span> {{ row.reviewOfDriver.rating }} sur 5{% if row.reviewOfDriver.comment %}, « {{ row.reviewOfDriver.comment }} »{% endif %}</p>
+                        {% else %}
+                            <p class="small muted">Pas encore d'avis de {{ b.passenger.firstName }}.</p>
+                        {% endif %}
+                        {% if row.reviewOfPassenger %}
+                            <p class="small"><span class="muted">Votre avis :</span> {{ row.reviewOfPassenger.rating }} sur 5{% if row.reviewOfPassenger.comment %}, « {{ row.reviewOfPassenger.comment }} »{% endif %}</p>
+                        {% elseif can_review[loop.index0] %}
+                            <p class="small"><a class="btn btn--outline" href="{{ path('app_booking_review', {id: b.id}) }}">Noter {{ b.passenger.firstName }}</a></p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <p class="muted">Aucun passager n'a voyagé sur ce trajet.</p>
+            {% endfor %}
+            {% for b in cancelled %}
+                <p class="small muted">Réservation annulée : {{ b.passenger.publicName }}, {{ b.fromStop.city.name }} → {{ b.toStop.city.name }}{% if b.payment and b.payment.amount > 0 %}, remboursé à {{ (b.payment.refundedAmount * 100 / b.payment.amount)|round }} %{% endif %}.</p>
+            {% endfor %}
+        </section>
+    </div>
+</div></div>
+{% endblock %}

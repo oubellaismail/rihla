@@ -34,7 +34,7 @@ export default class extends Controller {
         const bounds = [];
         this.drawLegs(data, bounds);
         this.drawStops(data, bounds);
-        if (data.viewer === 'driver') {
+        if (this.showsOccupancy(data)) {
             this.drawLegend();
         }
 
@@ -92,11 +92,16 @@ export default class extends Controller {
         return (this.dataValue.stops || []).find((s) => s.position === position);
     }
 
+    /** Seats left only matter while the trip can still be booked: the server sends null once it is over. */
+    showsOccupancy(data) {
+        return data.viewer === 'driver' && (data.legs || []).some((leg) => typeof leg.seatsTaken === 'number');
+    }
+
     drawLegs(data, bounds) {
         const highlight = data.highlight;
         (data.legs || []).forEach((leg) => {
             let style;
-            if (data.viewer === 'driver') {
+            if (this.showsOccupancy(data)) {
                 style = { color: this.seatColor(leg.seatsTaken, data.seatsOffered), weight: 5, opacity: 0.9 };
             } else if (highlight) {
                 const inside = leg.from >= highlight.from && leg.to <= highlight.to;

@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as ui %}
+{% block title %}Trajet annulé {{ trip.firstStop.city.name }} → {{ trip.lastStop.city.name }}{% endblock %}
+{% block body %}
+<div class="page"><div class="container container--narrow">
+    <div class="page-head">
+        <p class="muted small"><a href="{{ path('app_driver_trips') }}">Mes trajets</a></p>
+        <h1>{{ trip.firstStop.city.name }} → {{ trip.lastStop.city.name }}</h1>
+        <p class="row">Trajet annulé, il était prévu le {{ trip.firstStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }} à {{ trip.firstStop.departureAt|date('H:i') }}
+            <span class="badge badge--off">Annulé</span></p>
+    </div>
+
+    <section class="card stack">
+        <h2 class="section-title">Passagers remboursés</h2>
+        {% for b in bookings %}
+            {% set paid = b.payment %}
+            <div class="row row--between">
+                <span><strong>{{ b.passenger.publicName }}</strong> · {{ b.fromStop.city.name }} → {{ b.toStop.city.name }} · {{ b.seats }} {{ b.seats > 1 ? 'places' : 'place' }}</span>
+                <span><strong class="num">{{ paid ? paid.refundedAmount : 0 }} MAD</strong> remboursés{% if paid and paid.amount > 0 %}, {{ (paid.refundedAmount * 100 / paid.amount)|round }} %{% endif %}</span>
+            </div>
+        {% else %}
+            <p class="muted">Aucun passager n'avait réservé ce trajet.</p>
+        {% endfor %}
+        <p class="muted small">Un trajet annulé par le conducteur est toujours remboursé en entier. Il reste visible ici pour mémoire.</p>
+    </section>
+</div></div>
+{% endblock %}

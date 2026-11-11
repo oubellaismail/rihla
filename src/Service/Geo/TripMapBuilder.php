@@ -7,6 +7,7 @@ use App\Entity\Trip;
 use App\Entity\TripStop;
 use App\Entity\User;
 use App\Enum\BookingStatus;
+use App\Enum\TripStatus;
 use App\Service\SeatAvailabilityCalculator;
 
 /**
@@ -70,14 +71,16 @@ final class TripMapBuilder
             ];
         }
 
-        $taken = $isDriver ? $this->seats->occupiedPerLeg(max(0, \count($stops) - 1), $trip->getBookings()) : [];
+        // Once the trip is over (or cancelled) occupancy is meaningless: no colours.
+        $showOccupancy = $isDriver && !\in_array($trip->getStatus(), [TripStatus::Completed, TripStatus::Cancelled], true);
+        $taken = $showOccupancy ? $this->seats->occupiedPerLeg(max(0, \count($stops) - 1), $trip->getBookings()) : [];
         $legsData = [];
         for ($i = 0; $i < \count($stops) - 1; ++$i) {
             $legsData[] = [
                 'from' => $stops[$i]->getPosition(),
                 'to' => $stops[$i + 1]->getPosition(),
                 'geometry' => $stops[$i]->getLegGeometry(),
-                'seatsTaken' => $isDriver ? ($taken[$i] ?? 0) : null,
+                'seatsTaken' => $showOccupancy ? ($taken[$i] ?? 0) : null,
             ];
         }
 

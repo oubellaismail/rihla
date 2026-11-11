@@ -2,13 +2,19 @@
 {% import 'macros.html.twig' as ui %}
 {% set driver = booking.trip.driver %}
 {% set payment = booking.payment %}
+{% set finished = booking.status.value == 'COMPLETED' %}
+{% set cancelled = booking.status.isCancelled %}
 {% block title %}Réservation {{ booking.fromStop.city.name }} → {{ booking.toStop.city.name }}{% endblock %}
 {% block body %}
 <div class="page"><div class="container">
     <div class="page-head">
         <p class="muted small"><a href="{{ path('app_booking_index') }}">Mes trajets</a></p>
         <h1>{{ booking.fromStop.city.name }} → {{ booking.toStop.city.name }}</h1>
-        <p class="row">{{ booking.fromStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }} {% include 'booking/_status.html.twig' %}</p>
+        <p class="row">
+            {% if finished %}Trajet effectué le {{ booking.fromStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}
+            {% elseif cancelled %}Réservation annulée, le trajet était prévu le {{ booking.fromStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}
+            {% else %}{{ booking.fromStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}{% endif %}
+            {% include 'booking/_status.html.twig' %}</p>
     </div>
 
     <div class="split">
@@ -30,7 +36,9 @@
                         </li>
                     {% endfor %}
                 </ol>
+                {% if not cancelled %}
                 <div class="map-slot map-slot--trip" data-controller="trip-map" data-trip-map-data-value="{{ map|json_encode }}">Carte du trajet</div>
+                {% endif %}
                 {% set boarding = booking.fromStop %}
                 {% if booking.status.value == 'CONFIRMED' and boarding.meetingLatitude is not null and boarding.meetingLongitude is not null %}
                     <div class="map-actions">
@@ -47,7 +55,8 @@
                     <div>
                         <a href="{{ path('app_user_profile', {id: driver.id}) }}"><strong>{{ driver.publicName }}</strong></a>
                         {% if booking.trip.vehicle %}<div class="muted small">{{ booking.trip.vehicle.model }}{% if booking.trip.vehicle.color %}, {{ booking.trip.vehicle.color }}{% endif %}</div>{% endif %}
-                        {% if booking.status.value == 'CONFIRMED' and driver.phone %}
+                        {% if finished or cancelled %}
+                        {% elseif booking.status.value == 'CONFIRMED' and driver.phone %}
                             <div class="small">Téléphone : <a href="tel:{{ driver.phone }}">{{ driver.phone }}</a></div>
                         {% elseif booking.status.value == 'CONFIRMED' %}
                         {% else %}
@@ -56,6 +65,25 @@
                     </div>
                 </div>
             </section>
+
+            {% if finished and is_passenger %}
+            <section class="card stack">
+                <h2 class="section-title">Avis</h2>
+                {% if review_from_driver %}
+                    <p><span class="muted">Son avis sur vous :</span> {{ review_from_driver.rating }} sur 5{% if review_from_driver.comment %}, « {{ review_from_driver.comment }} »{% endif %}</p>
+                {% endif %}
+                {% if my_review %}
+                    <div class="stack">
+                        <p><strong>Votre avis :</strong> {{ my_review.rating }} sur 5{% if my_review.comment %}, « {{ my_review.comment }} »{% endif %}</p>
+                        <p class="muted small">Publié le {{ my_review.createdAt|format_datetime(pattern: 'd MMMM') }}, visible sur le profil de {{ driver.firstName }}</p>
+                    </div>
+                {% elseif can_review %}
+                    <a class="btn btn--primary" href="{{ path('app_booking_review', {id: booking.id}) }}">Laisser un avis</a>
+                {% elseif not review_from_driver %}
+                    <p class="muted">Le délai pour laisser un avis est dépassé.</p>
+                {% endif %}
+            </section>
+            {% endif %}
         </div>
 
         <aside class="card price-box">
@@ -64,11 +92,20 @@
                 <div><dt>Total</dt><dd class="price-big">{{ booking.totalPrice }} MAD</dd></div>
                 {% if payment %}
                 <div><dt>Paiement</dt><dd>{{ payment.status.label }}</dd></div>
-                {% if payment.refundedAmount > 0 %}<div><dt>Remboursé</dt><dd class="num">{{ payment.refundedAmount }} MAD</dd></div>{% endif %}
+                {% if payment.refundedAmount > 0 and not cancelled %}<div><dt>Remboursé</dt><dd class="num">{{ payment.refundedAmount }} MAD</dd></div>{% endif %}
                 {% endif %}
             </dl>
-            {% if can_review %}
+            {% if cancelled and payment and payment.amount > 0 %}
+                <p><strong class="num">{{ payment.refundedAmount }} MAD</strong> remboursés, {{ (payment.refundedAmount * 100 / payment.amount)|round }} % du total</p>
+            {% endif %}
+            {% if can_review and not finished %}
                 <a class="btn btn--primary btn--block" href="{{ path('app_booking_review', {id: booking.id}) }}">Laisser un avis</a>
+            {% endif %}
+            {% if finished %}
+                <p class="muted small">Le trajet est terminé : plus d'annulation possible, et le numéro du conducteur n'est plus affiché.</p>
+                <a class="btn btn--outline btn--block" href="{{ path('app_trip_search', {from: booking.fromStop.city.name, to: booking.toStop.city.name}) }}">{{ ui.icon('search') }} Refaire ce trajet</a>
+            {% elseif cancelled %}
+                <a class="btn btn--outline btn--block" href="{{ path('app_trip_search') }}">{{ ui.icon('search') }} Chercher un autre trajet</a>
             {% endif %}
             {% if can_cancel %}
                 <a class="btn btn--danger btn--block" href="{{ path('app_booking_cancel', {id: booking.id}) }}">Annuler la réservation</a>

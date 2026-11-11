@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Review;
+use App\Entity\Trip;
 use App\Entity\User;
 use App\Model\RatingSummary;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -65,6 +66,18 @@ class ReviewRepository extends ServiceEntityRepository
             ->setParameter('target', $target)
             ->orderBy('r.createdAt', 'DESC')
             ->addOrderBy('r.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /** @return list<Review> every review (both directions) written about the bookings of a trip */
+    public function forTrip(Trip $trip): array
+    {
+        return $this->createQueryBuilder('r')
+            ->join('r.booking', 'b')
+            ->where('b.trip = :trip')
+            ->setParameter('trip', $trip)
+            ->orderBy('r.id', 'ASC')
             ->getQuery()
             ->getResult();
     }
