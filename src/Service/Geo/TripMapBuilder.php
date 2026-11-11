@@ -70,7 +70,7 @@ final class TripMapBuilder
             ];
         }
 
-        $taken = $isDriver ? $this->seats->takenPerLeg(max(0, \count($stops) - 1), $trip->getBookings()) : [];
+        $taken = $isDriver ? $this->seats->occupiedPerLeg(max(0, \count($stops) - 1), $trip->getBookings()) : [];
         $legsData = [];
         for ($i = 0; $i < \count($stops) - 1; ++$i) {
             $legsData[] = [

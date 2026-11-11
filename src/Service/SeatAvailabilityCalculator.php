@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\Booking;
+use App\Enum\BookingStatus;
 
 /**
  * Computes how many seats are taken and free on a trip, leg by leg.
@@ -24,10 +25,34 @@ final class SeatAvailabilityCalculator
      */
     public function takenPerLeg(int $legCount, iterable $bookings): array
     {
+        return $this->seatsPerLeg($legCount, $bookings, static fn (BookingStatus $status) => $status->holdsSeats());
+    }
+
+    /**
+     * Seats that were or are in use on each leg, for display: confirmed and completed bookings.
+     * Never use it to decide what can still be booked (see takenPerLeg()).
+     *
+     * @param iterable<Booking> $bookings
+     *
+     * @return list<int>
+     */
+    public function occupiedPerLeg(int $legCount, iterable $bookings): array
+    {
+        return $this->seatsPerLeg($legCount, $bookings, static fn (BookingStatus $status) => $status->occupiedSeat());
+    }
+
+    /**
+     * @param iterable<Booking>           $bookings
+     * @param callable(BookingStatus):bool $counts
+     *
+     * @return list<int>
+     */
+    private function seatsPerLeg(int $legCount, iterable $bookings, callable $counts): array
+    {
         $taken = array_fill(0, max(0, $legCount), 0);
 
         foreach ($bookings as $booking) {
-            if (!$booking->getStatus()->holdsSeats()) {
+            if (!$counts($booking->getStatus())) {
                 continue;
             }
 

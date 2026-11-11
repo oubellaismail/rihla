@@ -15,6 +15,12 @@ enum BookingStatus: string
         return self::Confirmed === $this;
     }
 
+    /** Confirmed or completed: the passenger is travelling or has travelled (display only). */
+    public function occupiedSeat(): bool
+    {
+        return self::Confirmed === $this || self::Completed === $this;
+    }
+
     public function isCancelled(): bool
     {
         return self::CancelledByPassenger === $this || self::CancelledByDriver === $this;

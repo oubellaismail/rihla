@@ -34,7 +34,7 @@ final class DriverTripController extends AbstractController
         $past = [];
         foreach ($trips->findForDriver($this->currentUser()) as $trip) {
             $stops = $trip->getStops()->toArray();
-            $taken = $calculator->takenPerLeg(max(0, \count($stops) - 1), $trip->getBookings());
+            $taken = $calculator->occupiedPerLeg(max(0, \count($stops) - 1), $trip->getBookings());
             $carried = 0;
             foreach ($trip->getBookings() as $booking) {
                 if (BookingStatus::Completed === $booking->getStatus()) {
@@ -60,7 +60,7 @@ final class DriverTripController extends AbstractController
         $this->denyAccessUnlessGranted(TripVoter::VIEW_PASSENGERS, $trip);
 
         $stops = $trip->getStops()->toArray();
-        $taken = $calculator->takenPerLeg(max(0, \count($stops) - 1), $trip->getBookings());
+        $taken = $calculator->occupiedPerLeg(max(0, \count($stops) - 1), $trip->getBookings());
 
         $boarding = [];
         $cancelled = [];
