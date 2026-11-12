@@ -143,3 +143,15 @@ Design: [`docs/diagrams/seat-choice.drawio`](diagrams/seat-choice.drawio), mocku
 - **Privacy.** A taken seat says « occupée », never who sits there.
 - **Older bookings keep working.** A booking made before seat choice has no seat stored; it is given the first free seats in comfort order when the plan is drawn, so no data migration is needed.
 - **Works without JavaScript.** Seats are checkboxes in a form; JavaScript only limits the number ticked and updates the summary.
+
+## 2026-11-12 — Luggage (trunk volume)
+
+Design: [`docs/diagrams/luggage.drawio`](diagrams/luggage.drawio), mockup boards « Vos bagages, voyageur », « Le coffre, conducteur » and « Le coffre dans les pages ».
+
+- **Litres for the car, sizes for the passenger.** Car makers publish the trunk volume in litres (Logan ≈ 530 L, Clio ≈ 390 L, 208 ≈ 310 L), so the driver types that number once, on the vehicle. Passengers do not know their bag in litres, so they pick a size: « Bagage cabine » 40 L, « Valise moyenne » 70 L, « Grande valise » 100 L. A handbag or small backpack is never counted.
+- **80 % of the trunk is usable.** The maker's figure is measured with 1-litre blocks that fill every corner; rigid suitcases do not. A Logan's 530 L gives 424 L, about four large suitcases.
+- **The trunk is frozen on the trip.** When publishing, the trip copies the vehicle's volume and the driver may lower it for that trip (own things, 0 for no luggage). It is not editable afterwards, like the seats offered.
+- **Bags follow the legs, like seats.** On every leg of the passenger's portion, the litres booked plus the new bags must fit. A bag unloaded at an intermediate stop frees its litres for the rest of the trip.
+- **Checked inside the same lock, after the seats.** The seat rules come first; then at most 2 counted bags per place, then the volume. If the trunk filled meanwhile, `TrunkFullException` refuses the booking and the seat page comes back (409) with the choices kept. A booking without bags is always possible.
+- **Free.** Bags never change the price.
+- **Shown where it helps a decision:** search results and the trip page (« Coffre : place pour 2 grandes valises »), the booking page, and the driver's page, stop by stop (what to load, what to unload).

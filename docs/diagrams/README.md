@@ -13,3 +13,4 @@ Approved on 10 November 2026, before the entities were implemented.
 | [`finished-trips.drawio`](finished-trips.drawio) | **Finished and cancelled trips**: what changes in the code (screens are on the mockup canvas). |
 | [`meeting-picker.drawio`](meeting-picker.drawio) | **Meeting-point picker**: 15 km rule, city-aware API, picker on the publish page (screens are on the mockup canvas). |
 | [`seat-choice.drawio`](seat-choice.drawio) | **Seat choice**: car plans and comfort order, seat states on a portion, booking with chosen seats under the trip lock, pages (screens are on the mockup canvas, boards « Choisir ses places » and « Place déjà réservée », v2). |
+| [`luggage.drawio`](luggage.drawio) | **Luggage**: trunk volume in litres (80 % usable), bag sizes, litres per leg, the check under the trip lock after the seats, pages (screens are on the mockup canvas, boards « Vos bagages, voyageur », « Le coffre, conducteur », « Le coffre dans les pages »). |
