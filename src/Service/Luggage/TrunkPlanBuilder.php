@@ -7,7 +7,8 @@ use App\Entity\Trip;
 use App\Enum\LuggageSize;
 
 /**
- * The driver's trunk plan, stop by stop: which bags to load and unload, and how full the trunk is
+ * The driver's trunk checklist, stop by stop: first the bags to hand back, then the bags to
+ * put in (those going furthest first, so they end up at the back), then how full the trunk is
  * until the next stop. Only bookings that hold seats count; passengers without bags are left out.
  */
 final class TrunkPlanBuilder
@@ -19,9 +20,9 @@ final class TrunkPlanBuilder
     /**
      * @return array{usable: int, trunk: int, hasBags: bool, stops: list<array{
      *     stop: \App\Entity\TripStop,
-     *     load: list<array{name: string, bags: string}>,
-     *     unload: list<string>,
-     *     next: ?array{city: string, litres: int, bags: int}
+     *     unload: list<array{name: string, bags: string, sizes: list<string>}>,
+     *     load: list<array{name: string, bags: string, sizes: list<string>, to: string, back: bool}>,
+     *     next: ?array{city: string, litres: int, bags: int, fullness: string, room: string}
      * }>}
      */
     public function build(Trip $trip): array
@@ -31,6 +32,7 @@ final class TrunkPlanBuilder
             static fn (Booking $b): bool => $b->getStatus()->holdsSeats() && $b->getBagCount() > 0,
         ));
         $stops = $trip->getStops()->toArray();
+        $usable = $this->trunkSpace->usableLitres($trip);
         $litresPerLeg = $this->trunkSpace->litresPerLeg($trip, $bookings);
 
         $plan = [];
@@ -39,14 +41,27 @@ final class TrunkPlanBuilder
             $load = [];
             $unload = [];
             foreach ($bookings as $booking) {
-                $name = (string) $booking->getPassenger()->getFirstName();
                 if ($booking->getFromStop()->getPosition() === $position) {
-                    $load[] = ['name' => $name, 'bags' => LuggageSize::describeBags($booking->getBags())];
+                    $load[] = $this->line($booking) + [
+                        'to' => (string) $booking->getToStop()->getCity()->getName(),
+                        'toPosition' => $booking->getToStop()->getPosition(),
+                    ];
                 }
                 if ($booking->getToStop()->getPosition() === $position) {
-                    $unload[] = $name;
+                    $unload[] = $this->line($booking);
                 }
             }
+
+            // Going furthest first: those bags go in first, at the back of the trunk.
+            usort($load, static fn (array $a, array $b): int => $b['toPosition'] <=> $a['toPosition']);
+            $furthest = $load[0]['toPosition'] ?? null;
+            $several = \count(array_unique(array_column($load, 'toPosition'))) > 1;
+            $load = array_map(static function (array $l) use ($furthest, $several): array {
+                $l['back'] = $several && $l['toPosition'] === $furthest;
+                unset($l['toPosition']);
+
+                return $l;
+            }, $load);
 
             $next = null;
             if (isset($stops[$i + 1])) {
@@ -56,17 +71,57 @@ final class TrunkPlanBuilder
                         $bagCount += $booking->getBagCount();
                     }
                 }
-                $next = ['city' => $stops[$i + 1]->getCity()->getName(), 'litres' => $litresPerLeg[$position] ?? 0, 'bags' => $bagCount];
+                $litres = $litresPerLeg[$position] ?? 0;
+                $next = [
+                    'city' => $stops[$i + 1]->getCity()->getName(),
+                    'litres' => $litres,
+                    'bags' => $bagCount,
+                    'fullness' => $this->fullness($litres, $usable),
+                    'room' => $this->trunkSpace->describe(max(0, $usable - $litres)),
+                ];
             }
 
-            $plan[] = ['stop' => $stop, 'load' => $load, 'unload' => $unload, 'next' => $next];
+            $plan[] = ['stop' => $stop, 'unload' => $unload, 'load' => $load, 'next' => $next];
         }
 
         return [
-            'usable' => $this->trunkSpace->usableLitres($trip),
+            'usable' => $usable,
             'trunk' => $trip->getTrunkLitres(),
             'hasBags' => [] !== $bookings,
             'stops' => $plan,
         ];
+    }
+
+    /** @return array{name: string, bags: string, sizes: list<string>} largest bag first */
+    private function line(Booking $booking): array
+    {
+        $sizes = [];
+        foreach (array_reverse(LuggageSize::cases()) as $size) {
+            for ($n = 0; $n < $booking->getBags()[$size->value]; ++$n) {
+                $sizes[] = $size->value;
+            }
+        }
+
+        return [
+            'name' => (string) $booking->getPassenger()->getFirstName(),
+            'bags' => LuggageSize::describeBags($booking->getBags()),
+            'sizes' => $sizes,
+        ];
+    }
+
+    /** How full the trunk is, in the words a driver uses. */
+    private function fullness(int $litres, int $usable): string
+    {
+        if (0 === $litres) {
+            return 'Coffre vide';
+        }
+        $share = $usable > 0 ? $litres / $usable : 1;
+
+        return match (true) {
+            $share < 0.4 => 'Coffre peu chargé',
+            $share < 0.7 => 'Coffre à moitié plein',
+            $share < 0.95 => 'Coffre presque plein',
+            default => 'Coffre plein',
+        };
     }
 }

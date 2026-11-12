@@ -52,15 +52,42 @@
 .trunk-gauge__hint { font-size: 14px; color: var(--sunset-text); min-height: 0; }
 .trunk-gauge__hint:empty { display: none; }
 
-/* Driver's trunk plan */
+/* Driver's trunk checklist: a route down the left; at each stop the bags to hand back, then the
+   bags to put in, as boxes to tick, then how full the trunk is until the next stop. Suitcase
+   icons are drawn larger for larger bags, so the size reads without numbers. */
+.trunk-plan { padding: 32px; display: flex; flex-direction: column; gap: 24px; }
+.trunk-plan__head { display: flex; flex-direction: column; gap: 8px; max-width: 60ch; }
+.trunk-plan__lede { color: var(--soft); font-size: 16px; }
+.trunk-plan__note { max-width: 60ch; }
+
 .trunk-stops { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.trunk-stop { display: flex; flex-direction: column; gap: 6px; padding: 14px 0; border-top: 1px solid var(--line); }
-.trunk-stop:first-child { border-top: 0; padding-top: 0; }
-.trunk-stop__head { display: flex; align-items: baseline; gap: 10px; }
-.trunk-stop__line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
-.trunk-stop__verb { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--dusk); }
-.trunk-stop__verb svg { align-self: center; }
-.trunk-stop__gauge { margin: 0; }
+.trunk-stop { position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr); column-gap: 14px; }
+.trunk-stop:not(:last-child)::before { content: ""; position: absolute; left: 10px; top: 14px; bottom: -14px; width: 2px; background: var(--dusk); opacity: .25; }
+.trunk-stop__head { grid-column: 1 / -1; display: grid; grid-template-columns: 22px auto auto; column-gap: 14px; align-items: baseline; justify-content: start; }
+.trunk-stop__dot { width: 14px; height: 14px; margin-left: 4px; border-radius: 50%; border: 3px solid var(--dusk); background: var(--white); align-self: center; position: relative; z-index: 1; }
+.trunk-stop__city { font: 700 20px/1.2 var(--font-display); color: var(--ink); letter-spacing: -0.01em; }
+.trunk-stop__body { grid-column: 2; display: flex; flex-direction: column; gap: 16px; padding: 12px 0 28px; }
+.trunk-stop:last-child .trunk-stop__body { padding-bottom: 0; }
+
+.trunk-task { display: flex; flex-direction: column; gap: 6px; }
+.trunk-task__verb { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 16px; color: var(--ink); }
+.trunk-task__verb--out svg { color: var(--sunset-text); transform: rotate(-90deg); }
+.trunk-task__verb--in svg { color: var(--green); }
+.trunk-task__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+
+.trunk-check { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 12px 6px 8px; border-radius: var(--radius-s); background: var(--sand); cursor: pointer; }
+.trunk-check input { flex-shrink: 0; width: 22px; height: 22px; margin: 0; accent-color: var(--dusk); cursor: pointer; }
+.trunk-check__bags { flex-shrink: 0; width: 56px; display: flex; align-items: flex-end; justify-content: center; gap: 1px; color: var(--dusk); }
+.trunk-check__text { display: flex; flex-direction: column; font-size: 16px; color: var(--ink); line-height: 1.35; }
+.trunk-check__to { font-size: 14px; color: var(--muted); }
+.trunk-check__to strong { color: var(--ink); font-weight: 600; }
+.trunk-check:has(input:checked) { background: transparent; }
+.trunk-check:has(input:checked) .trunk-check__text { color: var(--muted); text-decoration: line-through; }
+.trunk-check:has(input:checked) .trunk-check__bags { opacity: .4; }
+
+.trunk-state { font-size: 15px; color: var(--soft); }
+.trunk-state strong { color: var(--ink); }
+.trunk-state__litres { color: var(--muted); white-space: nowrap; }
 
 @media (prefers-reduced-motion: reduce) {
     .trunk-gauge__others, .trunk-gauge__mine, .luggage__step { transition: none; }
@@ -68,6 +95,8 @@
 }
 
 @media (max-width: 640px) {
+    .trunk-plan { padding: 20px 16px; }
+    .trunk-check__bags { width: 44px; }
     .luggage { padding: 20px 16px; }
     .luggage__title { font-size: 22px; }
     .luggage__row { gap: 10px; flex-wrap: wrap; }
@@ -75,4 +104,12 @@
     .luggage__what { flex-basis: 100%; }
     .luggage__row.has-stepper .luggage__what { flex-basis: calc(100% - 160px); }
     .luggage__row--included .luggage__what { flex-basis: auto; }
+}
+
+/* Driver's trip page: full width, map and stops on the left, the trunk plan on the right.
+   One column below 960 px, in reading order: map, stops, trunk, cancellation. */
+.driver-trip { display: grid; gap: 28px; grid-template-columns: minmax(0, 1fr); }
+.driver-trip__main, .driver-trip__side { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+@media (min-width: 960px) {
+    .driver-trip { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
 }
