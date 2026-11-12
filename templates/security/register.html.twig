@@ -7,6 +7,9 @@
 <div class="container container--narrow page">
     <div class="auth-card card stack">
         <h1 class="auth-title">Créer un compte</h1>
+        {% if booking_in_progress|default(false) %}
+            <p class="muted">Votre réservation reprendra juste après.</p>
+        {% endif %}
         <p class="muted">Un compte suffit pour réserver une place ou publier un trajet.</p>
 
         {{ form_start(form, {attr: {class: 'form', novalidate: false}}) }}

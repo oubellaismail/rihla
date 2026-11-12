@@ -32,7 +32,13 @@ All demo accounts use the password `rihla2026`.
 | `karim@rihla.ma` | Driver of the Agadir → Essaouira → Marrakech → Casablanca trip |
 | `salma@rihla.ma` | Passenger with upcoming, completed and cancelled bookings |
 
-Try it: search **Essaouira → Marrakech** on the date of Karim's trip, open the trip, book a seat as Salma, then cancel it from *Mes trajets*. Log in as Karim to see the passengers per leg on *Mes trajets › En tant que conducteur*.
+Try it:
+
+1. On the home page, click « Exemple : Essaouira → Marrakech ».
+2. Open Karim's trip (the one with stops) and see the seats and price per leg on the timeline.
+3. « Choisir ma place », log in as Salma or Imane (demo accounts are on the login page), choose a seat and a suitcase, « Réserver ».
+4. In « Mes trajets », open the booking, then « Annuler la réservation ».
+5. Log in as Karim, « Mes trajets › En tant que conducteur », open the trip: passengers per stop and the trunk checklist.
 
 The full guide (configuration, tests, reset, troubleshooting) is in [`INSTALL.md`](INSTALL.md).
 
@@ -42,11 +48,11 @@ The full guide (configuration, tests, reset, troubleshooting) is in [`INSTALL.md
 |---|---|---|
 | 1 — Model | Entities, migrations, demo data, back-office | Done |
 | 2 — Rules | Seats per leg, no overbooking, cancellations, reviews, tests | Done |
-| 3 — Product | Accounts, search, booking, driver space, profiles | Done (149 tests in total) |
+| 3 — Product | Accounts, search, booking, driver space, profiles | Done |
 | 4 — External API | Nominatim and OSRM: suggested price and map | Done |
 | 5 — Delivery | Docker, `INSTALL.md` | Done |
 | Bonus — Seat choice | Choose your seat on a plan of the car, seats follow the legs | Done |
-| Bonus — Luggage | Trunk volume in litres, bags declared at booking and checked leg by leg | Done (343 tests in total) |
+| Bonus — Luggage | Trunk volume in litres, bags declared at booking and checked leg by leg | Done (407 tests in total) |
 
 ## Tests
 

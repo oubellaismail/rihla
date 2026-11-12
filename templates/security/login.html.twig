@@ -7,8 +7,8 @@
     <div class="auth-card card stack">
         <h1 class="auth-title">Connexion</h1>
 
-        {% if booking_in_progress|default(false) %}
-            <p class="muted">Connectez-vous pour réserver votre place.</p>
+        {% if login_message|default(null) %}
+            <p class="muted">{{ login_message }}</p>
         {% endif %}
 
         {% if error %}
@@ -27,6 +27,18 @@
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}" data-controller="csrf-protection">
             <button type="submit" class="btn btn--primary btn--block">Se connecter</button>
         </form>
+
+        {% if app.debug %}
+        <section class="demo-accounts" data-controller="demo-login" aria-labelledby="demo-title">
+            <h2 id="demo-title" class="demo-accounts__title">Comptes de démo</h2>
+            <div class="demo-accounts__list">
+                <button type="button" class="btn btn--outline" data-email="karim@rihla.ma" data-action="demo-login#fill">Karim, conducteur</button>
+                <button type="button" class="btn btn--outline" data-email="salma@rihla.ma" data-action="demo-login#fill">Salma, passagère</button>
+                <button type="button" class="btn btn--outline" data-email="imane@rihla.ma" data-action="demo-login#fill">Imane, nouvelle passagère</button>
+            </div>
+            <p class="small muted">Mot de passe : rihla2026</p>
+        </section>
+        {% endif %}
 
         <p class="small muted">Pas encore de compte ? <a href="{{ path('app_register') }}">Créer un compte</a></p>
     </div>

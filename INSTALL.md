@@ -10,7 +10,7 @@ Everything runs in Docker: PHP 8.4-FPM, Nginx and MySQL 8.4. You need nothing el
 - Free ports 8080 (web) and 3306 (MySQL); see [Ports](#ports) to change them
 - An internet connection on the first start (Composer packages, JavaScript packages) and for the maps (OpenStreetMap tiles, Nominatim, OSRM)
 
-These steps were checked on 2026-11-11 from a fresh clone of the GitHub repository (macOS, Docker Desktop): the app started with its demo data and the 251 tests passed.
+These steps were checked on 2026-11-11 from a fresh clone of the GitHub repository (macOS, Docker Desktop): the app started with its demo data and the 407 tests passed.
 
 ## Quick start
 

@@ -52,6 +52,12 @@ final class RegistrationController extends AbstractController
             return $this->redirectToRoute('app_home');
         }
 
-        return $this->render('security/register.html.twig', ['form' => $form]);
+        $target = $this->getTargetPath($request->getSession(), 'main');
+        $path = null === $target ? '' : (string) parse_url($target, PHP_URL_PATH);
+
+        return $this->render('security/register.html.twig', [
+            'form' => $form,
+            'booking_in_progress' => 1 === preg_match('#^/trips/\d+/(seats|book)#', $path),
+        ]);
     }
 }

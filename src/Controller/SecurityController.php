@@ -23,8 +23,22 @@ class SecurityController extends AbstractController
         return $this->render('security/login.html.twig', [
             'error' => $authenticationUtils->getLastAuthenticationError(),
             'last_username' => $authenticationUtils->getLastUsername(),
-            'booking_in_progress' => null !== $this->getTargetPath($request->getSession(), 'main'),
+            'login_message' => $this->loginMessage($this->getTargetPath($request->getSession(), 'main')),
         ]);
+    }
+
+    private function loginMessage(?string $targetPath): ?string
+    {
+        if (null === $targetPath) {
+            return null;
+        }
+        $path = (string) parse_url($targetPath, PHP_URL_PATH);
+
+        return match (true) {
+            1 === preg_match('#^/trips/\d+/(seats|book)#', $path) => 'Connectez-vous pour réserver votre place.',
+            '/trips/new' === $path => 'Connectez-vous pour publier un trajet.',
+            default => null,
+        };
     }
 
     #[Route('/logout', name: 'app_logout')]
