@@ -9,7 +9,7 @@
 <div class="page"><div class="container">
     <div class="page-head">
         <p class="muted small"><a href="{{ path('app_booking_index') }}">Mes trajets</a></p>
-        <h1>{{ booking.fromStop.city.name }} → {{ booking.toStop.city.name }}</h1>
+        <h1>{{ ui.route(booking.fromStop.city.name, booking.toStop.city.name) }}</h1>
         <p class="row">
             {% if finished %}Trajet effectué le {{ booking.fromStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}
             {% elseif cancelled %}Réservation annulée, le trajet était prévu le {{ booking.fromStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}

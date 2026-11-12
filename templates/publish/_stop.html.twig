@@ -16,7 +16,6 @@
             <div class="meeting-empty" data-role="meeting-empty">
                 <span class="meeting-text" data-role="meeting-text">Point de rendez-vous à choisir</span>
                 <button type="button" class="btn btn--outline meeting-open" data-action="meeting-picker#open" data-role="meeting-choose">{{ ui.icon('map') }} Choisir sur la carte</button>
-                <span class="small muted" data-role="meeting-hint">Choisissez d'abord la ville</span>
             </div>
             <div class="meeting-placed" data-role="meeting-placed" hidden>
                 <span class="meeting-place">{{ ui.icon('pin') }}<strong data-role="meeting-label"></strong></span>
@@ -29,7 +28,7 @@
     {{ form_widget(stop.meetingLatitude) }}
     {{ form_widget(stop.meetingLongitude) }}
     <div class="stop-price" data-stop-list-target="price">
-        {{ form_row(stop.legPriceToNext) }}
+        {{ form_row(stop.legPriceToNext, {attr: {placeholder: 'Prix conseillé après le choix des villes'}}) }}
         <p class="small suggestion" data-role="price-suggestion" hidden></p>
     </div>
 </li>

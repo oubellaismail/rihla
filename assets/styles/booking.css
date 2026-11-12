@@ -2,17 +2,16 @@
 .section-title { font-size: 24px; margin-bottom: 16px; }
 .stack > .section-title { margin-bottom: 0; }
 .booking-past { margin-top: 36px; }
-.booking-item { display: grid; grid-template-columns: 170px minmax(0, 1fr) auto; gap: 20px; align-items: center; }
+.booking-item { display: grid; grid-template-columns: 210px minmax(0, 1fr) auto; gap: 20px; align-items: center; }
 .booking-item__when, .booking-item__main, .booking-item__side { display: flex; flex-direction: column; gap: 4px; }
 .booking-item__side { align-items: flex-end; }
 .booking-item__when strong::first-letter { text-transform: uppercase; }
-.booking-item__when strong { display: block; font-family: var(--font-display); color: var(--ink);  }
+.booking-item__when strong { display: block; font-family: var(--font-display); color: var(--ink); white-space: nowrap; }
 .facts { margin: 0; display: flex; flex-direction: column; gap: 12px; }
 .facts > div { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
 .facts dt { color: var(--muted); }
 .facts dd { margin: 0; font-weight: 600; }
 .passenger { display: flex; align-items: flex-start; gap: 12px; margin-top: 10px; }
-.timeline .leg-seats.is-warn { color: var(--sunset-text); }
 .cancelled-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 
 /* Rating: five radio buttons shown as numbered discs */
@@ -29,3 +28,7 @@
     .booking-item { grid-template-columns: 1fr; gap: 10px; }
     .booking-item__side { flex-direction: row; justify-content: space-between; align-items: center; }
 }
+
+/* Driver trip page */
+.driver-summary { margin: 4px 0 0; }
+.card > .timeline + .map-slot { margin-top: 28px; }

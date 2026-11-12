@@ -5,7 +5,7 @@
 <div class="page"><div class="container container--narrow">
     <div class="page-head">
         <p class="muted small"><a href="{{ path('app_driver_trips') }}">Mes trajets</a></p>
-        <h1>{{ trip.firstStop.city.name }} → {{ trip.lastStop.city.name }}</h1>
+        <h1>{{ ui.route(trip.firstStop.city.name, trip.lastStop.city.name) }}</h1>
         <p class="row">Trajet annulé, il était prévu le {{ trip.firstStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }} à {{ trip.firstStop.departureAt|date('H:i') }}
             <span class="badge badge--off">Annulé</span></p>
     </div>

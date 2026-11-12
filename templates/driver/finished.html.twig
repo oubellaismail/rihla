@@ -5,7 +5,7 @@
 <div class="page"><div class="container container--narrow">
     <div class="page-head">
         <p class="muted small"><a href="{{ path('app_driver_trips') }}">Mes trajets</a></p>
-        <h1>{{ trip.firstStop.city.name }} → {{ trip.lastStop.city.name }}</h1>
+        <h1>{{ ui.route(trip.firstStop.city.name, trip.lastStop.city.name) }}</h1>
         <p class="row">Trajet effectué le {{ trip.firstStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}
             <span class="badge badge--ok">{{ ui.icon('check', 14) }} Terminé</span>
             <a href="{{ path('app_trip_show', {id: trip.id}) }}">Voir la page publique</a></p>

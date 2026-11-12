@@ -5,7 +5,7 @@
 .has-picker .meeting-ui { display: block; }
 .meeting-empty, .meeting-placed { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
 .meeting-empty[hidden], .meeting-placed[hidden] { display: none; }
-.meeting-text { color: var(--sunset-text); font-size: 15px; }
+.meeting-text { color: var(--muted); font-size: 15px; }
 .meeting-text.is-typed { color: var(--ink); font-weight: 600; }
 .meeting-place { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); min-width: 0; }
 .meeting-place svg { flex: none; color: var(--dusk); }

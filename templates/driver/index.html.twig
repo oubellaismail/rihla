@@ -3,6 +3,7 @@
 {% block title %}Mes trajets conducteur{% endblock %}
 {% macro item(it) %}
 {% import 'macros.html.twig' as ui %}
+{% import 'driver/_summary.html.twig' as sum %}
 {% set trip = it.trip %}
 <a class="card card--link booking-item" href="{{ path('app_driver_trip_show', {id: trip.id}) }}">
     <div class="booking-item__when">
@@ -11,7 +12,7 @@
     </div>
     <div class="booking-item__main">
         {{ ui.route(trip.firstStop.city.name, trip.lastStop.city.name) }}
-        <span class="muted small">{{ it.stops }} arrêts · {% if trip.status.value == 'COMPLETED' %}{{ it.carried }} passager{{ it.carried > 1 ? 's' }} transporté{{ it.carried > 1 ? 's' }}{% else %}{{ it.taken }} / {{ trip.seatsOffered }} places réservées{% endif %}</span>
+        <span class="muted small">{{ it.stops }} arrêts · {% if trip.status.value == 'COMPLETED' %}{{ it.carried }} passager{{ it.carried > 1 ? 's' }} transporté{{ it.carried > 1 ? 's' }}{% else %}{{ sum.list_line(it.summary, trip.seatsOffered) }}{% endif %}</span>
     </div>
     <div class="booking-item__side">
         <span class="badge {{ trip.status.value == 'PUBLISHED' ? 'badge--ok' : (trip.status.value == 'CANCELLED' ? 'badge--off' : '') }}">{{ trip.status.label }}</span>

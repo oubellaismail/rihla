@@ -1,0 +1,26 @@
+{# Wording built from DriverLegSummary: one place, used by the driver list and the trip page. #}
+{% macro free_runs(summary) -%}
+    {%- if summary.full -%}
+        Complet
+    {%- elseif summary.allFree -%}
+        {{ summary.runs[0].free }} {{ summary.runs[0].free > 1 ? 'places libres' : 'place libre' }} sur tout le trajet
+    {%- else -%}
+        {%- for run in summary.runs -%}
+            {{ loop.first ? '' : ', ' }}{{ run.free }} {{ run.free > 1 ? 'places libres' : 'place libre' }} sur {{ run.from }} → {{ run.to }}
+        {%- endfor -%}
+    {%- endif -%}
+{%- endmacro %}
+
+{% macro passengers(summary) -%}
+    {%- if summary.passengers == 0 -%}Aucun passager pour l'instant{%- else -%}{{ summary.passengers }} {{ summary.passengers > 1 ? 'passagers' : 'passager' }}{%- endif -%}
+{%- endmacro %}
+
+{% macro list_line(summary, offered) -%}
+    {%- if summary.full -%}
+        Complet
+    {%- elseif summary.allFree or summary.runs is empty -%}
+        {{ summary.maxTaken }} / {{ offered }} places réservées
+    {%- else -%}
+        Complet sauf {% for run in summary.runs %}{{ loop.first ? '' : ', ' }}{{ run.from }} → {{ run.to }} ({{ run.free }} {{ run.free > 1 ? 'places' : 'place' }}){% endfor %}
+    {%- endif -%}
+{%- endmacro %}

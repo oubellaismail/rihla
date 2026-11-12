@@ -1,11 +1,13 @@
 {% extends 'base.html.twig' %}
 {% import 'macros.html.twig' as ui %}
+{% import 'driver/_summary.html.twig' as sum %}
 {% block title %}Trajet {{ trip.firstStop.city.name }} → {{ trip.lastStop.city.name }}{% endblock %}
 {% block body %}
 <div class="page"><div class="container">
     <div class="page-head">
         <p class="muted small"><a href="{{ path('app_driver_trips') }}">Mes trajets</a></p>
-        <h1>{{ trip.firstStop.city.name }} → {{ trip.lastStop.city.name }}</h1>
+        <h1>{{ ui.route(trip.firstStop.city.name, trip.lastStop.city.name) }}</h1>
+        <p class="driver-summary muted">{{ sum.passengers(summary) }} · {{ sum.free_runs(summary) }}</p>
         <p class="row">{{ trip.firstStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}
             <span class="badge {{ trip.status.value == 'PUBLISHED' ? 'badge--ok' : (trip.status.value == 'CANCELLED' ? 'badge--off' : '') }}">{{ trip.status.label }}</span>
             <a href="{{ path('app_trip_show', {id: trip.id}) }}">Voir la page publique</a></p>
@@ -13,11 +15,6 @@
 
     <div class="driver-trip">
         <div class="driver-trip__main">
-            <section class="card stack">
-                <h2 class="section-title">Carte du trajet</h2>
-                <div class="map-slot map-slot--trip" data-controller="trip-map" data-trip-map-data-value="{{ map|json_encode }}">Carte du trajet</div>
-            </section>
-
             <section class="card stack">
                 <h2 class="section-title">Arrêts et passagers</h2>
                 <ol class="timeline">
@@ -42,13 +39,18 @@
                                 {% endfor %}
                             </div>
                             {% if not loop.last %}
-                                {% set t = taken[pos] ?? 0 %}
-                                {% set free = trip.seatsOffered - t %}
-                                <span class="leg-seats {{ free <= 0 ? 'is-full' : (free == 1 ? 'is-warn' : '') }}">{{ t }} / {{ trip.seatsOffered }} places</span>
+                                {% set free = summary.free[pos] ?? 0 %}
+                                {% set price = stop.legPriceToNext %}
+                                <span class="leg-pill{{ free <= 0 ? ' is-full' : '' }}">{% if free <= 0 %}Complet{% else %}{{ free }} {{ free > 1 ? 'places libres' : 'place libre' }}{% endif %}{% if price is not null %} · {{ price }} MAD{% endif %}</span>
                             {% endif %}
                         </li>
                     {% endfor %}
                 </ol>
+            </section>
+
+            <section class="card stack">
+                <h2 class="section-title">Carte du trajet</h2>
+                <div class="map-slot map-slot--trip" data-controller="trip-map" data-trip-map-data-value="{{ map|json_encode }}">Carte du trajet</div>
             </section>
         </div>
         <aside class="driver-trip__side">
@@ -124,7 +126,9 @@
             <section class="card stack">
                 <h2 class="section-title">Annuler le trajet</h2>
                 <p class="muted">Tous les passagers ayant réservé seront remboursés à 100 %.</p>
-                <form method="post" action="{{ path('app_driver_trip_cancel', {id: trip.id}) }}">
+                {% set n = summary.passengers %}
+                {% set confirmText = 'Annuler ce trajet ?' ~ (n == 0 ? '' : (n == 1 ? ' Le passager sera remboursé à 100 %.' : ' Les ' ~ n ~ ' passagers seront remboursés à 100 %.')) %}
+                <form method="post" action="{{ path('app_driver_trip_cancel', {id: trip.id}) }}" onsubmit="return confirm('{{ confirmText|replace({'\\': '\\\\', "'": "\\'"}) }}')">
                     <input type="hidden" name="_token" value="{{ csrf_token('cancel_trip_' ~ trip.id) }}">
                     <button type="submit" class="btn btn--danger">Annuler le trajet</button>
                 </form>

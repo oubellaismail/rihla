@@ -10,13 +10,13 @@ use App\Exception\CancellationNotAllowedException;
 use App\Repository\TripRepository;
 use App\Security\TripVoter;
 use App\Service\CancellationService;
+use App\Service\DriverLegSummary;
 use App\Model\PassengerRow;
 use App\Repository\ReviewRepository;
 use App\Service\Geo\TripMapBuilder;
 use App\Service\Luggage\TrunkPlanBuilder;
 use App\Service\ReviewPolicy;
 use App\Service\TripSummaryBuilder;
-use App\Service\SeatAvailabilityCalculator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -32,21 +32,20 @@ final class DriverTripController extends AbstractController
 
     #[Route('/driver/trips', name: 'app_driver_trips', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED')]
-    public function index(TripRepository $trips, SeatAvailabilityCalculator $calculator): Response
+    public function index(TripRepository $trips, DriverLegSummary $legSummary): Response
     {
         $now = $this->clock->now();
         $upcoming = [];
         $past = [];
         foreach ($trips->findForDriver($this->currentUser()) as $trip) {
             $stops = $trip->getStops()->toArray();
-            $taken = $calculator->occupiedPerLeg(max(0, \count($stops) - 1), $trip->getBookings());
             $carried = 0;
             foreach ($trip->getBookings() as $booking) {
                 if (BookingStatus::Completed === $booking->getStatus()) {
                     $carried += $booking->getSeats();
                 }
             }
-            $item = ['trip' => $trip, 'stops' => \count($stops), 'taken' => [] === $taken ? 0 : max($taken), 'carried' => $carried];
+            $item = ['trip' => $trip, 'stops' => \count($stops), 'summary' => $legSummary->summarise($trip), 'carried' => $carried];
             if (TripStatus::Published === $trip->getStatus() && $trip->getFirstStop()->getDepartureAt() > $now) {
                 $upcoming[] = $item;
             } else {
@@ -60,7 +59,7 @@ final class DriverTripController extends AbstractController
     }
 
     #[Route('/driver/trips/{id<\d+>}', name: 'app_driver_trip_show', methods: ['GET'])]
-    public function show(Trip $trip, SeatAvailabilityCalculator $calculator, TripMapBuilder $mapBuilder, TripSummaryBuilder $summaryBuilder, ReviewPolicy $policy, ReviewRepository $reviews, TrunkPlanBuilder $trunkPlan): Response
+    public function show(Trip $trip, DriverLegSummary $legSummary, TripMapBuilder $mapBuilder, TripSummaryBuilder $summaryBuilder, ReviewPolicy $policy, ReviewRepository $reviews, TrunkPlanBuilder $trunkPlan): Response
     {
         $this->denyAccessUnlessGranted(TripVoter::VIEW_PASSENGERS, $trip);
 
@@ -96,7 +95,7 @@ final class DriverTripController extends AbstractController
         }
 
         $stops = $trip->getStops()->toArray();
-        $taken = $calculator->occupiedPerLeg(max(0, \count($stops) - 1), $trip->getBookings());
+        $summary = $legSummary->summarise($trip);
 
         $boarding = [];
         $cancelled = [];
@@ -113,7 +112,7 @@ final class DriverTripController extends AbstractController
         return $this->render('driver/show.html.twig', [
             'trip' => $trip,
             'stops' => $stops,
-            'taken' => $taken,
+            'summary' => $summary,
             'boarding' => $boarding,
             'cancelled' => $cancelled,
             'can_cancel' => $canCancel,

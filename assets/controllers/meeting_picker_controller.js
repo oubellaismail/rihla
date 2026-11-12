@@ -113,7 +113,6 @@ export default class extends Controller {
         set('meeting-text').classList.toggle('is-typed', text !== '');
         const choose = set('meeting-choose');
         choose.disabled = !hasCity;
-        set('meeting-hint').hidden = hasCity;
         const edit = set('meeting-edit');
         edit.disabled = !hasCity;
 
