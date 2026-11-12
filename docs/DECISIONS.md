@@ -165,3 +165,12 @@ Tried on a local branch with the frontend-design skill, then chosen from three i
 - **Words before litres.** After each stop: « Coffre à moitié plein jusqu'à Essaouira. Il reste de la place pour une grande valise. » Litres stay in brackets. Thresholds: empty, under 40 % « peu chargé », under 70 % « à moitié plein », under 95 % « presque plein », then « plein ».
 - **Size without numbers.** Each bag is a suitcase icon, larger for larger bags.
 - **The driver's trip page uses the full width.** Map and stops on the left, trunk and cancellation on the right; one column under 960 px.
+
+## 2026-11-12 — The passenger's bag picker without litres
+
+Same reasoning as the driver's checklist: a passenger does not think in litres.
+
+- **Sizes, not litres.** Each size row shows a suitcase icon drawn at its relative size (cabin 18 px, medium 24 px, large 32 px) and no litre figure. The gauge and its litre legend are gone.
+- **One sentence says where you stand**, updated as you pick: « Vous emportez 1 valise moyenne. Il reste encore de la place pour un bagage cabine. » With nothing picked: « Vous n'emportez rien en soute. Il reste de la place pour 4 grandes valises. » When nothing fits: « Le coffre est plein sur votre portion. »
+- **The reason sits on the row.** A size that no longer fits says so on its own row (« Plus assez de place pour une grande valise ») and its + is disabled.
+- **Litres stay only where they are a fact**: the 409 page when the trunk filled meanwhile (« il reste 54 L sur cette portion »), and the driver's pages.
