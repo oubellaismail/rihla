@@ -23,6 +23,7 @@ final class LuggageExtension extends AbstractExtension
             new TwigFunction('trunk_line', $this->trunkLine(...)),
             new TwigFunction('luggage_sizes', $this->sizes(...)),
             new TwigFunction('trunk_words', $this->trunkSpace->describe(...)),
+            new TwigFunction('luggage_status', $this->status(...)),
         ];
     }
 
@@ -47,7 +48,7 @@ final class LuggageExtension extends AbstractExtension
     /**
      * The bag sizes with the words the seat page needs (also read by the Stimulus controller).
      *
-     * @return list<array{key: string, label: string, litres: int, one: string, many: string, example: string}>
+     * @return list<array{key: string, label: string, litres: int, one: string, many: string, indefinite: string, example: string}>
      */
     public function sizes(): array
     {
@@ -64,10 +65,34 @@ final class LuggageExtension extends AbstractExtension
                 'litres' => $size->litres(),
                 'one' => $size->noun(1),
                 'many' => $size->noun(2),
+                'indefinite' => $size->indefinite(),
                 'example' => $examples[$size->value],
             ];
         }
 
         return $sizes;
+    }
+
+    /**
+     * One sentence on where the passenger stands. Same wording as the Stimulus controller.
+     *
+     * @param array<string, int> $bags
+     */
+    public function status(int $free, array $bags, int $places): string
+    {
+        $mine = min(LuggageSize::litresOf($bags), $free);
+        $words = $this->trunkSpace->describe($free - $mine);
+        $none = 0 === array_sum($bags);
+        $full = 'plein' === $words;
+
+        if ($none) {
+            return $full ? 'Le coffre est plein sur votre portion.' : "Vous n'emportez rien en soute. Il reste de la ".$words.'.';
+        }
+        $carried = 'Vous emportez '.LuggageSize::describeBags($bags).'. ';
+        if (array_sum($bags) >= $places * TrunkSpace::MAX_BAGS_PER_PLACE) {
+            return $carried."C'est le maximum pour ".(1 === $places ? 'votre place' : sprintf('vos %d places', $places)).'.';
+        }
+
+        return $carried.($full ? 'Le coffre est plein sur votre portion.' : 'Il reste encore de la '.$words.'.');
     }
 }

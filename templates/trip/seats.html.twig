@@ -24,7 +24,7 @@
         <div class="flash flash--error seats-alert" role="alert"><strong>Le coffre s'est rempli entre-temps.</strong> {{ alert.message }}</div>
     {% endif %}
 
-    <form class="seats-layout" method="post" action="/trips/{{ trip.id }}/book" data-controller="seat-picker luggage" data-seat-picker-count-value="{{ seatCount }}" data-luggage-usable-value="{{ trunk.usable }}" data-luggage-free-value="{{ trunk.free }}" data-luggage-max-value="{{ trunk.maxBags }}" data-luggage-sizes-value="{{ luggage_sizes()|json_encode }}">
+    <form class="seats-layout" method="post" action="/trips/{{ trip.id }}/book" data-controller="seat-picker luggage" data-seat-picker-count-value="{{ seatCount }}" data-luggage-free-value="{{ trunk.free }}" data-luggage-places-value="{{ seatCount }}" data-luggage-max-value="{{ trunk.maxBags }}" data-luggage-sizes-value="{{ luggage_sizes()|json_encode }}">
         <input type="hidden" name="_token" value="{{ csrf_token('book-trip-' ~ trip.id) }}">
         <input type="hidden" name="from" value="{{ from.position }}">
         <input type="hidden" name="to" value="{{ to.position }}">
@@ -121,7 +121,7 @@
             </div>
 
             <div class="luggage__row luggage__row--included">
-                <span class="luggage__icon">{{ ui.icon('suitcase', 22) }}</span>
+                <span class="luggage__icon">{{ ui.icon('backpack', 24) }}</span>
                 <span class="luggage__what"><strong>Sac à main, petit sac à dos</strong><span class="muted">Toujours accepté, il voyage avec vous.</span></span>
                 <span class="badge badge--ok">Inclus</span>
             </div>
@@ -129,31 +129,20 @@
             {% if trunk.usable == 0 %}
                 <p class="luggage__none">Pas de place dans le coffre sur ce trajet : seuls les sacs à main et petits sacs à dos sont acceptés.</p>
             {% else %}
+                {% set mine = trunk.mine %}
+                {% set left = trunk.free - mine %}
+                {% set iconSizes = {cabin: 18, medium: 24, large: 32} %}
                 {% for size in luggage_sizes() %}
                     <div class="luggage__row" data-luggage-size="{{ size.key }}">
-                        <span class="luggage__icon">{{ ui.icon('suitcase', 22) }}</span>
-                        <span class="luggage__what"><strong><label for="bags-{{ size.key }}">{{ size.label }}</label> <span class="muted">· {{ size.litres }} L</span></strong><span class="muted">{{ size.example }}</span></span>
-                        <input class="luggage__input" id="bags-{{ size.key }}" type="number" name="bags[{{ size.key }}]" min="0" max="{{ trunk.maxBags }}" value="{{ bags[size.key] ?? 0 }}" inputmode="numeric" data-luggage-target="input" data-size="{{ size.key }}" data-litres="{{ size.litres }}">
+                        <span class="luggage__icon">{{ ui.icon('suitcase', iconSizes[size.key]) }}</span>
+                        <span class="luggage__what"><strong><label for="bags-{{ size.key }}">{{ size.label }}</label></strong><span class="muted">{{ size.example }}</span><span class="luggage__why" data-luggage-why="{{ size.key }}">{% if size.litres > left %}Plus assez de place pour {{ size.indefinite }}{% endif %}</span></span>
+                        <input class="luggage__input" id="bags-{{ size.key }}" type="number" name="bags[{{ size.key }}]" min="0" max="{{ min(trunk.maxBags, trunk.free // size.litres) }}" value="{{ bags[size.key] ?? 0 }}" inputmode="numeric" data-luggage-target="input" data-size="{{ size.key }}" data-litres="{{ size.litres }}">
                     </div>
                 {% endfor %}
 
-                <div class="trunk-gauge">
-                    <p class="trunk-gauge__title">Coffre de la {{ trip.vehicle.model }}, {{ from.city.name }} → {{ to.city.name }}</p>
-                    {% set mine = trunk.mine %}
-                    <div class="trunk-gauge__bar" role="img" data-luggage-target="bar" aria-label="{{ trunk.others }} L pris par les autres voyageurs, {{ mine }} L pour vous, {{ trunk.free - mine }} L libres, sur {{ trunk.usable }} L comptés">
-                        <span class="trunk-gauge__others" data-luggage-target="others" style="width: {{ (trunk.others * 100 / trunk.usable)|round(1) }}%"></span>
-                        <span class="trunk-gauge__mine" data-luggage-target="mine" style="width: {{ (mine * 100 / trunk.usable)|round(1) }}%"></span>
-                    </div>
-                    <ul class="trunk-gauge__legend">
-                        <li><span class="tg-key tg-key--others"></span>Autres voyageurs <span data-luggage-target="othersText">{{ trunk.others }} L</span></li>
-                        <li><span class="tg-key tg-key--mine"></span>Vous <span data-luggage-target="mineText">{{ mine }} L</span></li>
-                        <li><span class="tg-key tg-key--free"></span>Libre <span data-luggage-target="freeText">{{ trunk.free - mine }} L</span></li>
-                    </ul>
-                    <p class="trunk-gauge__free">Libre : <span data-luggage-target="freeWords">{{ trunk_words(trunk.free - mine) }}</span></p>
-                    <p class="trunk-gauge__hint" data-luggage-target="hint" role="status"></p>
-                </div>
+                <p class="luggage__status" data-luggage-target="status" role="status">{{ luggage_status(trunk.free, bags, seatCount) }}</p>
 
-                <p class="luggage__note">{{ driverFirstName }} indique un coffre de {{ trip.trunkLitres }} L. Rihla en compte {{ trunk.usable }} L (80 %) : des valises rigides ne remplissent jamais tous les coins. Au plus 2 bagages comptés par voyageur.</p>
+                <p class="luggage__note">Au plus 2 bagages par voyageur.</p>
             {% endif %}
         </section>
         </div>

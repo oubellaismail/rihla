@@ -76,4 +76,14 @@ enum LuggageSize: string
             self::Large => $plural ? 'grandes valises' : 'grande valise',
         };
     }
+
+    /** « une grande valise » */
+    public function indefinite(): string
+    {
+        return match ($this) {
+            self::Cabin => 'un bagage cabine',
+            self::Medium => 'une valise moyenne',
+            self::Large => 'une grande valise',
+        };
+    }
 }

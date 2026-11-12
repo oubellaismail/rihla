@@ -19,7 +19,7 @@
 .luggage__lede { color: var(--soft); font-size: 16px; }
 .luggage__row { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 10px 0; border-top: 1px solid var(--line); }
 .luggage__row--included { border-top: 0; }
-.luggage__icon { flex-shrink: 0; width: 44px; height: 44px; border-radius: var(--radius-s); background: var(--sand-deep); color: var(--dusk); display: inline-flex; align-items: center; justify-content: center; }
+.luggage__icon { flex-shrink: 0; width: 44px; height: 44px; border-radius: var(--radius-s); background: var(--sand-deep); color: var(--dusk); display: inline-flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; }
 .luggage__what { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; font-size: 15px; line-height: 1.35; }
 .luggage__what strong { font-size: 17px; color: var(--ink); }
 .luggage__what label { font: inherit; color: inherit; }
@@ -36,21 +36,10 @@
 .luggage__none { background: var(--sand); border-radius: 14px; padding: 16px 18px; color: var(--asphalt); }
 .luggage__note { font-size: 14px; color: var(--muted); line-height: 1.5; }
 
-/* Trunk gauge: others / yours / free */
-.trunk-gauge { display: flex; flex-direction: column; gap: 10px; background: var(--sand); border-radius: 14px; padding: 16px 18px; }
-.trunk-gauge__title { font-weight: 700; color: var(--ink); font-size: 16px; }
-.trunk-gauge__bar { display: flex; height: 18px; border-radius: 9px; overflow: hidden; background: var(--white); box-shadow: inset 0 0 0 2px var(--dusk); }
-.trunk-gauge__others { background: #CFC4B4; transition: width .3s var(--ease); }
-.trunk-gauge__mine { background: var(--dusk); transition: width .3s var(--ease); }
-.trunk-gauge__legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--soft); }
-.trunk-gauge__legend li { display: inline-flex; align-items: center; gap: 6px; }
-.tg-key { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
-.tg-key--others { background: #CFC4B4; }
-.tg-key--mine { background: var(--dusk); }
-.tg-key--free { background: var(--white); box-shadow: inset 0 0 0 2px var(--dusk); }
-.trunk-gauge__free { font-weight: 600; color: var(--ink); }
-.trunk-gauge__hint { font-size: 14px; color: var(--sunset-text); min-height: 0; }
-.trunk-gauge__hint:empty { display: none; }
+/* Where the passenger stands, in one sentence. */
+.luggage__status { background: var(--sand); border-radius: 14px; padding: 16px 18px; font-size: 16px; color: var(--ink); }
+.luggage__why { font-size: 14px; color: var(--sunset-text); }
+.luggage__why:empty { display: none; }
 
 /* Driver's trunk checklist: a route down the left; at each stop the bags to hand back, then the
    bags to put in, as boxes to tick, then how full the trunk is until the next stop. Suitcase
@@ -90,7 +79,7 @@
 .trunk-state__litres { color: var(--muted); white-space: nowrap; }
 
 @media (prefers-reduced-motion: reduce) {
-    .trunk-gauge__others, .trunk-gauge__mine, .luggage__step { transition: none; }
+    .luggage__step { transition: none; }
     .luggage__step:active:not(:disabled) { transform: none; }
 }
 
@@ -100,10 +89,11 @@
     .luggage { padding: 20px 16px; }
     .luggage__title { font-size: 22px; }
     .luggage__row { gap: 10px; flex-wrap: wrap; }
-    .luggage__icon { display: none; }
-    .luggage__what { flex-basis: 100%; }
-    .luggage__row.has-stepper .luggage__what { flex-basis: calc(100% - 160px); }
-    .luggage__row--included .luggage__what { flex-basis: auto; }
+    .luggage__row.has-stepper .luggage__what { flex-basis: calc(100% - 54px); }
+    .luggage__row.has-stepper .luggage__step:has(+ .luggage__input) { margin-left: 54px; }
+    .luggage__row--included { flex-wrap: nowrap; }
+    .luggage__row--included .luggage__what { flex: 1 1 0; }
+    .luggage__row--included .badge { flex-shrink: 0; }
 }
 
 /* Driver's trip page: full width, map and stops on the left, the trunk plan on the right.
