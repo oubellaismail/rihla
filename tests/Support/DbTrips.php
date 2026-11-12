@@ -16,7 +16,7 @@ use Doctrine\ORM\EntityManagerInterface;
  * Persists trips and bookings for integration tests (test database only).
  *
  * Default trip: Agadir 08:00 → Essaouira 09:45 → Marrakech 12:00 → Casablanca 15:00
- * on 2026-11-12, leg prices 60 / 65 / 85 MAD.
+ * on 2026-11-12, leg prices 60 / 65 / 85 MAD, Dacia Logan with a 530 L trunk.
  */
 final class DbTrips
 {
@@ -48,10 +48,10 @@ final class DbTrips
     /**
      * @param list<array{0: string, 1: string, 2: ?int}>|null $stops [city, HH:MM, price to next]
      */
-    public function trip(int $seatsOffered = 3, ?User $driver = null, ?array $stops = null, string $day = TripBuilder::DAY, int $passengerSeats = 4): Trip
+    public function trip(int $seatsOffered = 3, ?User $driver = null, ?array $stops = null, string $day = TripBuilder::DAY, int $passengerSeats = 4, int $trunkLitres = 530): Trip
     {
         $driver ??= $this->user('Karim');
-        $vehicle = (new Vehicle())->setOwner($driver)->setModel('Dacia Logan')->setColor('bleue')->setPassengerSeats($passengerSeats);
+        $vehicle = (new Vehicle())->setOwner($driver)->setModel('Dacia Logan')->setColor('bleue')->setPassengerSeats($passengerSeats)->setTrunkLitres($trunkLitres);
         $this->em->persist($vehicle);
         $trip = (new Trip())->setDriver($driver)->setVehicle($vehicle)->setSeatsOffered($seatsOffered);
 
@@ -69,9 +69,13 @@ final class DbTrips
         return $trip;
     }
 
-    /** An existing booking created directly (bypassing the service), e.g. to fill a leg. */
-    /** @param list<string> $seatCodes seats held (empty: a booking made before seat choice existed) */
-    public function booking(Trip $trip, int $from, int $to, int $seats = 1, BookingStatus $status = BookingStatus::Confirmed, ?User $passenger = null, array $seatCodes = []): Booking
+    /**
+     * An existing booking created directly (bypassing the service), e.g. to fill a leg.
+     *
+     * @param list<string>       $seatCodes seats held (empty: a booking made before seat choice existed)
+     * @param array<string, int> $bags      counted bags by LuggageSize value, e.g. ['large' => 1]
+     */
+    public function booking(Trip $trip, int $from, int $to, int $seats = 1, BookingStatus $status = BookingStatus::Confirmed, ?User $passenger = null, array $seatCodes = [], array $bags = []): Booking
     {
         $booking = (new Booking())
             ->setTrip($trip)
@@ -84,6 +88,7 @@ final class DbTrips
         if ([] !== $seatCodes) {
             $booking->setSeatCodes($seatCodes);
         }
+        $booking->setBags($bags);
         $booking->setPayment((new Payment())->setAmount($booking->getTotalPrice()));
         $trip->getBookings()->add($booking);
         $this->em->persist($booking);
@@ -93,9 +98,9 @@ final class DbTrips
         return $booking;
     }
 
-    public function vehicle(User $owner, int $passengerSeats = 4): Vehicle
+    public function vehicle(User $owner, int $passengerSeats = 4, int $trunkLitres = 530): Vehicle
     {
-        $vehicle = (new Vehicle())->setOwner($owner)->setModel('Renault Kangoo')->setColor('grise')->setPassengerSeats($passengerSeats);
+        $vehicle = (new Vehicle())->setOwner($owner)->setModel('Renault Kangoo')->setColor('grise')->setPassengerSeats($passengerSeats)->setTrunkLitres($trunkLitres);
         $this->em->persist($vehicle);
 
         return $vehicle;
