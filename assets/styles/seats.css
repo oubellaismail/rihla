@@ -8,7 +8,8 @@
 .back-link svg { transform: scaleX(-1); }
 
 .seats-layout { display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start; }
-.seats-plan { flex: 999 1 560px; min-width: 0; padding: 32px; display: flex; flex-direction: column; gap: 28px; }
+.seats-main { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 28px; }
+.seats-plan { min-width: 0; padding: 32px; display: flex; flex-direction: column; gap: 28px; }
 .seats-aside { flex: 1 1 340px; min-width: 0; padding: 28px; display: flex; flex-direction: column; gap: 20px; box-shadow: var(--shadow-float); }
 
 .seats-vehicle { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
@@ -78,6 +79,10 @@
 .seats-eyebrow { font-size: 15px; font-weight: 600; color: var(--muted); }
 .seats-chosen__title { font: 700 26px var(--font-display); letter-spacing: -0.02em; color: var(--ink); }
 .seats-chosen__detail { font-size: 16px; color: var(--soft); }
+.seats-chosen--bags { padding-top: 16px; border-top: 1px solid var(--line); }
+.seats-chosen__bags { font-size: 17px; font-weight: 600; color: var(--ink); }
+/* The summary and the button stay in view while the passenger scrolls through the plan and the bags. */
+@media (min-width: 641px) { .seats-aside { position: sticky; top: 24px; } }
 .seats-auto { justify-content: flex-start; text-align: left; }
 .seats-total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 16px; border-top: 1px solid var(--line); color: var(--soft); }
 .seats-total__amount { font: 800 40px var(--font-display); color: var(--ink); font-variant-numeric: tabular-nums; }
@@ -91,7 +96,8 @@
 @media (max-width: 640px) {
     .seats-page { gap: 20px; padding-top: 12px; }
     .seats-layout { gap: 20px; }
-    .seats-plan { padding: 20px 16px; gap: 20px; flex-basis: 100%; }
+    .seats-main { flex-basis: 100%; gap: 20px; }
+    .seats-plan { padding: 20px 16px; gap: 20px; }
     .seats-aside { padding: 20px 16px; flex-basis: 100%; }
     .seats-stage { padding: 24px 12px; gap: 24px; }
     .seats-legend { max-width: none; }

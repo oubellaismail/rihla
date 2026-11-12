@@ -13,6 +13,7 @@ use App\Service\CancellationService;
 use App\Model\PassengerRow;
 use App\Repository\ReviewRepository;
 use App\Service\Geo\TripMapBuilder;
+use App\Service\Luggage\TrunkPlanBuilder;
 use App\Service\ReviewPolicy;
 use App\Service\TripSummaryBuilder;
 use App\Service\SeatAvailabilityCalculator;
@@ -59,7 +60,7 @@ final class DriverTripController extends AbstractController
     }
 
     #[Route('/driver/trips/{id<\d+>}', name: 'app_driver_trip_show', methods: ['GET'])]
-    public function show(Trip $trip, SeatAvailabilityCalculator $calculator, TripMapBuilder $mapBuilder, TripSummaryBuilder $summaryBuilder, ReviewPolicy $policy, ReviewRepository $reviews): Response
+    public function show(Trip $trip, SeatAvailabilityCalculator $calculator, TripMapBuilder $mapBuilder, TripSummaryBuilder $summaryBuilder, ReviewPolicy $policy, ReviewRepository $reviews, TrunkPlanBuilder $trunkPlan): Response
     {
         $this->denyAccessUnlessGranted(TripVoter::VIEW_PASSENGERS, $trip);
 
@@ -116,6 +117,7 @@ final class DriverTripController extends AbstractController
             'boarding' => $boarding,
             'cancelled' => $cancelled,
             'can_cancel' => $canCancel,
+            'trunk' => $trunkPlan->build($trip),
             'map' => $mapBuilder->build($trip, $this->currentUser()),
         ]);
     }

@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Enum\BookingStatus;
+use App\Enum\LuggageSize;
 use App\Repository\BookingRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -58,6 +59,15 @@ class Booking
     /** @var list<string>|null seats held, e.g. ["A1", "B3"]; null for bookings made before seat choice existed */
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $seatCodes = null;
+
+    #[ORM\Column(type: 'smallint', options: ['default' => 0])]
+    private int $cabinBags = 0;
+
+    #[ORM\Column(type: 'smallint', options: ['default' => 0])]
+    private int $mediumBags = 0;
+
+    #[ORM\Column(type: 'smallint', options: ['default' => 0])]
+    private int $largeBags = 0;
 
     #[ORM\OneToOne(mappedBy: 'booking')]
     private ?Payment $payment = null;
@@ -218,6 +228,74 @@ class Booking
     public function setSeatCodes(array $codes): static
     {
         $this->seatCodes = array_values($codes);
+
+        return $this;
+    }
+
+    /**
+     * @param array<string, int> $bags counts keyed by LuggageSize value; missing sizes count 0
+     */
+    public function setBags(array $bags): static
+    {
+        $this->cabinBags = $bags[LuggageSize::Cabin->value] ?? 0;
+        $this->mediumBags = $bags[LuggageSize::Medium->value] ?? 0;
+        $this->largeBags = $bags[LuggageSize::Large->value] ?? 0;
+
+        return $this;
+    }
+
+    /** @return array{cabin: int, medium: int, large: int} */
+    public function getBags(): array
+    {
+        return [
+            LuggageSize::Cabin->value => $this->cabinBags,
+            LuggageSize::Medium->value => $this->mediumBags,
+            LuggageSize::Large->value => $this->largeBags,
+        ];
+    }
+
+    public function getLuggageLitres(): int
+    {
+        return LuggageSize::litresOf($this->getBags());
+    }
+
+    public function getBagCount(): int
+    {
+        return array_sum($this->getBags());
+    }
+
+    public function getCabinBags(): int
+    {
+        return $this->cabinBags;
+    }
+
+    public function setCabinBags(int $cabinBags): static
+    {
+        $this->cabinBags = $cabinBags;
+
+        return $this;
+    }
+
+    public function getMediumBags(): int
+    {
+        return $this->mediumBags;
+    }
+
+    public function setMediumBags(int $mediumBags): static
+    {
+        $this->mediumBags = $mediumBags;
+
+        return $this;
+    }
+
+    public function getLargeBags(): int
+    {
+        return $this->largeBags;
+    }
+
+    public function setLargeBags(int $largeBags): static
+    {
+        $this->largeBags = $largeBags;
 
         return $this;
     }

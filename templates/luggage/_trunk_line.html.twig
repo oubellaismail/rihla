@@ -1,0 +1,3 @@
+{# What still fits in the trunk on a portion. Expects trunk = trunk_line(trip, from, to). #}
+{% import 'macros.html.twig' as ui %}
+<p class="trunk-line{{ trunk.full ? ' is-full' : '' }}">{{ ui.icon('suitcase', 18) }} <span>{% if trunk.full %}Coffre plein : petits sacs seulement{% else %}Coffre : {{ trunk.words }}{% endif %}</span></p>

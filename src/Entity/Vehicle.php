@@ -33,6 +33,11 @@ class Vehicle
     #[Assert\Range(min: 1, max: 6)]
     private int $passengerSeats = 4;
 
+    /** Trunk volume in litres. */
+    #[ORM\Column(type: 'smallint', options: ['default' => 400])]
+    #[Assert\Range(min: 50, max: 3000, notInRangeMessage: 'Le volume du coffre doit être entre 50 et 3000 litres.')]
+    private int $trunkLitres = 400;
+
     public function __toString(): string
     {
         return trim($this->model . ' ' . $this->color);
@@ -87,6 +92,18 @@ class Vehicle
     public function setPassengerSeats(int $passengerSeats): static
     {
         $this->passengerSeats = $passengerSeats;
+
+        return $this;
+    }
+
+    public function getTrunkLitres(): int
+    {
+        return $this->trunkLitres;
+    }
+
+    public function setTrunkLitres(int $trunkLitres): static
+    {
+        $this->trunkLitres = $trunkLitres;
 
         return $this;
     }

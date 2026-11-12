@@ -49,6 +49,9 @@ class BookingCrudController extends AbstractCrudController
         yield TextField::new('seatCodes', 'Sièges')
             ->onlyOnDetail()
             ->formatValue(static fn ($value, Booking $booking) => implode(', ', $booking->getSeatCodes()) ?: '—');
+        yield IntegerField::new('cabinBags', 'Bagages cabine');
+        yield IntegerField::new('mediumBags', 'Bagages moyens');
+        yield IntegerField::new('largeBags', 'Bagages grands');
         yield IntegerField::new('totalPrice', 'Prix total (MAD)');
         yield ChoiceField::new('status', 'Statut');
         yield DateTimeField::new('createdAt', 'Réservée le')->hideOnForm();

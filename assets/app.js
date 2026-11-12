@@ -6,3 +6,4 @@ import './styles/account.css';
 import './styles/map.css';
 import './styles/picker.css';
 import './styles/seats.css';
+import './styles/luggage.css';

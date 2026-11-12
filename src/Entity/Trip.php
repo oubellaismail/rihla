@@ -35,6 +35,11 @@ class Trip
     #[Assert\Range(min: 1, max: 6)]
     private int $seatsOffered = 3;
 
+    /** Trunk volume for this trip; null means the vehicle's own volume. The driver may lower it. */
+    #[ORM\Column(type: 'smallint', nullable: true)]
+    #[Assert\Range(min: 0, max: 3000)]
+    private ?int $trunkLitres = null;
+
     #[ORM\Column(length: 20, enumType: TripStatus::class)]
     private TripStatus $status = TripStatus::Published;
 
@@ -103,6 +108,18 @@ class Trip
     public function setVehicle(Vehicle $vehicle): static
     {
         $this->vehicle = $vehicle;
+
+        return $this;
+    }
+
+    public function getTrunkLitres(): int
+    {
+        return $this->trunkLitres ?? $this->vehicle?->getTrunkLitres() ?? 0;
+    }
+
+    public function setTrunkLitres(?int $trunkLitres): static
+    {
+        $this->trunkLitres = $trunkLitres;
 
         return $this;
     }

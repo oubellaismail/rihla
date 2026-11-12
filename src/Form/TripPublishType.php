@@ -10,6 +10,7 @@ use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Validator\Constraints\NotNull;
@@ -48,6 +49,17 @@ final class TripPublishType extends AbstractType
                 },
                 'choices' => ['1 place' => 1, '2 places' => 2, '3 places' => 3, '4 places' => 4, '5 places' => 5, '6 places' => 6],
                 'help' => 'Les places que vous mettez à disposition, sans compter la vôtre.',
+            ])
+            ->add('trunkLitres', IntegerType::class, [
+                'label' => 'Coffre pour ce trajet',
+                'required' => false,
+                'help' => 'Volume laissé aux voyageurs, en litres. Laissez vide pour tout le coffre du véhicule ; baissez-le si vous emportez vos propres affaires, 0 pour aucun bagage en soute.',
+                'attr' => ['min' => 0, 'max' => 3000, 'inputmode' => 'numeric', 'placeholder' => 'Tout le coffre'],
+                // Empty means « the vehicle's whole trunk »: the publisher fills it in.
+                'getter' => static fn (Trip $trip): ?int => null,
+                'setter' => static function (Trip $trip, ?int $litres): void {
+                    $trip->setTrunkLitres($litres);
+                },
             ])
             ->add('stops', CollectionType::class, [
                 'entry_type' => TripStopType::class,

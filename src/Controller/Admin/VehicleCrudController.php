@@ -31,5 +31,6 @@ class VehicleCrudController extends AbstractCrudController
         yield TextField::new('model', 'Modèle');
         yield TextField::new('color', 'Couleur');
         yield IntegerField::new('passengerSeats', 'Places passagers');
+        yield IntegerField::new('trunkLitres', 'Coffre (L)');
     }
 }

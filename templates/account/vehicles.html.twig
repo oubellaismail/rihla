@@ -19,7 +19,7 @@
                         <span class="vehicle-icon">{{ ui.icon('car', 24) }}</span>
                         <div>
                             <strong>{{ vehicle.model }}</strong>, {{ vehicle.color }}<br>
-                            <span class="small muted">{{ vehicle.passengerSeats }} place{{ vehicle.passengerSeats > 1 ? 's' : '' }} passagers</span>
+                            <span class="small muted">{{ vehicle.passengerSeats }} place{{ vehicle.passengerSeats > 1 ? 's' : '' }} passagers · coffre {{ vehicle.trunkLitres }} L</span>
                         </div>
                         {% if vehicle.id not in usedIds %}
                             <form method="post" action="{{ path('app_vehicle_delete', {id: vehicle.id}) }}" onsubmit="return confirm('Supprimer ce véhicule ?')">
@@ -42,6 +42,12 @@
                 <div class="form-row">
                     {{ form_row(form.color) }}
                     {{ form_row(form.passengerSeats) }}
+                </div>
+                <div class="field unit-field">
+                    {{ form_label(form.trunkLitres) }}
+                    <div class="unit-input">{{ form_widget(form.trunkLitres) }}<span class="unit-input__unit" aria-hidden="true">litres</span></div>
+                    {{ form_help(form.trunkLitres) }}
+                    {{ form_errors(form.trunkLitres) }}
                 </div>
                 <div>{{ form_widget(form.save) }}</div>
             {{ form_end(form) }}

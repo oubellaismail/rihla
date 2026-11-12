@@ -32,6 +32,7 @@ class TripCrudController extends AbstractCrudController
         yield AssociationField::new('driver', 'Conducteur');
         yield AssociationField::new('vehicle', 'Véhicule');
         yield IntegerField::new('seatsOffered', 'Places proposées');
+        yield IntegerField::new('trunkLitres', 'Coffre (L)')->setHelp('Laissez vide pour reprendre le volume du véhicule.');
         yield ChoiceField::new('status', 'Statut');
         yield AssociationField::new('stops', 'Arrêts')->hideOnForm();
         yield AssociationField::new('bookings', 'Réservations')->hideOnForm();

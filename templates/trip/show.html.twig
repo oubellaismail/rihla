@@ -72,6 +72,8 @@
                         <strong>{{ trip.driver.publicName }}</strong>
                         <span>{{ ui.rating(rating) }}</span>
                         <span class="muted small">{{ trip.vehicle.model }}, {{ trip.vehicle.color }}</span>
+                        <span class="muted small">{{ trip.seatsOffered }} {{ trip.seatsOffered > 1 ? 'places proposées' : 'place proposée' }} · coffre {{ trip.trunkLitres }} L</span>
+                        {% include 'luggage/_trunk_line.html.twig' with {trunk: trunk_line(trip, from, to)} only %}
                         <a href="{{ path('app_user_profile', {id: trip.driver.id}) }}">Voir son profil</a>
                     </div>
                 </div>

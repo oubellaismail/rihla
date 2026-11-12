@@ -33,6 +33,12 @@
                         {{ form_row(form.vehicle) }}
                         {{ form_row(form.seatsOffered) }}
                     </div>
+                    <div class="field unit-field">
+                        {{ form_label(form.trunkLitres) }}
+                        <div class="unit-input">{{ form_widget(form.trunkLitres) }}<span class="unit-input__unit" aria-hidden="true">litres</span></div>
+                        {{ form_help(form.trunkLitres) }}
+                        {{ form_errors(form.trunkLitres) }}
+                    </div>
                 </section>
             </div>
 

@@ -8,11 +8,14 @@ use App\Entity\Trip;
 use App\Entity\TripStop;
 use App\Entity\User;
 use App\Enum\BookingStatus;
+use App\Enum\LuggageSize;
 use App\Enum\PaymentStatus;
 use App\Enum\TripStatus;
 use App\Exception\BookingNotAllowedException;
 use App\Exception\NotEnoughSeatsException;
 use App\Exception\SeatTakenException;
+use App\Exception\TrunkFullException;
+use App\Service\Luggage\TrunkSpace;
 use App\Service\Seat\SeatLayout;
 use App\Service\Seat\SeatMap;
 use Doctrine\DBAL\LockMode;
@@ -35,6 +38,7 @@ final class BookingService
         private readonly ClockInterface $clock,
         private readonly SeatMap $seatMap,
         private readonly SeatLayout $seatLayout,
+        private readonly TrunkSpace $trunkSpace,
     ) {
     }
 
@@ -47,16 +51,18 @@ final class BookingService
      * @param callable|null $onLocked test seam: called once the lock is held, before seats are counted,
      *                                to let a test keep the lock for a while
      * @param list<string> $seatCodes seats chosen, one per place; empty to let Rihla pick them
+     * @param array<string, int> $bags bags declared, counts keyed by LuggageSize value; at most 2 per place
      *
      * @throws BookingNotAllowedException when the request breaks a rule (the message is meant for the user)
      * @throws SeatTakenException         when a chosen seat is held by someone else on that portion
      * @throws NotEnoughSeatsException    when the portion has fewer free seats than requested
+     * @throws TrunkFullException         when the bags no longer fit in the trunk on that portion
      */
-    public function book(Trip $trip, TripStop $from, TripStop $to, int $seats, User $passenger, ?callable $onLocked = null, array $seatCodes = []): Booking
+    public function book(Trip $trip, TripStop $from, TripStop $to, int $seats, User $passenger, ?callable $onLocked = null, array $seatCodes = [], array $bags = []): Booking
     {
-        $this->assertRequestIsValid($trip, $from, $to, $seats, $passenger, $seatCodes);
+        $this->assertRequestIsValid($trip, $from, $to, $seats, $passenger, $seatCodes, $bags);
 
-        return $this->em->wrapInTransaction(function () use ($trip, $from, $to, $seats, $passenger, $onLocked, $seatCodes): Booking {
+        return $this->em->wrapInTransaction(function () use ($trip, $from, $to, $seats, $passenger, $onLocked, $seatCodes, $bags): Booking {
             $this->em->lock($trip, LockMode::PESSIMISTIC_WRITE);
             // The status may have changed while we waited for the lock.
             $this->em->refresh($trip);
@@ -69,6 +75,7 @@ final class BookingService
 
             $bookings = $this->loadConfirmedBookings($trip);
             $seatCodes = $this->resolveSeats($trip, $from, $to, $seats, $seatCodes, $bookings);
+            $this->assertBagsFit($trip, $from, $to, $bags, $bookings);
 
             $totalPrice = $this->priceCalculator->portionPrice($trip, $from, $to, $seats);
             $booking = (new Booking())
@@ -78,6 +85,7 @@ final class BookingService
                 ->setToStop($to)
                 ->setSeats($seats)
                 ->setSeatCodes($seatCodes)
+                ->setBags($bags)
                 ->setTotalPrice($totalPrice)
                 ->setStatus(BookingStatus::Confirmed)
                 ->setCreatedAt($this->clock->now());
@@ -96,7 +104,7 @@ final class BookingService
     }
 
     /** Checks that need no database access, so they run before taking the lock. */
-    private function assertRequestIsValid(Trip $trip, TripStop $from, TripStop $to, int $seats, User $passenger, array $seatCodes): void
+    private function assertRequestIsValid(Trip $trip, TripStop $from, TripStop $to, int $seats, User $passenger, array $seatCodes, array $bags): void
     {
         if ($seats < self::MIN_SEATS || $seats > self::MAX_SEATS) {
             throw new BookingNotAllowedException(sprintf('Vous pouvez réserver entre %d et %d places.', self::MIN_SEATS, self::MAX_SEATS));
@@ -112,6 +120,37 @@ final class BookingService
         }
         if ([] !== $seatCodes && (count($seatCodes) !== $seats || count(array_unique($seatCodes)) !== count($seatCodes))) {
             throw new BookingNotAllowedException(1 === $seats ? 'Choisissez une place.' : sprintf('Choisissez %d places, une par voyageur.', $seats));
+        }
+        $this->assertBagsAreValid($bags, $seats);
+    }
+
+    /** @param array<string, mixed> $bags */
+    private function assertBagsAreValid(array $bags, int $seats): void
+    {
+        $sizes = array_map(static fn (LuggageSize $size) => $size->value, LuggageSize::cases());
+        foreach ($bags as $size => $count) {
+            if (!in_array($size, $sizes, true) || !is_int($count) || $count < 0) {
+                throw new BookingNotAllowedException('Ces bagages ne sont pas valides.');
+            }
+        }
+        if (array_sum($bags) > TrunkSpace::MAX_BAGS_PER_PLACE * $seats) {
+            throw new BookingNotAllowedException(sprintf('Au plus %d bagages comptés par voyageur.', TrunkSpace::MAX_BAGS_PER_PLACE));
+        }
+    }
+
+    /**
+     * @param array<string, int> $bags
+     * @param list<Booking>      $bookings
+     */
+    private function assertBagsFit(Trip $trip, TripStop $from, TripStop $to, array $bags, array $bookings): void
+    {
+        $needed = LuggageSize::litresOf($bags);
+        if (0 === $needed) {
+            return;
+        }
+        $free = $this->trunkSpace->freeLitres($trip, $from->getPosition(), $to->getPosition(), $bookings);
+        if ($needed > $free) {
+            throw new TrunkFullException($free);
         }
     }
 

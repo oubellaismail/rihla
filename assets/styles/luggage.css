@@ -1,0 +1,78 @@
+/* Luggage: vehicle and publish fields, seat page card, trunk lines, driver's trunk plan.
+   Palette, radii and spacing come from app.css. */
+
+/* Number field with a unit written after it */
+.unit-input { position: relative; display: flex; align-items: center; }
+.unit-input input { padding-right: 72px; }
+.unit-input__unit { position: absolute; right: 16px; color: var(--muted); font-weight: 600; pointer-events: none; }
+
+/* « Coffre : place pour 2 grandes valises » */
+.trunk-line { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 15px; font-weight: 600; color: var(--soft); }
+.trunk-line svg { flex-shrink: 0; color: var(--dusk); }
+.trunk-line.is-full, .trunk-line.is-full svg { color: var(--sunset-text); }
+
+/* Seat page card */
+.seats-alert { margin: 0; }
+.luggage { padding: 32px; display: flex; flex-direction: column; gap: 16px; }
+.luggage__head { display: flex; flex-direction: column; gap: 6px; }
+.luggage__title { font-size: 26px; }
+.luggage__lede { color: var(--soft); font-size: 16px; }
+.luggage__row { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 10px 0; border-top: 1px solid var(--line); }
+.luggage__row--included { border-top: 0; }
+.luggage__icon { flex-shrink: 0; width: 44px; height: 44px; border-radius: var(--radius-s); background: var(--sand-deep); color: var(--dusk); display: inline-flex; align-items: center; justify-content: center; }
+.luggage__what { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; font-size: 15px; line-height: 1.35; }
+.luggage__what strong { font-size: 17px; color: var(--ink); }
+.luggage__what label { font: inherit; color: inherit; }
+.luggage__input { width: 72px; min-height: 48px; padding: 8px 10px; border-radius: var(--radius-s); border: 1.5px solid #DCCFBE; background: var(--white); font: 600 18px var(--font-body); color: var(--ink); text-align: center; }
+.luggage__input:focus { outline: none; border-color: var(--dusk); box-shadow: 0 0 0 3px rgba(34, 48, 92, 0.15); }
+.luggage__input.is-stepper { width: 48px; padding: 8px 0; border: 0; background: transparent; -moz-appearance: textfield; appearance: textfield; }
+.luggage__input.is-stepper::-webkit-outer-spin-button, .luggage__input.is-stepper::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.luggage__row.has-stepper .luggage__input { order: 2; }
+.luggage__step { order: 1; width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; border: 2px solid var(--dusk); background: var(--white); color: var(--dusk); font: 700 22px/1 var(--font-body); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: background .2s ease, transform .2s var(--ease); }
+.luggage__step + .luggage__input + .luggage__step { order: 3; }
+.luggage__step:hover:not(:disabled) { background: var(--sand-deep); }
+.luggage__step:active:not(:disabled) { transform: scale(0.94); }
+.luggage__step:disabled { opacity: 0.35; cursor: not-allowed; }
+.luggage__none { background: var(--sand); border-radius: 14px; padding: 16px 18px; color: var(--asphalt); }
+.luggage__note { font-size: 14px; color: var(--muted); line-height: 1.5; }
+
+/* Trunk gauge: others / yours / free */
+.trunk-gauge { display: flex; flex-direction: column; gap: 10px; background: var(--sand); border-radius: 14px; padding: 16px 18px; }
+.trunk-gauge__title { font-weight: 700; color: var(--ink); font-size: 16px; }
+.trunk-gauge__bar { display: flex; height: 18px; border-radius: 9px; overflow: hidden; background: var(--white); box-shadow: inset 0 0 0 2px var(--dusk); }
+.trunk-gauge__others { background: #CFC4B4; transition: width .3s var(--ease); }
+.trunk-gauge__mine { background: var(--dusk); transition: width .3s var(--ease); }
+.trunk-gauge__legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--soft); }
+.trunk-gauge__legend li { display: inline-flex; align-items: center; gap: 6px; }
+.tg-key { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
+.tg-key--others { background: #CFC4B4; }
+.tg-key--mine { background: var(--dusk); }
+.tg-key--free { background: var(--white); box-shadow: inset 0 0 0 2px var(--dusk); }
+.trunk-gauge__free { font-weight: 600; color: var(--ink); }
+.trunk-gauge__hint { font-size: 14px; color: var(--sunset-text); min-height: 0; }
+.trunk-gauge__hint:empty { display: none; }
+
+/* Driver's trunk plan */
+.trunk-stops { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.trunk-stop { display: flex; flex-direction: column; gap: 6px; padding: 14px 0; border-top: 1px solid var(--line); }
+.trunk-stop:first-child { border-top: 0; padding-top: 0; }
+.trunk-stop__head { display: flex; align-items: baseline; gap: 10px; }
+.trunk-stop__line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.trunk-stop__verb { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--dusk); }
+.trunk-stop__verb svg { align-self: center; }
+.trunk-stop__gauge { margin: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+    .trunk-gauge__others, .trunk-gauge__mine, .luggage__step { transition: none; }
+    .luggage__step:active:not(:disabled) { transform: none; }
+}
+
+@media (max-width: 640px) {
+    .luggage { padding: 20px 16px; }
+    .luggage__title { font-size: 22px; }
+    .luggage__row { gap: 10px; flex-wrap: wrap; }
+    .luggage__icon { display: none; }
+    .luggage__what { flex-basis: 100%; }
+    .luggage__row.has-stepper .luggage__what { flex-basis: calc(100% - 160px); }
+    .luggage__row--included .luggage__what { flex-basis: auto; }
+}

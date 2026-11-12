@@ -45,7 +45,8 @@ The full guide (configuration, tests, reset, troubleshooting) is in [`INSTALL.md
 | 3 — Product | Accounts, search, booking, driver space, profiles | Done (149 tests in total) |
 | 4 — External API | Nominatim and OSRM: suggested price and map | Done |
 | 5 — Delivery | Docker, `INSTALL.md` | Done |
-| Bonus — Seat choice | Choose your seat on a plan of the car, seats follow the legs | Done (298 tests in total) |
+| Bonus — Seat choice | Choose your seat on a plan of the car, seats follow the legs | Done |
+| Bonus — Luggage | Trunk volume in litres, bags declared at booking and checked leg by leg | Done (343 tests in total) |
 
 ## Tests
 

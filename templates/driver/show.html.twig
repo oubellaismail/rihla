@@ -49,6 +49,31 @@
         </ol>
     </section>
 
+    <section class="card stack trunk-plan" style="margin-top: 28px">
+        <h2 class="section-title">Le coffre, arrêt par arrêt</h2>
+        <p class="muted">{{ trunk.usable }} L comptés sur les {{ trip.trunkLitres }} L de la {{ trip.vehicle.model }}. Chargez en dernier ce qui sort en premier.</p>
+        {% if not trunk.hasBags %}
+            <p class="muted">Aucun bagage déclaré pour l'instant.</p>
+        {% else %}
+            <ol class="trunk-stops">
+                {% for entry in trunk.stops %}
+                    <li class="trunk-stop">
+                        <div class="trunk-stop__head"><strong>{{ entry.stop.city.name }}</strong> <time class="muted">{{ entry.stop.departureAt|date('H:i') }}</time></div>
+                        {% if entry.load is not empty %}
+                            <p class="trunk-stop__line"><span class="trunk-stop__verb">{{ ui.icon('plus', 16) }} Charger</span> {% for l in entry.load %}{{ l.name }} : {{ l.bags }}{{ loop.last ? '' : ' · ' }}{% endfor %}</p>
+                        {% endif %}
+                        {% if entry.unload is not empty %}
+                            <p class="trunk-stop__line"><span class="trunk-stop__verb">{{ ui.icon('arrow', 16) }} Sortir</span> {{ entry.unload|seat_list }}</p>
+                        {% endif %}
+                        {% if entry.next %}
+                            <p class="trunk-stop__gauge small muted">Jusqu'à {{ entry.next.city }} : <strong>{{ entry.next.litres }} L sur {{ trunk.usable }} L</strong> · {{ entry.next.bags }} {{ entry.next.bags > 1 ? 'bagages' : 'bagage' }}</p>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ol>
+        {% endif %}
+    </section>
+
     {% if cancelled is not empty %}
     <section class="stack booking-past" style="margin-top: 28px">
         <h2 class="section-title">Réservations annulées</h2>

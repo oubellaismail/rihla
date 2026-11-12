@@ -91,6 +91,7 @@
             <dl class="facts">
                 {% set seatCodes = seats_of(booking) %}
                 <div><dt>{{ seatCodes|length > 1 ? 'Places' : 'Place' }}</dt> <dd>{{ seatCodes|seat_list }}</dd></div>
+                <div><dt>Bagages</dt><dd>{{ booking.bags|describe_bags }}</dd></div>
                 <div><dt>Total</dt><dd class="price-big">{{ booking.totalPrice }} MAD</dd></div>
                 {% if payment %}
                 <div><dt>Paiement</dt><dd>{{ payment.status.label }}</dd></div>

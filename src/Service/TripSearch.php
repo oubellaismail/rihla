@@ -132,16 +132,22 @@ final class TripSearch
      */
     private function loadBookings(array $trips): array
     {
-        /** @var list<Booking> $bookings */
-        $bookings = $this->em->createQuery(
-            'SELECT b, f, t FROM '.Booking::class.' b JOIN b.fromStop f JOIN b.toStop t WHERE b.trip IN (:trips)'
+        // Fetch-joining the collection also initialises Trip::getBookings(), so later reads
+        // (trunk space on the result cards) cost no extra query per trip.
+        /** @var list<Trip> $loaded */
+        $loaded = $this->em->createQuery(
+            'SELECT trip, b, f, t FROM '.Trip::class.' trip
+             LEFT JOIN trip.bookings b LEFT JOIN b.fromStop f LEFT JOIN b.toStop t
+             WHERE trip IN (:trips)'
         )
             ->setParameter('trips', $trips)
             ->getResult();
 
         $byTrip = [];
-        foreach ($bookings as $booking) {
-            $byTrip[$booking->getTrip()->getId()][] = $booking;
+        foreach ($loaded as $trip) {
+            foreach ($trip->getBookings() as $booking) {
+                $byTrip[$trip->getId()][] = $booking;
+            }
         }
 
         return $byTrip;

@@ -20,12 +20,17 @@
         <p class="seats-lede">{{ from.city.name }} {{ from.departureAt|date('H:i') }} vers {{ to.city.name }} {{ to.departureAt|date('H:i') }}, {{ from.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}, avec {{ trip.driver.publicName }}{{ trip.driver.publicName ends with '.' ? '' : '.' }}</p>
     </header>
 
-    <form class="seats-layout" method="post" action="/trips/{{ trip.id }}/book" data-controller="seat-picker" data-seat-picker-count-value="{{ seatCount }}" >
+    {% if alert %}
+        <div class="flash flash--error seats-alert" role="alert"><strong>Le coffre s'est rempli entre-temps.</strong> {{ alert.message }}</div>
+    {% endif %}
+
+    <form class="seats-layout" method="post" action="/trips/{{ trip.id }}/book" data-controller="seat-picker luggage" data-seat-picker-count-value="{{ seatCount }}" data-luggage-usable-value="{{ trunk.usable }}" data-luggage-free-value="{{ trunk.free }}" data-luggage-max-value="{{ trunk.maxBags }}" data-luggage-sizes-value="{{ luggage_sizes()|json_encode }}">
         <input type="hidden" name="_token" value="{{ csrf_token('book-trip-' ~ trip.id) }}">
         <input type="hidden" name="from" value="{{ from.position }}">
         <input type="hidden" name="to" value="{{ to.position }}">
         <input type="hidden" name="seats" value="{{ seatCount }}">
 
+        <div class="seats-main">
         <section class="seats-plan card">
             <div class="seats-vehicle">
                 <div>
@@ -85,7 +90,7 @@
                         {% set state = states[seat.code] %}
                         {% set spot = spots[seat.code] %}
                         <label class="seat" data-seat="{{ seat.code }}" data-state="{{ state.value }}" style="--x: {{ spot[0] }}; --y: {{ spot[1] }}; --w: {{ spot[2] }}; --h: {{ spot[3] }}">
-                            <input class="seat__input" type="checkbox" name="seatCodes[]" value="{{ seat.code }}" data-action="change->seat-picker#toggle" data-seat-picker-target="seat" data-position="{{ seat.position }}" data-freed="{{ state.value == 'freed' ? '1' : '0' }}"{% if not state.isOpen %} disabled{% endif %}>
+                            <input class="seat__input" type="checkbox" name="seatCodes[]" value="{{ seat.code }}" data-action="change->seat-picker#toggle" data-seat-picker-target="seat" data-position="{{ seat.position }}" data-freed="{{ state.value == 'freed' ? '1' : '0' }}"{% if not state.isOpen %} disabled{% elseif seat.code in ticked %} checked{% endif %}>
                             <span class="seat__code" aria-hidden="true">{{ seat.code }}</span>
                             <span class="seat__sub" aria-hidden="true">{% if state.value == 'taken' %}occupée{% elseif state.value == 'not_offered' %}non proposée{% else %}<span class="seat__free">libre</span><span class="seat__picked">choisie</span>{% endif %}</span>
                             <span class="visually-hidden">{{ seat.code }}, {{ seat.position }}, {{ state.label }}</span>
@@ -109,19 +114,70 @@
             </div>
         </section>
 
+        <section class="luggage card" aria-labelledby="luggage-title">
+            <div class="luggage__head">
+                <h2 id="luggage-title" class="luggage__title">Vos bagages</h2>
+                <p class="luggage__lede">Dites ce que vous emportez en soute, Rihla vérifie qu'il reste de la place sur votre portion.</p>
+            </div>
+
+            <div class="luggage__row luggage__row--included">
+                <span class="luggage__icon">{{ ui.icon('suitcase', 22) }}</span>
+                <span class="luggage__what"><strong>Sac à main, petit sac à dos</strong><span class="muted">Toujours accepté, il voyage avec vous.</span></span>
+                <span class="badge badge--ok">Inclus</span>
+            </div>
+
+            {% if trunk.usable == 0 %}
+                <p class="luggage__none">Pas de place dans le coffre sur ce trajet : seuls les sacs à main et petits sacs à dos sont acceptés.</p>
+            {% else %}
+                {% for size in luggage_sizes() %}
+                    <div class="luggage__row" data-luggage-size="{{ size.key }}">
+                        <span class="luggage__icon">{{ ui.icon('suitcase', 22) }}</span>
+                        <span class="luggage__what"><strong><label for="bags-{{ size.key }}">{{ size.label }}</label> <span class="muted">· {{ size.litres }} L</span></strong><span class="muted">{{ size.example }}</span></span>
+                        <input class="luggage__input" id="bags-{{ size.key }}" type="number" name="bags[{{ size.key }}]" min="0" max="{{ trunk.maxBags }}" value="{{ bags[size.key] ?? 0 }}" inputmode="numeric" data-luggage-target="input" data-size="{{ size.key }}" data-litres="{{ size.litres }}">
+                    </div>
+                {% endfor %}
+
+                <div class="trunk-gauge">
+                    <p class="trunk-gauge__title">Coffre de la {{ trip.vehicle.model }}, {{ from.city.name }} → {{ to.city.name }}</p>
+                    {% set mine = trunk.mine %}
+                    <div class="trunk-gauge__bar" role="img" data-luggage-target="bar" aria-label="{{ trunk.others }} L pris par les autres voyageurs, {{ mine }} L pour vous, {{ trunk.free - mine }} L libres, sur {{ trunk.usable }} L comptés">
+                        <span class="trunk-gauge__others" data-luggage-target="others" style="width: {{ (trunk.others * 100 / trunk.usable)|round(1) }}%"></span>
+                        <span class="trunk-gauge__mine" data-luggage-target="mine" style="width: {{ (mine * 100 / trunk.usable)|round(1) }}%"></span>
+                    </div>
+                    <ul class="trunk-gauge__legend">
+                        <li><span class="tg-key tg-key--others"></span>Autres voyageurs <span data-luggage-target="othersText">{{ trunk.others }} L</span></li>
+                        <li><span class="tg-key tg-key--mine"></span>Vous <span data-luggage-target="mineText">{{ mine }} L</span></li>
+                        <li><span class="tg-key tg-key--free"></span>Libre <span data-luggage-target="freeText">{{ trunk.free - mine }} L</span></li>
+                    </ul>
+                    <p class="trunk-gauge__free">Libre : <span data-luggage-target="freeWords">{{ trunk_words(trunk.free - mine) }}</span></p>
+                    <p class="trunk-gauge__hint" data-luggage-target="hint" role="status"></p>
+                </div>
+
+                <p class="luggage__note">{{ driverFirstName }} indique un coffre de {{ trip.trunkLitres }} L. Rihla en compte {{ trunk.usable }} L (80 %) : des valises rigides ne remplissent jamais tous les coins. Au plus 2 bagages comptés par voyageur.</p>
+            {% endif %}
+        </section>
+        </div>
+
         <aside class="seats-aside card">
             <div class="seats-chosen" aria-live="polite" aria-atomic="true">
                 <span class="seats-eyebrow">{{ seatCount > 1 ? 'Vos places' : 'Votre place' }}</span>
                 <strong class="seats-chosen__title" data-seat-picker-target="title">Aucune place choisie</strong>
                 <span class="seats-chosen__detail" data-seat-picker-target="detail">Choisissez sur le plan, ou laissez Rihla choisir.</span>
             </div>
+            {% if trunk.usable > 0 %}
+            <div class="seats-chosen seats-chosen--bags" aria-live="polite" aria-atomic="true">
+                <span class="seats-eyebrow">Vos bagages</span>
+                <strong class="seats-chosen__bags" data-luggage-target="summary">{{ bags|describe_bags }}</strong>
+                <span class="seats-chosen__detail">Plus un sac à main ou un petit sac à dos.</span>
+            </div>
+            {% endif %}
             <button class="btn btn--outline seats-auto" type="submit" name="auto" value="1">Pas de préférence, choisir pour moi</button>
             <div class="seats-total">
                 <span>Total</span>
                 <span class="seats-total__amount">{{ total }} MAD</span>
             </div>
             <button class="btn btn--primary btn--block" type="submit" data-seat-picker-target="submit">Réserver</button>
-            <p class="seats-note">Le choix de place est gratuit.</p>
+            <p class="seats-note">Bagages et choix de place gratuits. Annulation gratuite jusqu'à 24 h avant le départ.</p>
         </aside>
     </form>
 </div>

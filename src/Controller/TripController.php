@@ -5,16 +5,19 @@ namespace App\Controller;
 use App\Entity\Trip;
 use App\Entity\TripStop;
 use App\Entity\User;
+use App\Enum\LuggageSize;
 use App\Enum\SeatState;
 use App\Enum\TripStatus;
 use App\Model\Seat;
 use App\Exception\BookingNotAllowedException;
 use App\Exception\NotEnoughSeatsException;
 use App\Exception\SeatTakenException;
+use App\Exception\TrunkFullException;
 use App\Repository\CityRepository;
 use App\Repository\ReviewRepository;
 use App\Service\BookingService;
 use App\Service\Geo\TripMapBuilder;
+use App\Service\Luggage\TrunkSpace;
 use App\Service\PriceCalculator;
 use App\Service\Seat\SeatLayout;
 use App\Service\Seat\SeatMap;
@@ -22,6 +25,7 @@ use App\Service\SeatAvailabilityCalculator;
 use App\Service\TripSearch;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\HttpFoundation\InputBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -29,6 +33,14 @@ use Symfony\Component\Routing\Attribute\Route;
 final class TripController extends AbstractController
 {
     private const MAX_SEATS = 4;
+
+    public function __construct(
+        private readonly SeatMap $seatMap,
+        private readonly SeatLayout $layout,
+        private readonly PriceCalculator $priceCalculator,
+        private readonly TrunkSpace $trunkSpace,
+    ) {
+    }
 
     #[Route('/trips', name: 'app_trip_search', methods: ['GET'])]
     public function search(
@@ -117,8 +129,8 @@ final class TripController extends AbstractController
             'legSeats' => $legSeats,
             'freeSeats' => $freeSeats,
             'maxSeats' => min(self::MAX_SEATS, $freeSeats),
-            'price' => $priceCalculator->portionPrice($trip, $from, $to, 1),
-            'tripPrice' => $priceCalculator->portionPrice($trip, $trip->getFirstStop(), $trip->getLastStop(), 1),
+            'price' => $this->priceCalculator->portionPrice($trip, $from, $to, 1),
+            'tripPrice' => $this->priceCalculator->portionPrice($trip, $trip->getFirstStop(), $trip->getLastStop(), 1),
             'isDriver' => $this->getUser() === $driver,
             'isOpen' => TripStatus::Published === $trip->getStatus() && !$departed,
             'departed' => $departed,
@@ -132,9 +144,6 @@ final class TripController extends AbstractController
         Trip $trip,
         Request $request,
         ClockInterface $clock,
-        SeatMap $seatMap,
-        SeatLayout $layout,
-        PriceCalculator $priceCalculator,
     ): Response {
         $fromPosition = $request->query->getInt('from', -1);
         $toPosition = $request->query->getInt('to', -1);
@@ -156,7 +165,7 @@ final class TripController extends AbstractController
             return $back;
         }
 
-        $states = $seatMap->states($trip, $fromPosition, $toPosition);
+        $states = $this->seatMap->states($trip, $fromPosition, $toPosition);
         $openCount = count(array_filter($states, static fn (SeatState $state): bool => $state->isOpen()));
         if ($openCount < $seats) {
             $this->addFlash('error', (new NotEnoughSeatsException($seats, $openCount))->getMessage());
@@ -164,23 +173,11 @@ final class TripController extends AbstractController
             return $back;
         }
 
-        $passengerSeats = $trip->getVehicle()->getPassengerSeats();
-
-        return $this->render('trip/seats.html.twig', [
-            'trip' => $trip,
-            'from' => $from,
-            'to' => $to,
-            'seatCount' => $seats,
-            'states' => $states,
-            'plan' => $layout->seats($passengerSeats),
-            'kind' => $layout->kind($passengerSeats),
-            'offered' => count($layout->offeredCodes($trip)),
-            'total' => $priceCalculator->portionPrice($trip, $from, $to, $seats),
-        ]);
+        return $this->renderSeatPage($trip, $from, $to, $seats, $states, $this->readBags($request->query));
     }
 
     #[Route('/trips/{id<\d+>}/book', name: 'app_trip_book', methods: ['POST'])]
-    public function book(Trip $trip, Request $request, BookingService $bookingService, SeatMap $seatMap, SeatLayout $layout, PriceCalculator $priceCalculator): Response
+    public function book(Trip $trip, Request $request, BookingService $bookingService): Response
     {
         $fromPosition = $request->request->getInt('from', -1);
         $toPosition = $request->request->getInt('to', -1);
@@ -205,15 +202,26 @@ final class TripController extends AbstractController
             ? []
             : array_values(array_filter($request->request->all('seatCodes'), 'is_string'));
 
+        $bags = $this->readBags($request->request);
+
         /** @var User $user */
         $user = $this->getUser();
 
         try {
-            $booking = $bookingService->book($trip, $from, $to, $seats, $user, null, $seatCodes);
+            $booking = $bookingService->book($trip, $from, $to, $seats, $user, null, $seatCodes, $bags);
+        } catch (TrunkFullException $e) {
+            return $this->renderSeatPage(
+                $trip, $from, $to, $seats,
+                $this->seatMap->states($trip, $fromPosition, $toPosition),
+                $bags,
+                $seatCodes,
+                $e,
+                Response::HTTP_CONFLICT,
+            );
         } catch (SeatTakenException $e) {
-            $suggestion = $seatMap->autoPick($trip, $fromPosition, $toPosition, $seats);
+            $suggestion = $this->seatMap->autoPick($trip, $fromPosition, $toPosition, $seats);
             $suggested = count($suggestion) === $seats
-                ? array_values(array_filter($layout->seats($trip->getVehicle()->getPassengerSeats()), static fn (Seat $seat): bool => in_array($seat->code, $suggestion, true)))
+                ? array_values(array_filter($this->layout->seats($trip->getVehicle()->getPassengerSeats()), static fn (Seat $seat): bool => in_array($seat->code, $suggestion, true)))
                 : [];
 
             return $this->render('trip/seat_taken.html.twig', [
@@ -223,7 +231,7 @@ final class TripController extends AbstractController
                 'seatCount' => $seats,
                 'headline' => rtrim($e->getMessage(), '.'),
                 'suggested' => $suggested,
-                'total' => $priceCalculator->portionPrice($trip, $from, $to, $seats),
+                'total' => $this->priceCalculator->portionPrice($trip, $from, $to, $seats),
             ], new Response(status: Response::HTTP_CONFLICT));
         } catch (NotEnoughSeatsException|BookingNotAllowedException $e) {
             $this->addFlash('error', $e->getMessage());
@@ -238,6 +246,61 @@ final class TripController extends AbstractController
         $this->addFlash('success', 'Réservation confirmée.');
 
         return $this->redirectToRoute('app_booking_show', ['id' => $booking->getId()]);
+    }
+
+    /**
+     * Bag counts typed on the seat page: only the known sizes, missing or non-numeric values count 0.
+     *
+     * @return array<string, int>
+     */
+    private function readBags(InputBag $input): array
+    {
+        $raw = $input->all()['bags'] ?? [];
+        $raw = \is_array($raw) ? $raw : [];
+
+        $bags = [];
+        foreach (LuggageSize::cases() as $size) {
+            $value = $raw[$size->value] ?? 0;
+            $bags[$size->value] = (\is_string($value) || \is_int($value)) && is_numeric($value) ? max(0, (int) $value) : 0;
+        }
+
+        return $bags;
+    }
+
+    /**
+     * The seat page, for the first visit and for the « trunk filled meanwhile » answer.
+     *
+     * @param array<string, SeatState> $states
+     * @param array<string, int>       $bags
+     * @param list<string>             $ticked seats to keep chosen
+     */
+    private function renderSeatPage(Trip $trip, TripStop $from, TripStop $to, int $seats, array $states, array $bags, array $ticked = [], ?TrunkFullException $trunkFull = null, int $status = Response::HTTP_OK): Response
+    {
+        $passengerSeats = $trip->getVehicle()->getPassengerSeats();
+        $usable = $this->trunkSpace->usableLitres($trip);
+        $free = $trunkFull?->getFreeLitres() ?? $this->trunkSpace->freeLitres($trip, $from->getPosition(), $to->getPosition());
+
+        return $this->render('trip/seats.html.twig', [
+            'trip' => $trip,
+            'from' => $from,
+            'to' => $to,
+            'seatCount' => $seats,
+            'states' => $states,
+            'plan' => $this->layout->seats($passengerSeats),
+            'kind' => $this->layout->kind($passengerSeats),
+            'offered' => count($this->layout->offeredCodes($trip)),
+            'total' => $this->priceCalculator->portionPrice($trip, $from, $to, $seats),
+            'bags' => $bags,
+            'ticked' => $ticked,
+            'alert' => $trunkFull,
+            'trunk' => [
+                'usable' => $usable,
+                'free' => $free,
+                'others' => max(0, $usable - $free),
+                'mine' => min(LuggageSize::litresOf($bags), $free),
+                'maxBags' => $seats * TrunkSpace::MAX_BAGS_PER_PLACE,
+            ],
+        ], new Response(status: $status));
     }
 
     private function stopAt(Trip $trip, int $position): ?TripStop

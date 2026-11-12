@@ -36,6 +36,7 @@ final class TripPublisher
         $this->assertVehicleBelongsTo($trip, $driver);
         $this->assertHasEnoughStops($trip);
         $this->assertSeatsFitInVehicle($trip);
+        $this->assertTrunkFitsInVehicle($trip);
         $this->assertFirstDepartureIsInTheFuture($trip);
         $this->assertStopsAreConsistent($trip);
         $this->assertLegsArePriced($trip);
@@ -81,6 +82,20 @@ final class TripPublisher
                     : sprintf('Votre véhicule n\'a que %d places passagers.', $max)
             );
         }
+    }
+
+    /** The trip freezes its own trunk volume: the vehicle's when left empty, never more than the vehicle's. */
+    private function assertTrunkFitsInVehicle(Trip $trip): void
+    {
+        $max = $trip->getVehicle()->getTrunkLitres();
+        $litres = $trip->getTrunkLitres();
+        if ($litres < 0) {
+            throw new TripNotPublishableException('Le volume du coffre ne peut pas être négatif.');
+        }
+        if ($litres > $max) {
+            throw new TripNotPublishableException(sprintf('Le coffre de votre véhicule ne fait que %d L.', $max));
+        }
+        $trip->setTrunkLitres($litres);
     }
 
     private function assertFirstDepartureIsInTheFuture(Trip $trip): void

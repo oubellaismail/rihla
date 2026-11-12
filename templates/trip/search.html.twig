@@ -45,6 +45,7 @@
                         <span><strong class="num">{{ match.from.departureAt|date('H:i') }}</strong> {{ match.from.city.name }}</span>
                         <span><strong class="num">{{ match.to.departureAt|date('H:i') }}</strong> {{ match.to.city.name }}</span>
                         {% if partial %}<span class="small muted">trajet complet {{ trip.firstStop.city.name }} → {{ trip.lastStop.city.name }}</span>{% endif %}
+                        {% include 'luggage/_trunk_line.html.twig' with {trunk: trunk_line(trip, match.from, match.to)} only %}
                     </div>
                     <div class="row">
                         {{ ui.avatar(trip.driver) }}
