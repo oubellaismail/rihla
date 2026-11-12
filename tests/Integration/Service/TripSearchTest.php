@@ -171,6 +171,23 @@ final class TripSearchTest extends KernelTestCase
         self::assertSame(60, $upcoming[1]->cheapestLegPrice, 'shown as « dès 60 MAD »');
     }
 
+    public function testUpcomingIsFullOnlyWhenNoLegHasASeat(): void
+    {
+        $partly = $this->db->trip();
+        $this->db->booking($partly, 0, 1, 3); // only Agadir → Essaouira is full
+        $full = $this->db->trip(day: '2026-11-13');
+        $this->db->booking($full, 0, 3, 3);
+
+        [$first, $second] = static::getContainer()->get(TripSearch::class)->upcoming(10);
+
+        self::assertSame($partly, $first->trip);
+        self::assertSame(0, $first->freeSeats, 'no seat for the whole trip');
+        self::assertFalse($first->full, 'but Essaouira → Casablanca still has seats');
+        self::assertTrue($first->partlyFree);
+        self::assertTrue($second->full);
+        self::assertFalse($second->partlyFree);
+    }
+
     public function testUpcomingStopsAtTheLimit(): void
     {
         foreach (['2026-11-11', '2026-11-12', '2026-11-13'] as $day) {

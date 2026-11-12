@@ -3,30 +3,29 @@
 namespace App\Tests\Unit\Config;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * The Symfony debug toolbar is off by default in dev (docs/UX-REVIEW.md, fix 3): the jury runs
- * the dev environment, and the toolbar covers the bottom of every phone page, where the booking
- * bars sit. A developer turns it on with PROFILER_TOOLBAR=1 in .env.local; /_profiler stays.
+ * The Symfony debug toolbar is off in dev (docs/UX-REVIEW.md, fix 3): the jury runs the dev
+ * environment, and the toolbar covers the bottom of every phone page, where the booking bars sit.
+ * It cannot follow an environment variable: the bundle decides at container compile time.
+ * A developer sets it to true in config/packages/web_profiler.yaml; /_profiler stays available.
  */
 final class DevToolbarTest extends TestCase
 {
     private const ROOT = __DIR__.'/../../..';
 
-    public function testTheToolbarFollowsAnEnvironmentVariable(): void
+    public function testTheToolbarIsOffInDev(): void
     {
         $config = Yaml::parseFile(self::ROOT.'/config/packages/web_profiler.yaml');
 
-        self::assertSame('%env(bool:PROFILER_TOOLBAR)%', $config['when@dev']['web_profiler']['toolbar']);
+        self::assertFalse($config['when@dev']['web_profiler']['toolbar']);
     }
 
-    public function testTheVariableIsOffByDefault(): void
+    public function testTheProfilerItselfStaysOnInDev(): void
     {
-        $values = (new Dotenv())->parse((string) file_get_contents(self::ROOT.'/.env'));
+        $config = Yaml::parseFile(self::ROOT.'/config/packages/web_profiler.yaml');
 
-        self::assertArrayHasKey('PROFILER_TOOLBAR', $values);
-        self::assertSame('0', $values['PROFILER_TOOLBAR']);
+        self::assertIsArray($config['when@dev']['framework']['profiler'] ?? null, 'the profiler still collects, /_profiler still works');
     }
 }

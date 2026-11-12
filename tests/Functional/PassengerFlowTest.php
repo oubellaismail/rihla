@@ -245,7 +245,13 @@ final class PassengerFlowTest extends WebFlowTestCase
             'registration[plainPassword]' => 'un-mot-de-passe-solide',
         ]));
 
-        self::assertResponseRedirects($seats, null, 'the new passenger lands on the seat page they asked for');
+        // Symfony saves the target with its query string sorted: compare the path and the parameters.
+        self::assertResponseRedirects();
+        $location = (string) $this->client->getResponse()->headers->get('Location');
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+        ksort($query);
+        self::assertSame(parse_url($seats, PHP_URL_PATH), parse_url($location, PHP_URL_PATH), 'the new passenger lands on the seat page they asked for');
+        self::assertSame(['from' => '1', 'seats' => '1', 'to' => '2'], $query, 'with the same portion and seat count');
     }
 
     public function testSigningUpWithoutABookingInProgressGoesHome(): void
