@@ -155,3 +155,13 @@ Design: [`docs/diagrams/luggage.drawio`](diagrams/luggage.drawio), mockup boards
 - **Checked inside the same lock, after the seats.** The seat rules come first; then at most 2 counted bags per place, then the volume. If the trunk filled meanwhile, `TrunkFullException` refuses the booking and the seat page comes back (409) with the choices kept. A booking without bags is always possible.
 - **Free.** Bags never change the price.
 - **Shown where it helps a decision:** search results and the trip page (« Coffre : place pour 2 grandes valises »), the booking page, and the driver's page, stop by stop (what to load, what to unload).
+
+## 2026-11-12 — The driver's trunk as a checklist
+
+Tried on a local branch with the frontend-design skill, then chosen from three ideas (checklist per stop, passenger timeline, trunk drawing).
+
+- **A checklist, not a gauge.** At a stop the driver asks « whose bag comes out, whose goes in », not « how many litres ». Each stop lists « Rendre d'abord », then « Puis ranger » (just « Rendre » or « Ranger » when there is only one), in the order it is done on the pavement. Every line is a box to tick; ticks are not saved.
+- **Furthest first, at the back.** Bags going furthest are listed first and marked « à mettre au fond » when the stop loads bags for more than one destination. Every line says where its passenger gets off.
+- **Words before litres.** After each stop: « Coffre à moitié plein jusqu'à Essaouira. Il reste de la place pour une grande valise. » Litres stay in brackets. Thresholds: empty, under 40 % « peu chargé », under 70 % « à moitié plein », under 95 % « presque plein », then « plein ».
+- **Size without numbers.** Each bag is a suitcase icon, larger for larger bags.
+- **The driver's trip page uses the full width.** Map and stops on the left, trunk and cancellation on the right; one column under 960 px.
