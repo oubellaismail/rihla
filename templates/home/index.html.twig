@@ -9,12 +9,13 @@
         <p>Trouvez une place dans une voiture qui fait déjà le chemin. Montez à Essaouira, descendez à Marrakech&nbsp;: vous ne payez que votre bout de route.</p>
 
         <form class="searchbar" action="{{ path('app_trip_search') }}" method="get">
-            <label><span>Départ</span><input type="text" name="from" list="city-names" placeholder="Agadir" autocomplete="off" required></label>
+            <label><span>Départ</span><input type="text" name="from" list="city-names" placeholder="Essaouira" autocomplete="off" required></label>
             <label><span>Arrivée</span><input type="text" name="to" list="city-names" placeholder="Marrakech" autocomplete="off" required></label>
-            <label><span>Quand</span><input type="date" name="date" value="{{ today }}" min="{{ today }}" required></label>
+            <label><span>Quand</span><input type="date" name="date" value="" min="{{ today }}"></label>
             <button class="btn btn--primary" type="submit">{{ ui.icon('search') }} C’est parti</button>
             <datalist id="city-names">{% for name in cityNames %}<option value="{{ name }}">{% endfor %}</datalist>
         </form>
+        <p class="search-example small"><a href="/trips?from=Essaouira&amp;to=Marrakech">Exemple : Essaouira → Marrakech</a></p>
     </div>
 
     <div class="hero-photo">
@@ -63,8 +64,8 @@
                             {{ ui.route(trip.firstStop.city.name, trip.lastStop.city.name) }}
                             <span class="muted small">{{ trip.firstStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}, {{ trip.firstStop.departureAt|date('H:i') }} · {{ trip.driver.publicName }}</span>
                             <div class="foot">
-                                <span class="small"><span class="num">{{ card.price }} MAD</span> <span class="muted">· trajet complet</span></span>
-                                <span class="small {{ card.freeSeats ? 'muted' : '' }}">{{ card.freeSeats > 0 ? card.freeSeats ~ (card.freeSeats > 1 ? ' places libres' : ' place libre') : 'Complet' }}</span>
+                                <span class="small"><span class="muted">dès</span> <span class="num">{{ card.price }} MAD</span></span>
+                                <span class="small {{ card.freeSeats ? 'muted' : '' }}">{% if card.freeSeats > 0 %}{{ card.freeSeats }}{{ card.freeSeats > 1 ? ' places libres' : ' place libre' }}{% elseif card.someLegFree %}Places sur une partie du trajet{% else %}Complet{% endif %}</span>
                             </div>
                         </div>
                     </a>

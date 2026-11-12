@@ -37,11 +37,13 @@ final class HomeController extends AbstractController
             $legs = $this->legs($trip, $seatAvailability);
             $first = $trip->getFirstStop();
             $last = $trip->getLastStop();
+            $free = array_column($legs, 'free');
             $cards[] = [
                 'trip' => $trip,
                 'legs' => $legs,
-                'freeSeats' => [] === $legs ? 0 : min(array_column($legs, 'free')),
-                'price' => $priceCalculator->portionPrice($trip, $first, $last, 1),
+                'freeSeats' => [] === $legs ? 0 : min($free),
+                'someLegFree' => [] !== array_filter($free, static fn (int $n): bool => $n > 0),
+                'price' => $priceCalculator->cheapestLegPrice($trip),
                 'photo' => $this->photoFor($first->getCity()->getName(), $last->getCity()->getName()),
             ];
         }

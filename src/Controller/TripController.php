@@ -33,6 +33,7 @@ use Symfony\Component\Routing\Attribute\Route;
 final class TripController extends AbstractController
 {
     private const MAX_SEATS = 4;
+    private const UPCOMING_LIST = 20;
 
     public function __construct(
         private readonly SeatMap $seatMap,
@@ -50,15 +51,16 @@ final class TripController extends AbstractController
         TripSearch $tripSearch,
         ReviewRepository $reviews,
     ): Response {
-        $today = $clock->now()->setTime(0, 0);
+        $now = $clock->now();
         $fromName = trim((string) $request->query->get('from', ''));
         $toName = trim((string) $request->query->get('to', ''));
-        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $request->query->get('date', '')) ?: $today;
+        $date = \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $request->query->get('date', '')) ?: null;
         $seats = max(1, min(self::MAX_SEATS, $request->query->getInt('seats', 1)));
 
         $searched = '' !== $fromName && '' !== $toName;
         $unknownCity = null;
         $results = [];
+        $upcoming = [];
 
         if ($searched) {
             $from = $cities->findOneByNameInsensitive($fromName);
@@ -70,6 +72,10 @@ final class TripController extends AbstractController
                     $results[] = ['match' => $match, 'rating' => $reviews->summaryFor($match->trip->getDriver())];
                 }
             }
+        } else {
+            foreach ($tripSearch->upcoming(self::UPCOMING_LIST) as $match) {
+                $upcoming[] = ['match' => $match];
+            }
         }
 
         return $this->render('trip/search.html.twig', [
@@ -77,11 +83,42 @@ final class TripController extends AbstractController
             'to' => $toName,
             'date' => $date,
             'seats' => $seats,
+            'today' => $now->format('Y-m-d'),
             'searched' => $searched,
             'unknownCity' => $unknownCity,
             'results' => $results,
+            'resultDays' => $this->groupByDay($results, $now),
+            'upcomingDays' => $this->groupByDay($upcoming, $now),
             'cityNames' => $cities->findAllNames(),
         ]);
+    }
+
+    /**
+     * Groups result rows by the day of their departure: « Aujourd'hui », « Demain », then « jeudi 12 novembre ».
+     *
+     * @param list<array{match: \App\Model\TripMatch}> $rows
+     *
+     * @return list<array{title: string, rows: list<array{match: \App\Model\TripMatch}>}>
+     */
+    private function groupByDay(array $rows, \DateTimeImmutable $now): array
+    {
+        $formatter = new \IntlDateFormatter('fr_FR', \IntlDateFormatter::NONE, \IntlDateFormatter::NONE, $now->getTimezone()->getName(), null, 'EEEE d MMMM');
+        $today = $now->format('Y-m-d');
+        $tomorrow = $now->modify('+1 day')->format('Y-m-d');
+
+        $days = [];
+        foreach ($rows as $row) {
+            $departure = $row['match']->from->getDepartureAt();
+            $key = $departure->format('Y-m-d');
+            $days[$key]['title'] ??= match ($key) {
+                $today => "Aujourd'hui",
+                $tomorrow => 'Demain',
+                default => (string) $formatter->format($departure),
+            };
+            $days[$key]['rows'][] = $row;
+        }
+
+        return array_values($days);
     }
 
     #[Route('/trips/{id<\d+>}', name: 'app_trip_show', methods: ['GET'])]

@@ -16,6 +16,9 @@ use Symfony\Component\Clock\ClockInterface;
  */
 final class TripSearch
 {
+    /** How far ahead a search without a date looks. */
+    private const HORIZON_DAYS = 30;
+
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly SeatAvailabilityCalculator $seatAvailability,
@@ -29,15 +32,20 @@ final class TripSearch
      *
      * @throws \InvalidArgumentException when fewer than one seat is requested
      */
-    public function search(City $from, City $to, \DateTimeImmutable $date, int $seats = 1): array
+    public function search(City $from, City $to, ?\DateTimeImmutable $date, int $seats = 1): array
     {
         if ($seats < 1) {
             throw new \InvalidArgumentException('Il faut chercher au moins une place.');
         }
 
-        $dayStart = $date->setTime(0, 0);
-        $dayEnd = $dayStart->modify('+1 day');
         $now = $this->clock->now();
+        if (null === $date) {
+            $dayStart = $now;
+            $dayEnd = $now->modify('+'.self::HORIZON_DAYS.' days');
+        } else {
+            $dayStart = $date->setTime(0, 0);
+            $dayEnd = $dayStart->modify('+1 day');
+        }
 
         /** @var list<array{fromId: int, toId: int}> $rows */
         $rows = $this->em->createQuery(
@@ -76,7 +84,8 @@ final class TripSearch
 
         $bookingsByTrip = $this->loadBookings(array_map(static fn (array $p): Trip => $p[0]->getTrip(), $pairs));
 
-        $matches = [];
+        $fitting = [];
+        $full = [];
         foreach ($pairs as [$fromStop, $toStop]) {
             $trip = $fromStop->getTrip();
             $freeSeats = $this->seatAvailability->freeSeats(
@@ -85,16 +94,69 @@ final class TripSearch
                 $fromStop->getPosition(),
                 $toStop->getPosition(),
             );
-            if ($freeSeats < $seats) {
-                continue;
-            }
+            $isFull = $freeSeats < $seats;
 
-            $matches[] = new TripMatch(
+            $match = new TripMatch(
                 $trip,
                 $fromStop,
                 $toStop,
                 $freeSeats,
                 $this->priceCalculator->portionPrice($trip, $fromStop, $toStop, 1),
+                $isFull,
+                $this->priceCalculator->portionPrice($trip, $trip->getFirstStop(), $trip->getLastStop(), 1),
+                $this->priceCalculator->cheapestLegPrice($trip),
+                false,
+            );
+            if ($isFull) {
+                $full[] = $match;
+            } else {
+                $fitting[] = $match;
+            }
+        }
+
+        // Pairs are already in departure order; fitting trips first, full ones after.
+        return array_merge($fitting, $full);
+    }
+
+    /**
+     * The next published trips that have not left their first stop, as whole-trip matches.
+     *
+     * @return list<TripMatch>
+     */
+    public function upcoming(int $limit): array
+    {
+        /** @var list<Trip> $trips */
+        $trips = $this->em->getRepository(Trip::class)->findUpcoming($this->clock->now(), $limit);
+        if ([] === $trips) {
+            return [];
+        }
+
+        $bookingsByTrip = $this->loadBookings($trips);
+
+        $matches = [];
+        foreach ($trips as $trip) {
+            $first = $trip->getFirstStop();
+            $last = $trip->getLastStop();
+            $freeSeats = $this->seatAvailability->freeSeats(
+                $trip->getSeatsOffered(),
+                $bookingsByTrip[$trip->getId()] ?? [],
+                $first->getPosition(),
+                $last->getPosition(),
+            );
+            $wholePrice = $this->priceCalculator->portionPrice($trip, $first, $last, 1);
+            // « Full » means no leg has a free seat; a trip full only on some legs stays bookable.
+            $taken = $this->seatAvailability->takenPerLeg($trip->getStops()->count() - 1, $bookingsByTrip[$trip->getId()] ?? []);
+            $someLegFree = [] !== array_filter($taken, static fn (int $n): bool => $n < $trip->getSeatsOffered());
+            $matches[] = new TripMatch(
+                $trip,
+                $first,
+                $last,
+                $freeSeats,
+                $wholePrice,
+                !$someLegFree,
+                $wholePrice,
+                $this->priceCalculator->cheapestLegPrice($trip),
+                $freeSeats < 1 && $someLegFree,
             );
         }
 

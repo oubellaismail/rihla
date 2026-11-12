@@ -21,6 +21,22 @@ final class PriceCalculator
     public const MINIMUM_PRICE = 5;
 
     /**
+     * Price in MAD of the cheapest single leg of the trip (shown as « dès … MAD »).
+     * Legs without a price are ignored; 0 when no leg is priced.
+     */
+    public function cheapestLegPrice(Trip $trip): int
+    {
+        $prices = [];
+        foreach ($trip->getStops() as $stop) {
+            if (null !== $stop->getLegPriceToNext()) {
+                $prices[] = $stop->getLegPriceToNext();
+            }
+        }
+
+        return [] === $prices ? 0 : min($prices);
+    }
+
+    /**
      * Price in MAD for riding from one stop to another: the sum of the leg
      * prices in [from, to) multiplied by the number of seats.
      *
