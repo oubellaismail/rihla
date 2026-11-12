@@ -264,4 +264,31 @@ final class LuggageTest extends WebFlowTestCase
         self::assertStringContainsString('170 L sur 424 L', $text, 'Essaouira → Marrakech');
         self::assertStringNotContainsString('Mehdi : ', $text, 'nothing to load for Mehdi');
     }
+
+    public function testTheDriverGetsAChecklistInTheOrderItIsDone(): void
+    {
+        $karim = $this->db->user('Karim');
+        $trip = $this->db->trip(driver: $karim);
+        $this->db->booking($trip, 0, 1, passenger: $this->db->user('Mehdi'), seatCodes: ['A1'], bags: ['large' => 1]);
+        $this->db->booking($trip, 0, 3, passenger: $this->db->user('Rachid'), seatCodes: ['B1'], bags: ['large' => 1]);
+        $this->db->booking($trip, 1, 2, passenger: $this->db->user('Salma'), seatCodes: ['A1'], bags: ['medium' => 1]);
+        $this->login($karim);
+
+        $crawler = $this->client->request('GET', sprintf('/driver/trips/%d', $trip->getId()));
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('.driver-trip__side .trunk-plan', 'the trunk sits in the side column');
+        $agadir = $crawler->filter('.trunk-stop')->eq(0)->text();
+        self::assertStringContainsString('Ranger', $agadir);
+        self::assertStringNotContainsString('Rendre', $agadir);
+        self::assertStringContainsString('descend à Casablanca, à mettre au fond', $agadir);
+        self::assertLessThan(strpos($agadir, 'Mehdi'), strpos($agadir, 'Rachid'), 'furthest first');
+        self::assertStringContainsString("Coffre à moitié plein jusqu'à Essaouira", $agadir);
+
+        $essaouira = $crawler->filter('.trunk-stop')->eq(1)->text();
+        self::assertLessThan(strpos($essaouira, 'Puis ranger'), strpos($essaouira, "Rendre d'abord"), 'hand back before putting in');
+        self::assertStringContainsString('descend à Marrakech', $essaouira);
+
+        self::assertCount(6, $crawler->filter('.trunk-plan input[type="checkbox"]'), 'one box per line: 2 at Agadir, 2 at Essaouira, 1 at Marrakech, 1 at Casablanca');
+    }
 }
