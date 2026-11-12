@@ -36,7 +36,9 @@ final class BookingConcurrencyTest extends KernelTestCase
     public function testTwoSimultaneousBookingsForTheLastSeatNeverBothSucceed(): void
     {
         $db = new DbTrips($this->em);
-        $this->trip = $db->trip(1);
+        // The child processes run on the real clock (a mocked clock does not cross processes),
+        // so the trip must really be in the future, whatever day the tests run.
+        $this->trip = $db->trip(1, day: (new \DateTimeImmutable('+30 days'))->format('Y-m-d'));
         $salma = $db->user('Salma');
         $youssef = $db->user('Youssef');
         $this->users = [$this->trip->getDriver(), $salma, $youssef];
