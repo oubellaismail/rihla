@@ -47,7 +47,7 @@
                 <ol class="timeline">
                     {% for stop in stops %}
                         {% set mine = stop.position >= from.position and stop.position <= to.position %}
-                        <li class="{{ mine ? 'is-mine' : '' }}{{ stop.position == to.position ? ' is-last-mine' : '' }}">
+                        <li class="{{ mine ? 'is-mine' : '' }}{{ stop.position == to.position ? ' is-last-mine' : '' }}{{ not loop.last and (legSeats[stop.position] ?? 0) == 0 ? ' is-full-leg' : '' }}">
                             <time datetime="{{ stop.departureAt|date('c') }}">{{ stop.departureAt|date('H:i') }}</time>
                             <span class="dot"></span>
                             <span>
@@ -57,7 +57,8 @@
                             </span>
                             {% if not loop.last %}
                                 {% set free = legSeats[stop.position] ?? 0 %}
-                                <span class="leg-seats{{ free == 0 ? ' is-full' : '' }}">{{ free == 0 ? 'Complet' : free ~ (free > 1 ? ' places libres' : ' place libre') }}</span>
+                                {% set legMine = stop.position >= from.position and stop.position < to.position %}
+                                <span class="leg-pill{{ free == 0 ? ' is-full' : '' }}{{ legMine ? ' is-mine' : '' }}">{{ free == 0 ? 'Complet' : free ~ (free > 1 ? ' places libres' : ' place libre') }} · {{ stop.legPriceToNext }} MAD</span>
                             {% endif %}
                         </li>
                     {% endfor %}

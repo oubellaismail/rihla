@@ -31,6 +31,44 @@ export default class extends Controller {
         this.render();
     }
 
+    /*
+     * « Pas de préférence »: with JavaScript, tick the best free seats (same comfort order as the
+     * server's SeatMap::autoPick) and bring the bags into view instead of booking at once.
+     */
+    autoPick(event) {
+        event.preventDefault();
+        const free = this.seatTargets.filter((input) => !input.disabled);
+        const comfort = ['A1', 'B1', 'B3', 'B2', 'C1', 'C2'];
+        const rank = (input) => {
+            const i = comfort.indexOf(input.value);
+            return i === -1 ? comfort.length : i;
+        };
+        free.sort((a, b) => rank(a) - rank(b));
+
+        let picked = free.slice(0, this.countValue);
+        if (this.countValue > 1) {
+            // Side by side when a row has room for everyone (rows B, C, then A, like the server).
+            for (const row of ['B', 'C', 'A']) {
+                const inRow = free.filter((input) => input.value.startsWith(row));
+                if (inRow.length >= this.countValue) {
+                    picked = inRow.slice(0, this.countValue);
+                    break;
+                }
+            }
+        }
+
+        this.seatTargets.forEach((input) => { input.checked = false; });
+        picked.forEach((input) => { input.checked = true; });
+        this.order = picked;
+        this.render();
+
+        const bags = this.element.querySelector('.luggage');
+        if (bags) {
+            const calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            bags.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' });
+        }
+    }
+
     render() {
         const picked = this.order;
         const codes = picked.map((input) => input.value);

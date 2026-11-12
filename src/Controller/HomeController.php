@@ -20,6 +20,15 @@ final class HomeController extends AbstractController
     private const UPCOMING_TRIPS = 4;
     private const REVIEWS = 3;
 
+    /** Photos available for the route cards. */
+    private const PHOTOS = [
+        'images/route-essaouira-coast.jpg',
+        'images/route-agadir-marrakech-atlas.jpg',
+        'images/route-tizi-n-tichka.jpg',
+        'images/route-tanger-corniche.jpg',
+        'images/trip-windshield-road.jpg',
+    ];
+
     #[Route('/', name: 'app_home', methods: ['GET'])]
     public function index(
         ClockInterface $clock,
@@ -33,18 +42,27 @@ final class HomeController extends AbstractController
         $now = $clock->now();
 
         $cards = [];
+        $usedPhotos = [];
         foreach ($trips->findUpcoming($now, self::UPCOMING_TRIPS) as $trip) {
             $legs = $this->legs($trip, $seatAvailability);
             $first = $trip->getFirstStop();
             $last = $trip->getLastStop();
             $free = array_column($legs, 'free');
+            $freePerLeg = [];
+            foreach (array_values($trip->getStops()->toArray()) as $i => $stop) {
+                if (isset($legs[$i])) {
+                    $freePerLeg[$stop->getPosition()] = $legs[$i]['free'];
+                }
+            }
+            $photo = $this->photoFor($first->getCity()->getName(), $last->getCity()->getName(), $usedPhotos);
+            $usedPhotos[] = $photo;
             $cards[] = [
                 'trip' => $trip,
                 'legs' => $legs,
                 'freeSeats' => [] === $legs ? 0 : min($free),
                 'someLegFree' => [] !== array_filter($free, static fn (int $n): bool => $n > 0),
-                'price' => $priceCalculator->cheapestLegPrice($trip),
-                'photo' => $this->photoFor($first->getCity()->getName(), $last->getCity()->getName()),
+                'price' => $priceCalculator->cheapestLegPrice($trip, $freePerLeg),
+                'photo' => $photo,
             ];
         }
 
@@ -88,18 +106,34 @@ final class HomeController extends AbstractController
         return $legs;
     }
 
-    private function photoFor(string $from, string $to): string
+    /**
+     * The photo matching the route, or the next unused one when it is already on another card.
+     *
+     * @param list<string> $used photos already shown on the page
+     */
+    private function photoFor(string $from, string $to, array $used = []): string
     {
         $cities = [mb_strtolower($from), mb_strtolower($to)];
         $has = static fn (string $name): bool => in_array($name, $cities, true);
 
-        return match (true) {
+        $preferred = match (true) {
             $has('essaouira') => 'images/route-essaouira-coast.jpg',
             $has('tanger') => 'images/route-tanger-corniche.jpg',
             $has('ouarzazate') => 'images/route-tizi-n-tichka.jpg',
             $has('agadir'), $has('marrakech') => 'images/route-agadir-marrakech-atlas.jpg',
             default => 'images/trip-windshield-road.jpg',
         };
+        if (!in_array($preferred, $used, true)) {
+            return $preferred;
+        }
+
+        foreach (self::PHOTOS as $photo) {
+            if (!in_array($photo, $used, true)) {
+                return $photo;
+            }
+        }
+
+        return $preferred;
     }
 
     private function ago(\DateTimeImmutable $when, \DateTimeImmutable $now): string

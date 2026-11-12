@@ -147,6 +147,11 @@ final class TripSearch
             // « Full » means no leg has a free seat; a trip full only on some legs stays bookable.
             $taken = $this->seatAvailability->takenPerLeg($trip->getStops()->count() - 1, $bookingsByTrip[$trip->getId()] ?? []);
             $someLegFree = [] !== array_filter($taken, static fn (int $n): bool => $n < $trip->getSeatsOffered());
+            $freePerLeg = [];
+            $stops = $trip->getStops()->toArray();
+            foreach ($taken as $i => $count) {
+                $freePerLeg[$stops[$i]->getPosition()] = max(0, $trip->getSeatsOffered() - $count);
+            }
             $matches[] = new TripMatch(
                 $trip,
                 $first,
@@ -155,7 +160,7 @@ final class TripSearch
                 $wholePrice,
                 !$someLegFree,
                 $wholePrice,
-                $this->priceCalculator->cheapestLegPrice($trip),
+                $this->priceCalculator->cheapestLegPrice($trip, $freePerLeg),
                 $freeSeats < 1 && $someLegFree,
             );
         }

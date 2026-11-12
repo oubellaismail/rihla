@@ -134,6 +134,12 @@ final class TripController extends AbstractController
         $stops = $trip->getStops()->toArray();
         $lastPosition = $trip->getLastStop()->getPosition();
 
+        $taken = $seatAvailability->takenPerLeg(count($stops) - 1, $trip->getBookings());
+        $legSeats = [];
+        foreach ($taken as $i => $count) {
+            $legSeats[$stops[$i]->getPosition()] = max(0, $trip->getSeatsOffered() - $count);
+        }
+
         $fromPosition = $request->query->getInt('from', $trip->getFirstStop()->getPosition());
         $toPosition = $request->query->getInt('to', $lastPosition);
         $from = $this->stopAt($trip, $fromPosition);
@@ -141,13 +147,11 @@ final class TripController extends AbstractController
         if (null === $from || null === $to || $from->getPosition() >= $to->getPosition()) {
             $from = $trip->getFirstStop();
             $to = $trip->getLastStop();
+        } elseif (!$request->query->has('from') && !$request->query->has('to')) {
+            // No portion asked for: when the whole trip is full, open on the first portion with a seat.
+            [$from, $to] = $this->firstBookablePortion($stops, $legSeats) ?? [$from, $to];
         }
 
-        $taken = $seatAvailability->takenPerLeg(count($stops) - 1, $trip->getBookings());
-        $legSeats = [];
-        foreach ($taken as $i => $count) {
-            $legSeats[$stops[$i]->getPosition()] = max(0, $trip->getSeatsOffered() - $count);
-        }
         $portionLegs = array_filter(
             $legSeats,
             static fn (int $free, int $position): bool => $position >= $from->getPosition() && $position < $to->getPosition(),
@@ -174,6 +178,35 @@ final class TripController extends AbstractController
             'rating' => $reviews->summaryFor($driver),
             'map' => $mapBuilder->build($trip, $this->getUser() instanceof User ? $this->getUser() : null, $from, $to),
         ]);
+    }
+
+    /**
+     * When the whole trip is full, the first run of consecutive legs that each have a free seat,
+     * from its first stop to the stop after its last leg; null when the whole trip has a seat or no leg is free.
+     *
+     * @param list<TripStop>   $stops
+     * @param array<int, int>  $legSeats free seats per leg, keyed by the position of the leg's first stop
+     *
+     * @return array{0: TripStop, 1: TripStop}|null
+     */
+    private function firstBookablePortion(array $stops, array $legSeats): ?array
+    {
+        if ([] === $legSeats || min($legSeats) > 0) {
+            return null;
+        }
+
+        $start = null;
+        foreach ($stops as $i => $stop) {
+            $isFree = ($legSeats[$stop->getPosition()] ?? 0) > 0 && isset($stops[$i + 1]);
+            if ($isFree && null === $start) {
+                $start = $stop;
+            }
+            if (null !== $start && !$isFree) {
+                return [$start, $stop];
+            }
+        }
+
+        return null;
     }
 
     #[Route('/trips/{id<\d+>}/seats', name: 'app_trip_seats', methods: ['GET'])]

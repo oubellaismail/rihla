@@ -22,16 +22,28 @@ final class PriceCalculator
 
     /**
      * Price in MAD of the cheapest single leg of the trip (shown as « dès … MAD »).
+     *
+     * With $freePerLeg (free seats per leg, keyed by the position of the leg's first stop) only legs
+     * with at least one free seat count; when none is free, the cheapest leg overall is used.
      * Legs without a price are ignored; 0 when no leg is priced.
+     *
+     * @param array<int, int>|null $freePerLeg
      */
-    public function cheapestLegPrice(Trip $trip): int
+    public function cheapestLegPrice(Trip $trip, ?array $freePerLeg = null): int
     {
-        $prices = [];
+        $all = [];
+        $bookable = [];
         foreach ($trip->getStops() as $stop) {
-            if (null !== $stop->getLegPriceToNext()) {
-                $prices[] = $stop->getLegPriceToNext();
+            $price = $stop->getLegPriceToNext();
+            if (null === $price) {
+                continue;
+            }
+            $all[] = $price;
+            if (null === $freePerLeg || ($freePerLeg[$stop->getPosition()] ?? 0) > 0) {
+                $bookable[] = $price;
             }
         }
+        $prices = [] !== $bookable ? $bookable : $all;
 
         return [] === $prices ? 0 : min($prices);
     }

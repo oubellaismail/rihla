@@ -49,5 +49,5 @@
 {% endmacro %}
 
 {% macro route(fromCity, toCity) %}
-<span class="route">{{ fromCity }}{{ _self.arrow() }}{{ toCity }}</span>
+<span class="route">{{ fromCity }} <span class="route__end">{{ _self.arrow() }}{{ toCity }}</span></span>
 {% endmacro %}

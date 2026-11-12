@@ -9,7 +9,7 @@
 .band--dusk .container { color: var(--white); }
 
 /* Search results */
-.searchbar + .search-results { margin-top: 40px; }
+.searchbar + .search-results, .search-summary + .search-results { margin-top: 40px; }
 .result { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) auto; gap: 20px 32px; align-items: center; }
 .result-times { display: flex; flex-direction: column; gap: 4px; }
 .result-times .num { margin-right: 8px; font-size: 20px; }

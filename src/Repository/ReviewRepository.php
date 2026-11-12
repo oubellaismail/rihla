@@ -40,14 +40,18 @@ class ReviewRepository extends ServiceEntityRepository
     }
 
     /**
-     * Latest reviews that come with a written comment.
+     * Latest reviews that come with a written comment, written about the driver of the trip
+     * (testimonials: passengers speaking of drivers, never drivers rating passengers).
      *
      * @return list<Review>
      */
     public function findLatestWithComment(int $limit): array
     {
         return $this->createQueryBuilder('r')
-            ->where('r.comment IS NOT NULL')
+            ->join('r.booking', 'b')
+            ->join('b.trip', 't')
+            ->where('r.target = t.driver')
+            ->andWhere('r.comment IS NOT NULL')
             ->andWhere("r.comment <> ''")
             ->orderBy('r.createdAt', 'DESC')
             ->addOrderBy('r.id', 'DESC')
