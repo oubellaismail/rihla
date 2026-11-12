@@ -98,7 +98,7 @@ final class SearchPagesTest extends WebFlowTestCase
         $partlyCard = $crawler->filter(sprintf('.route-card[href="/trips/%d"]', $partly->getId()))->text();
         self::assertStringContainsString('Places sur une partie du trajet', $partlyCard);
         self::assertStringNotContainsString('Complet', $partlyCard);
-        self::assertStringContainsString('dès 60 MAD', $partlyCard);
+        self::assertStringContainsString('dès 65 MAD', $partlyCard, 'the 60 MAD leg is full: « dès » counts legs with a seat');
         self::assertStringContainsString('Complet', $crawler->filter(sprintf('.route-card[href="/trips/%d"]', $full->getId()))->text());
     }
 

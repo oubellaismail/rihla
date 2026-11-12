@@ -184,6 +184,7 @@ final class TripSearchTest extends KernelTestCase
         self::assertSame(0, $first->freeSeats, 'no seat for the whole trip');
         self::assertFalse($first->full, 'but Essaouira → Casablanca still has seats');
         self::assertTrue($first->partlyFree);
+        self::assertSame(65, $first->cheapestLegPrice, 'the 60 MAD leg is full');
         self::assertTrue($second->full);
         self::assertFalse($second->partlyFree);
     }
