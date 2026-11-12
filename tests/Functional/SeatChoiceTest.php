@@ -55,7 +55,7 @@ final class SeatChoiceTest extends WebFlowTestCase
         $this->salma();
 
         $crawler = $this->client->request('GET', sprintf('/trips/%d?from=1&to=2', $trip->getId()));
-        $form = $crawler->selectButton('Réserver')->form(['seats' => 2]);
+        $form = $crawler->selectButton('Choisir ma place')->form(['seats' => 2]);
         self::assertSame('GET', $form->getMethod());
         $this->client->submit($form);
 

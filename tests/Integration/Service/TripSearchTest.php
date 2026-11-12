@@ -86,16 +86,20 @@ final class TripSearchTest extends KernelTestCase
         self::assertSame([], $this->search('Agadir', 'Casablanca'));
     }
 
-    public function testAFullPortionIsHiddenButTheSeatsFreedLaterAreStillOffered(): void
+    public function testAFullPortionIsListedAsFullAndTheSeatsFreedLaterAreStillOffered(): void
     {
         $trip = $this->db->trip();
         $this->db->booking($trip, 0, 2, 3); // Agadir → Marrakech, the car is full until Marrakech
 
-        self::assertSame([], $this->search('Agadir', 'Essaouira'));
-        self::assertSame([], $this->search('Essaouira', 'Casablanca'), 'Essaouira → Marrakech is full');
+        $full = $this->search('Agadir', 'Essaouira');
+        self::assertCount(1, $full, 'a driver does offer it: say it is full, do not pretend nobody does');
+        self::assertTrue($full[0]->full);
+        self::assertSame(0, $full[0]->freeSeats);
+        self::assertTrue($this->search('Essaouira', 'Casablanca')[0]->full, 'Essaouira → Marrakech is full');
 
         $results = $this->search('Marrakech', 'Casablanca');
         self::assertCount(1, $results);
+        self::assertFalse($results[0]->full);
         self::assertSame(3, $results[0]->freeSeats);
     }
 
@@ -104,11 +108,76 @@ final class TripSearchTest extends KernelTestCase
         $trip = $this->db->trip();
         $this->db->booking($trip, 1, 2, 2); // 1 seat left between Essaouira and Marrakech
 
-        self::assertSame([], $this->search('Agadir', 'Casablanca', seats: 2));
+        $two = $this->search('Agadir', 'Casablanca', seats: 2);
+        self::assertCount(1, $two);
+        self::assertTrue($two[0]->full, 'full for 2 passengers');
 
         $results = $this->search('Agadir', 'Casablanca', seats: 1);
         self::assertCount(1, $results);
+        self::assertFalse($results[0]->full);
         self::assertSame(1, $results[0]->freeSeats);
+    }
+
+    public function testTripsThatFitComeBeforeFullOnes(): void
+    {
+        $fullEarly = $this->db->trip(stops: [['Agadir', '06:30', 70], ['Essaouira', '08:15', null]]);
+        $this->db->booking($fullEarly, 0, 1, 3);
+        $late = $this->db->trip();
+
+        $results = $this->search('Agadir', 'Essaouira');
+
+        self::assertSame([$late, $fullEarly], array_map(static fn (TripMatch $m) => $m->trip, $results));
+    }
+
+    public function testAMatchKnowsThePriceOfTheWholeTrip(): void
+    {
+        $this->db->trip();
+
+        $match = $this->search('Essaouira', 'Marrakech')[0];
+
+        self::assertSame(65, $match->pricePerSeat);
+        self::assertSame(210, $match->wholeTripPrice, 'to show « 65 MAD au lieu de 210 MAD »');
+    }
+
+    public function testWithoutADateTheNextDeparturesOnThatRouteAreListed(): void
+    {
+        $this->db->trip(day: '2026-11-11');
+        $this->db->trip(day: '2026-11-13');
+        $this->db->trip(day: '2026-11-09'); // already gone
+
+        $results = static::getContainer()->get(TripSearch::class)
+            ->search($this->db->city('Essaouira'), $this->db->city('Marrakech'), null);
+
+        self::assertSame(
+            ['2026-11-11 09:45', '2026-11-13 09:45'],
+            array_map(static fn (TripMatch $m) => $m->from->getDepartureAt()->format('Y-m-d H:i'), $results),
+        );
+    }
+
+    public function testUpcomingListsTheNextTripsFromTheirFirstStop(): void
+    {
+        $later = $this->db->trip(day: '2026-11-12');
+        $sooner = $this->db->trip(stops: [['Marrakech', '18:00', 90], ['Casablanca', '21:00', null]], day: '2026-11-10');
+        $this->db->trip(stops: [['Agadir', '08:00', 60], ['Essaouira', '09:45', null]], day: '2026-11-10'); // left at 08:00
+        $this->db->trip(day: '2026-11-14')->setStatus(TripStatus::Cancelled);
+        static::getContainer()->get(EntityManagerInterface::class)->flush();
+
+        $upcoming = static::getContainer()->get(TripSearch::class)->upcoming(10);
+
+        self::assertSame([$sooner, $later], array_map(static fn (TripMatch $m) => $m->trip, $upcoming));
+        self::assertSame(DbTrips::stop($later, 0), $upcoming[1]->from);
+        self::assertSame(DbTrips::stop($later, 3), $upcoming[1]->to);
+        self::assertSame(210, $upcoming[1]->pricePerSeat);
+        self::assertSame(60, $upcoming[1]->cheapestLegPrice, 'shown as « dès 60 MAD »');
+    }
+
+    public function testUpcomingStopsAtTheLimit(): void
+    {
+        foreach (['2026-11-11', '2026-11-12', '2026-11-13'] as $day) {
+            $this->db->trip(day: $day);
+        }
+
+        self::assertCount(2, static::getContainer()->get(TripSearch::class)->upcoming(2));
     }
 
     public function testCancelledBookingsDoNotHoldSeats(): void

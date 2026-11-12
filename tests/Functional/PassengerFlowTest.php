@@ -88,7 +88,7 @@ final class PassengerFlowTest extends WebFlowTestCase
         $this->login($salma);
 
         $crawler = $this->client->request('GET', sprintf('/trips/%d?from=1&to=2', $trip->getId()));
-        $crawler = $this->client->submit($crawler->selectButton('Réserver')->form(['seats' => 2]));
+        $crawler = $this->client->submit($crawler->selectButton('Choisir ma place')->form(['seats' => 2]));
         $this->client->submit($crawler->selectButton('Pas de préférence, choisir pour moi')->form());
 
         $booking = $this->em->getRepository(Booking::class)->findOneBy(['passenger' => $salma]);
@@ -111,7 +111,7 @@ final class PassengerFlowTest extends WebFlowTestCase
         $this->login($salma);
 
         $crawler = $this->client->request('GET', sprintf('/trips/%d?from=0&to=3', $trip->getId()));
-        $form = $crawler->selectButton('Réserver')->form();
+        $form = $crawler->selectButton('Choisir ma place')->form();
         $form['seats']->disableValidation()->setValue('3');
         $this->client->submit($form);
         $this->client->followRedirect();
@@ -223,6 +223,50 @@ final class PassengerFlowTest extends WebFlowTestCase
         self::assertResponseRedirects();
         $this->client->followRedirect();
         self::assertSelectorExists('a[href="/logout"]');
+    }
+
+    public function testSigningUpInTheMiddleOfABookingGoesBackToTheTrip(): void
+    {
+        $trip = $this->db->trip();
+        $this->em->flush();
+        $seats = sprintf('/trips/%d/seats?from=1&to=2&seats=1', $trip->getId());
+
+        $this->client->request('GET', $seats);
+        self::assertResponseRedirects('/login');
+        $crawler = $this->client->followRedirect();
+        self::assertStringContainsString('Connectez-vous pour réserver votre place.', $this->pageText());
+
+        $crawler = $this->client->click($crawler->selectLink('Créer un compte')->link());
+        $this->client->submit($crawler->selectButton('Créer mon compte')->form([
+            'registration[firstName]' => 'Yasmine',
+            'registration[lastName]' => 'Alaoui',
+            'registration[email]' => 'yasmine.trip@rihla.ma',
+            'registration[phone]' => '0612345678',
+            'registration[plainPassword]' => 'un-mot-de-passe-solide',
+        ]));
+
+        self::assertResponseRedirects($seats, null, 'the new passenger lands on the seat page they asked for');
+    }
+
+    public function testSigningUpWithoutABookingInProgressGoesHome(): void
+    {
+        $crawler = $this->client->request('GET', '/register');
+        $this->client->submit($crawler->selectButton('Créer mon compte')->form([
+            'registration[firstName]' => 'Yasmine',
+            'registration[lastName]' => 'Alaoui',
+            'registration[email]' => 'yasmine.home@rihla.ma',
+            'registration[phone]' => '0612345678',
+            'registration[plainPassword]' => 'un-mot-de-passe-solide',
+        ]));
+
+        self::assertResponseRedirects('/');
+    }
+
+    public function testTheLoginPageSaysNothingAboutBookingWhenNoneIsInProgress(): void
+    {
+        $this->client->request('GET', '/login');
+
+        self::assertStringNotContainsString('pour réserver votre place', $this->pageText());
     }
 
     public function testAnEmailCanOnlyBeRegisteredOnce(): void
