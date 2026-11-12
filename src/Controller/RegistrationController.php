@@ -11,9 +11,12 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Util\TargetPathTrait;
 
 final class RegistrationController extends AbstractController
 {
+    use TargetPathTrait;
+
     #[Route('/register', name: 'app_register', methods: ['GET', 'POST'])]
     public function register(
         Request $request,
@@ -34,8 +37,17 @@ final class RegistrationController extends AbstractController
             $em->persist($user);
             $em->flush();
 
+            // Read before login(): the session id is migrated while logging in.
+            $target = $this->getTargetPath($request->getSession(), 'main');
+
             $security->login($user, 'form_login', 'main');
             $this->addFlash('success', 'Bienvenue sur Rihla, votre compte est créé.');
+
+            if (null !== $target) {
+                $this->removeTargetPath($request->getSession(), 'main');
+
+                return $this->redirect($target);
+            }
 
             return $this->redirectToRoute('app_home');
         }

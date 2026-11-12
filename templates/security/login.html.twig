@@ -7,6 +7,10 @@
     <div class="auth-card card stack">
         <h1 class="auth-title">Connexion</h1>
 
+        {% if booking_in_progress|default(false) %}
+            <p class="muted">Connectez-vous pour réserver votre place.</p>
+        {% endif %}
+
         {% if error %}
             <p class="flash flash--error" role="alert">{{ error.messageKey|trans(error.messageData, 'security') }}</p>
         {% endif %}

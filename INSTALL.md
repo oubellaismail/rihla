@@ -108,6 +108,8 @@ If these services cannot be reached, the rest of the app keeps working: the map 
 
 ## Troubleshooting
 
+**The Symfony debug toolbar is missing.** It is off in dev so it does not cover phone pages. Set `toolbar: true` in `config/packages/web_profiler.yaml` to see it; `/_profiler` stays available either way.
+
 **Port already in use** (`Bind for 0.0.0.0:8080 failed`). Another program uses the port. Pick another one: `HTTP_PORT=8090 docker compose up -d`.
 
 **The page shows 502 Bad Gateway.** The PHP container is still installing dependencies or waiting for MySQL. Wait and watch `docker compose logs -f php`.
