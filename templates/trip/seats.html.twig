@@ -31,6 +31,7 @@
         <input type="hidden" name="seats" value="{{ seatCount }}">
 
         <div class="seats-main">
+            <button class="btn btn--outline seats-auto" type="submit" name="auto" value="1">Pas de préférence, choisir pour moi</button>
         <section class="seats-plan card">
             <div class="seats-vehicle">
                 <div>
@@ -160,7 +161,6 @@
                 <span class="seats-chosen__detail">Plus un sac à main ou un petit sac à dos.</span>
             </div>
             {% endif %}
-            <button class="btn btn--outline seats-auto" type="submit" name="auto" value="1">Pas de préférence, choisir pour moi</button>
             <div class="seats-total">
                 <span>Total</span>
                 <span class="seats-total__amount">{{ total }} MAD</span>

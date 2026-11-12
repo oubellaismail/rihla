@@ -11,8 +11,8 @@
 <div class="container page">
     <header class="trip-head">
         <a class="btn btn--ghost" href="{{ path('app_trip_search', {from: from.city.name, to: to.city.name, date: first.departureAt|date('Y-m-d')}) }}">Retour aux résultats</a>
-        <h1>{{ ui.route(first.city.name, last.city.name) }}</h1>
-        <p class="muted">{{ first.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}, départ {{ first.departureAt|date('H:i') }} · arrivée prévue {{ last.departureAt|date('H:i') }}. {{ stops|length - 2 > 0 ? (stops|length - 2) ~ (stops|length - 2 > 1 ? ' arrêts' : ' arrêt') ~ ' en route, ' : '' }}{{ trip.seatsOffered }} {{ trip.seatsOffered > 1 ? 'places' : 'place' }} dans la voiture.</p>
+        <h1>{{ ui.route(from.city.name, to.city.name) }}</h1>
+        <p class="muted">Trajet complet {{ first.city.name }} → {{ last.city.name }}, {{ first.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}, départ {{ first.departureAt|date('H:i') }} · arrivée prévue {{ last.departureAt|date('H:i') }}. {{ stops|length - 2 > 0 ? (stops|length - 2) ~ (stops|length - 2 > 1 ? ' arrêts' : ' arrêt') ~ ' en route, ' : '' }}{{ trip.seatsOffered }} {{ trip.seatsOffered > 1 ? 'places' : 'place' }} dans la voiture.</p>
         {% if trip.status.value == 'CANCELLED' %}
             <span class="badge badge--warn">Trajet annulé</span>
         {% elseif trip.status.value == 'COMPLETED' %}
@@ -93,6 +93,7 @@
             <div>
                 <span class="price-big">{{ price }} MAD</span>
                 <span class="muted"> par place</span>
+                {% if price != tripPrice %}<p class="price-compare muted small">au lieu de {{ tripPrice }} MAD pour le trajet complet</p>{% endif %}
             </div>
 
             {% if isDriver %}
@@ -103,7 +104,7 @@
             {% elseif freeSeats == 0 %}
                 <p class="note"><strong>Complet sur cette portion</strong>. Essayez de descendre plus tôt ou de monter plus tard.</p>
             {% else %}
-                <form class="form" action="/trips/{{ trip.id }}/seats" method="get">
+                <form class="form" id="choose-seat-form" action="/trips/{{ trip.id }}/seats" method="get">
                     <input type="hidden" name="from" value="{{ from.position }}">
                     <input type="hidden" name="to" value="{{ to.position }}">
                     <div class="field seats-field">
@@ -111,11 +112,21 @@
                         <select id="seats" name="seats">{% for n in 1..maxSeats %}<option value="{{ n }}">{{ n }}</option>{% endfor %}</select>
                     </div>
                     <p class="note">{{ freeSeats }} {{ freeSeats > 1 ? 'places libres' : 'place libre' }} sur votre bout de route.</p>
-                    <button class="btn btn--primary btn--block" type="submit">Réserver</button>
+                    <button class="btn btn--primary btn--block" type="submit">Choisir ma place</button>
                 </form>
             {% endif %}
-            <p class="note">Le trajet complet coûte {{ tripPrice }} MAD par place. Vous ne payez que votre portion. Paiement simulé.</p>
+            <p class="note">Vous ne payez que votre portion. Paiement simulé.</p>
         </aside>
     </div>
 </div>
+
+{% if isOpen and not isDriver and freeSeats > 0 %}
+    <div class="booking-bar">
+        <div class="booking-bar__info">
+            <strong class="booking-bar__price">{{ price }} MAD</strong>
+            <span class="booking-bar__route">{{ from.city.name }} → {{ to.city.name }}</span>
+        </div>
+        <button class="btn btn--primary" type="submit" form="choose-seat-form">Choisir ma place</button>
+    </div>
+{% endif %}
 {% endblock %}

@@ -144,6 +144,13 @@ p { margin: 0; text-wrap: pretty; }
 /* Route line: stops of a trip */
 .route { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; font: 700 21px var(--font-display); color: var(--ink); letter-spacing: -0.01em; }
 .route svg { flex: none; }
+/* Inside a heading the route takes the heading's size; the arrow follows it. */
+h1 .route, h2 .route, h3 .route { font: inherit; letter-spacing: inherit; }
+h1 .route svg, h2 .route svg, h3 .route svg { width: auto; height: 0.7em; }
+
+/* Booking bar: only on small screens, pinned to the bottom. */
+.booking-bar { display: none; }
+.price-compare { margin: 6px 0 0; }
 .timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .timeline li { display: grid; grid-template-columns: 64px 24px 1fr auto; gap: 14px; align-items: start; padding-bottom: 22px; position: relative; }
 .timeline li:last-child { padding-bottom: 0; }
@@ -206,6 +213,13 @@ p { margin: 0; text-wrap: pretty; }
 @media (max-width: 900px) {
     .split { grid-template-columns: 1fr; }
     .price-box { position: static; }
+    .booking-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--white); border-top: 1px solid var(--line); box-shadow: 0 -8px 24px -16px rgba(60, 38, 20, 0.3); }
+    .booking-bar__info { display: flex; flex-direction: column; min-width: 0; }
+    .booking-bar__price { font: 800 22px/1.1 var(--font-display); color: var(--ink); font-variant-numeric: tabular-nums; }
+    .booking-bar__route { font-size: 14px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .booking-bar .btn { min-height: 48px; flex: none; }
+    /* Keep the footer clear of the bar. */
+    body:has(.booking-bar) .site-footer { padding-bottom: calc(48px + 84px + env(safe-area-inset-bottom)); }
 }
 @media (max-width: 640px) {
     .container { padding: 0 16px; }

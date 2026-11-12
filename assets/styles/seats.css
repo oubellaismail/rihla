@@ -83,7 +83,7 @@
 .seats-chosen__bags { font-size: 17px; font-weight: 600; color: var(--ink); }
 /* The summary and the button stay in view while the passenger scrolls through the plan and the bags. */
 @media (min-width: 641px) { .seats-aside { position: sticky; top: 24px; } }
-.seats-auto { justify-content: flex-start; text-align: left; }
+.seats-auto { align-self: flex-start; justify-content: flex-start; text-align: left; }
 .seats-total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 16px; border-top: 1px solid var(--line); color: var(--soft); }
 .seats-total__amount { font: 800 40px var(--font-display); color: var(--ink); font-variant-numeric: tabular-nums; }
 .seats-note { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.5; }
@@ -95,10 +95,18 @@
 
 @media (max-width: 640px) {
     .seats-page { gap: 20px; padding-top: 12px; }
+    /* Summary and Réserver pinned to the bottom; the controller keeps writing the live state. */
+    .seats-aside { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); border-radius: 0; box-shadow: 0 -8px 24px -16px rgba(60, 38, 20, 0.3); border-top: 1px solid var(--line); }
+    .seats-aside .seats-chosen { flex: 1 1 100%; gap: 0; }
+    .seats-aside .seats-chosen--bags, .seats-aside .seats-eyebrow, .seats-aside .seats-chosen__detail, .seats-aside .seats-note { display: none; }
+    .seats-aside .seats-chosen__title { font-size: 17px; }
+    body:has(.seats-aside) .site-footer { padding-bottom: calc(200px + env(safe-area-inset-bottom)); }
+    .seats-aside .seats-total { flex: 1 1 auto; padding-top: 0; border-top: 0; flex-direction: column; align-items: flex-start; gap: 0; font-size: 14px; }
+    .seats-aside .seats-total__amount { font-size: 26px; line-height: 1.1; }
+    .seats-aside .btn--block { width: auto; flex: 1 1 140px; min-height: 48px; }
     .seats-layout { gap: 20px; }
     .seats-main { flex-basis: 100%; gap: 20px; }
     .seats-plan { padding: 20px 16px; gap: 20px; }
-    .seats-aside { padding: 20px 16px; flex-basis: 100%; }
     .seats-stage { padding: 24px 12px; gap: 24px; }
     .seats-legend { max-width: none; }
     .seat { min-width: 44px; padding-bottom: 12px; }
