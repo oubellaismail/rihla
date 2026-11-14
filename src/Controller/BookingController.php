@@ -16,6 +16,8 @@ use App\Service\CancellationService;
 use App\Service\Geo\TripMapBuilder;
 use App\Service\ReviewPolicy;
 use App\Service\ReviewService;
+use App\Service\TripCompletionService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,18 +27,25 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class BookingController extends AbstractController
 {
-    public function __construct(private readonly ClockInterface $clock)
-    {
+    public function __construct(
+        private readonly ClockInterface $clock,
+        private readonly TripCompletionService $completion,
+        private readonly EntityManagerInterface $em,
+    ) {
     }
 
     #[Route('/bookings', name: 'app_booking_index', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED')]
     public function index(BookingRepository $bookings): Response
     {
+        $completed = $this->completion->completeFinishedTrips();
         $now = $this->clock->now();
         $upcoming = [];
         $past = [];
         foreach ($bookings->findForPassenger($this->currentUser()) as $booking) {
+            if ($completed > 0) {
+                $this->em->refresh($booking); // the bulk completion UPDATE bypasses entities already loaded
+            }
             if (BookingStatus::Confirmed === $booking->getStatus() && $booking->getFromStop()->getDepartureAt() > $now) {
                 $upcoming[] = $booking;
             } else {
@@ -52,6 +61,9 @@ final class BookingController extends AbstractController
     #[Route('/bookings/{id<\d+>}', name: 'app_booking_show', methods: ['GET'])]
     public function show(Booking $booking, ReviewRepository $reviews, ReviewPolicy $policy, TripMapBuilder $mapBuilder): Response
     {
+        if ($this->completion->completeFinishedTrips() > 0) {
+            $this->em->refresh($booking); // the bulk completion UPDATE bypasses entities already loaded
+        }
         $this->denyAccessUnlessGranted(BookingVoter::VIEW, $booking);
         $user = $this->currentUser();
 
@@ -82,7 +94,15 @@ final class BookingController extends AbstractController
     #[Route('/bookings/{id<\d+>}/cancel', name: 'app_booking_cancel', methods: ['GET', 'POST'])]
     public function cancel(Booking $booking, Request $request, CancellationPolicy $policy, CancellationService $service): Response
     {
-        $this->denyAccessUnlessGranted(BookingVoter::CANCEL, $booking);
+        if (!$this->isGranted(BookingVoter::CANCEL, $booking)) {
+            $this->denyAccessUnlessGranted(BookingVoter::VIEW, $booking);
+            if ($booking->getPassenger()?->getId() !== $this->currentUser()->getId()) {
+                throw $this->createAccessDeniedException();
+            }
+            $this->addFlash('info', $booking->getStatus()->isCancelled() ? 'Cette réservation est déjà annulée.' : 'Cette réservation ne peut plus être annulée.');
+
+            return $this->redirectToRoute('app_booking_show', ['id' => $booking->getId()]);
+        }
         $now = $this->clock->now();
 
         if ($request->isMethod('POST')) {

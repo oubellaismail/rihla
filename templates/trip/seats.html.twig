@@ -21,7 +21,7 @@
     </header>
 
     {% if alert %}
-        <div class="flash flash--error seats-alert" role="alert"><strong>Le coffre s'est rempli entre-temps.</strong> {{ alert.message }}</div>
+        <div class="flash flash--error seats-alert" role="alert"><strong>Le coffre s'est rempli entre-temps.</strong> {{ trunkNotice }}</div>
     {% endif %}
 
     <form class="seats-layout" method="post" action="/trips/{{ trip.id }}/book" data-controller="seat-picker luggage" data-seat-picker-count-value="{{ seatCount }}" data-luggage-free-value="{{ trunk.free }}" data-luggage-places-value="{{ seatCount }}" data-luggage-max-value="{{ trunk.maxBags }}" data-luggage-sizes-value="{{ luggage_sizes()|json_encode }}">
@@ -166,7 +166,7 @@
                 <span class="seats-total__amount">{{ total }} MAD</span>
             </div>
             <button class="btn btn--primary btn--block" type="submit" data-seat-picker-target="submit">Réserver</button>
-            <p class="seats-note">Bagages et choix de place gratuits. Annulation gratuite jusqu'à 24 h avant le départ.</p>
+            <p class="seats-note">Bagages et choix de place gratuits. Paiement simulé : aucune somme n'est débitée. Annulation : remboursement intégral jusqu'à 24 h avant le départ, 50 % ensuite, rien après le départ.</p>
         </aside>
     </form>
 </div>

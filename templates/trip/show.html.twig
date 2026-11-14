@@ -27,20 +27,21 @@
             <section class="trip-section">
                 <h2>Votre bout de route</h2>
                 {% if isOpen and not isDriver %}
-                    <form class="portion-form" action="{{ path('app_trip_show', {id: trip.id}) }}" method="get">
+                    <form class="portion-form" data-controller="portion" action="{{ path('app_trip_show', {id: trip.id}) }}" method="get">
                         <div class="field">
                             <label for="from">Je monte à</label>
-                            <select id="from" name="from">
+                            <select id="from" name="from" data-action="change->portion#apply">
                                 {% for stop in stops|slice(0, stops|length - 1) %}<option value="{{ stop.position }}"{% if stop.position == from.position %} selected{% endif %}>{{ stop.city.name }} · {{ stop.departureAt|date('H:i') }}</option>{% endfor %}
                             </select>
                         </div>
                         <div class="field">
                             <label for="to">Je descends à</label>
-                            <select id="to" name="to">
+                            <select id="to" name="to" data-action="change->portion#apply">
                                 {% for stop in stops|slice(1) %}<option value="{{ stop.position }}"{% if stop.position == to.position %} selected{% endif %}>{{ stop.city.name }} · {{ stop.departureAt|date('H:i') }}</option>{% endfor %}
                             </select>
                         </div>
-                        <button class="btn btn--outline" type="submit">Changer de portion</button>
+                        <button class="btn btn--outline" type="submit" data-portion-target="submit">Changer de portion</button>
+                        {% if portionNote %}<p class="muted portion-note" role="status">{{ portionNote }}</p>{% endif %}
                     </form>
                 {% endif %}
 

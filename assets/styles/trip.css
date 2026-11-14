@@ -87,3 +87,4 @@
 @media (min-width: 641px) {
     .search-summary::details-content { content-visibility: visible; display: block; }
 }
+.portion-form .portion-note { flex: 1 1 100%; margin: 0; font-size: 0.9rem; }

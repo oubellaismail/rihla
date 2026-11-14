@@ -23,11 +23,12 @@
                     <input type="hidden" name="from" value="{{ from.position }}">
                     <input type="hidden" name="to" value="{{ to.position }}">
                     <input type="hidden" name="seats" value="{{ seatCount }}">
+                    {% for key, count in bags %}<input type="hidden" name="bags[{{ key }}]" value="{{ count }}">{% endfor %}
                     {% for code in codes %}<input type="hidden" name="seatCodes[]" value="{{ code }}">{% endfor %}
                     <span class="seat-taken__chip">{{ codes|join(' ') }}</span>
                     <span class="seat-taken__offer-text">
                         <strong>{{ suggested|length > 1 ? 'Places ' : 'Place ' }}{{ codes|seat_list }}{% if suggested|length == 1 %}, {{ suggested[0].position|lower }}{% endif %}</strong>
-                        <span>Libre{{ suggested|length > 1 ? 's' : '' }} sur tout votre bout de route, même prix : {{ total }} MAD</span>
+                        <span>Libre{{ suggested|length > 1 ? 's' : '' }} sur tout votre bout de route, même prix : {{ total }} MAD{% if bags|filter(n => n > 0)|length %}. Avec {{ bags|describe_bags }}{% endif %}</span>
                     </span>
                     <button class="btn btn--primary" type="submit">Réserver {{ suggested|length > 1 ? 'les places ' : 'la place ' }}{{ codes|seat_list }}</button>
                 </form>

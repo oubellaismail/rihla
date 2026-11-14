@@ -144,7 +144,11 @@ final class TripController extends AbstractController
         $toPosition = $request->query->getInt('to', $lastPosition);
         $from = $this->stopAt($trip, $fromPosition);
         $to = $this->stopAt($trip, $toPosition);
+        $portionNote = null;
         if (null === $from || null === $to || $from->getPosition() >= $to->getPosition()) {
+            if ($request->query->has('from') || $request->query->has('to')) {
+                $portionNote = "L'arrêt de descente doit venir après celui de montée.";
+            }
             $from = $trip->getFirstStop();
             $to = $trip->getLastStop();
         } elseif (!$request->query->has('from') && !$request->query->has('to')) {
@@ -160,7 +164,7 @@ final class TripController extends AbstractController
         $freeSeats = [] === $portionLegs ? 0 : min($portionLegs);
 
         $now = $clock->now();
-        $departed = $trip->getFirstStop()->getDepartureAt() <= $now;
+        $departed = $from->getDepartureAt() <= $now; // the boarding stop, as TripSearch and BookingService do
         $driver = $trip->getDriver();
 
         return $this->render('trip/show.html.twig', [
@@ -175,6 +179,7 @@ final class TripController extends AbstractController
             'isDriver' => $this->getUser() === $driver,
             'isOpen' => TripStatus::Published === $trip->getStatus() && !$departed,
             'departed' => $departed,
+            'portionNote' => $portionNote,
             'rating' => $reviews->summaryFor($driver),
             'map' => $mapBuilder->build($trip, $this->getUser() instanceof User ? $this->getUser() : null, $from, $to),
         ]);
@@ -228,7 +233,7 @@ final class TripController extends AbstractController
         }
 
         $back = $this->redirectToRoute('app_trip_show', ['id' => $trip->getId(), 'from' => $fromPosition, 'to' => $toPosition]);
-        $open = TripStatus::Published === $trip->getStatus() && $trip->getFirstStop()->getDepartureAt() > $clock->now();
+        $open = TripStatus::Published === $trip->getStatus() && $from->getDepartureAt() > $clock->now();
         if (!$open || $this->getUser() === $trip->getDriver()) {
             $this->addFlash('error', !$open ? 'Ce trajet n’est plus ouvert à la réservation.' : 'C’est votre trajet : vous ne pouvez pas y réserver une place.');
 
@@ -299,6 +304,7 @@ final class TripController extends AbstractController
                 'from' => $from,
                 'to' => $to,
                 'seatCount' => $seats,
+                'bags' => $bags,
                 'headline' => rtrim($e->getMessage(), '.'),
                 'suggested' => $suggested,
                 'total' => $this->priceCalculator->portionPrice($trip, $from, $to, $seats),
@@ -363,6 +369,7 @@ final class TripController extends AbstractController
             'bags' => $bags,
             'ticked' => $ticked,
             'alert' => $trunkFull,
+            'trunkNotice' => null === $trunkFull ? null : $this->trunkNotice($free),
             'trunk' => [
                 'usable' => $usable,
                 'free' => $free,
@@ -371,6 +378,14 @@ final class TripController extends AbstractController
                 'maxBags' => $seats * TrunkSpace::MAX_BAGS_PER_PLACE,
             ],
         ], new Response(status: $status));
+    }
+
+    /** « Your bags no longer fit »: in words, never in litres. */
+    private function trunkNotice(int $free): string
+    {
+        $words = $this->trunkSpace->describe($free);
+
+        return 'Vos bagages ne passent plus sur cette portion : '.('plein' === $words ? 'le coffre est plein.' : 'il reste de la '.$words.'.');
     }
 
     private function stopAt(Trip $trip, int $position): ?TripStop
