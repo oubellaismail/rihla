@@ -109,13 +109,14 @@ final class TripPublisher
     private function assertStopsAreConsistent(Trip $trip): void
     {
         $previous = null;
-        foreach ($trip->getStops() as $stop) {
+        foreach ($trip->getStops() as $i => $stop) {
+            $n = $i + 1;
             if (null !== $previous) {
                 if ($stop->getDepartureAt() <= $previous->getDepartureAt()) {
-                    throw new TripNotPublishableException('Les horaires des arrêts doivent être strictement croissants.');
+                    throw new TripNotPublishableException(sprintf('Arrêt %d (%s) : l\'heure doit être après celle de l\'arrêt précédent.', $n, $stop->getCity()?->getName()));
                 }
                 if ($this->sameCity($stop->getCity(), $previous->getCity())) {
-                    throw new TripNotPublishableException('Deux arrêts consécutifs ne peuvent pas être dans la même ville.');
+                    throw new TripNotPublishableException(sprintf('Arrêt %d (%s) : même ville que l\'arrêt précédent.', $n, $stop->getCity()?->getName()));
                 }
             }
             $previous = $stop;
@@ -130,11 +131,15 @@ final class TripPublisher
     /** Every leg (all stops but the last) needs a price of 0 or more. */
     private function assertLegsArePriced(Trip $trip): void
     {
-        $legStarts = $trip->getStops()->slice(0, -1);
-        foreach ($legStarts as $stop) {
+        $stops = $trip->getStops()->getValues();
+        foreach (\array_slice($stops, 0, -1) as $i => $stop) {
             $price = $stop->getLegPriceToNext();
-            if (null === $price || $price < 0) {
-                throw new TripNotPublishableException('Chaque tronçon doit avoir un prix positif ou nul.');
+            $leg = sprintf('Tronçon %s → %s', $stop->getCity()?->getName(), $stops[$i + 1]->getCity()?->getName());
+            if (null === $price) {
+                throw new TripNotPublishableException($leg.' : indiquez un prix (0 si gratuit).');
+            }
+            if ($price < 0) {
+                throw new TripNotPublishableException($leg.' : le prix ne peut pas être négatif.');
             }
         }
     }

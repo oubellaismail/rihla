@@ -36,7 +36,7 @@ class TripStop
     private ?\DateTimeImmutable $departureAt = null;
 
     #[ORM\Column(length: 150)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(message: 'Choisissez un point de rendez-vous sur la carte ou décrivez-le.')]
     #[Assert\Length(max: 150)]
     private ?string $meetingPoint = null;
 

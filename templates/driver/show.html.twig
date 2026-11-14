@@ -37,6 +37,10 @@
                                         </div>
                                     </div>
                                 {% endfor %}
+                                {% set off = alighting[pos] ?? [] %}
+                                {% if off is not empty %}
+                                    <div class="stop-meta">{{ off|length > 1 ? 'Descendent ici' : 'Descend ici' }} : {{ off|map(b => b.passenger.publicName)|join(', ') }}</div>
+                                {% endif %}
                             </div>
                             {% if not loop.last %}
                                 {% set free = summary.free[pos] ?? 0 %}

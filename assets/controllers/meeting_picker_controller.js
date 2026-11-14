@@ -118,7 +118,7 @@ export default class extends Controller {
 
         const label = row.querySelector('.stop-meeting label');
         if (label) {
-            label.textContent = 'Précision (facultatif)';
+            label.textContent = 'Précision (facultatif si le point est sur la carte)';
         }
     }
 

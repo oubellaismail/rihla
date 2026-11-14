@@ -14,7 +14,8 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\CallbackTransformer;
 use Symfony\Component\Form\Exception\TransformationFailedException;
 use Symfony\Component\Form\FormBuilderInterface;
-use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Validator\Constraints\NotNull;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -38,9 +39,9 @@ final class TripStopType extends AbstractType
                 'constraints' => [new NotNull(message: 'Indiquez la date et l\'heure.')],
             ])
             ->add('meetingPoint', TextType::class, [
-                'label' => 'Point de rendez-vous',
+                'label' => 'Précision (facultatif si le point est sur la carte)',
+                'required' => false,
                 'attr' => ['placeholder' => 'Gare routière'],
-                'constraints' => [new NotBlank(message: 'Indiquez un point de rendez-vous.')],
             ])
             ->add('legPriceToNext', IntegerType::class, [
                 'label' => 'Prix jusqu\'à l\'arrêt suivant',
@@ -50,6 +51,17 @@ final class TripStopType extends AbstractType
             ])
             ->add('meetingLatitude', HiddenType::class, self::coordinateOptions())
             ->add('meetingLongitude', HiddenType::class, self::coordinateOptions());
+
+        // A stop needs words or a point on the map. Runs before validation (priority 10), once, here.
+        $builder->addEventListener(FormEvents::POST_SUBMIT, static function (FormEvent $event): void {
+            $stop = $event->getData();
+            if (!$stop instanceof TripStop || '' !== trim((string) $stop->getMeetingPoint())) {
+                return;
+            }
+            if (null !== $stop->getMeetingLatitude() && null !== $stop->getMeetingLongitude()) {
+                $stop->setMeetingPoint('Point sur la carte, '.($stop->getCity()?->getName() ?? 'ville'));
+            }
+        }, 10);
 
         // Hidden fields carry text: turn it into a float (empty → null); the range is checked by the entity.
         foreach (['meetingLatitude', 'meetingLongitude'] as $field) {

@@ -10,6 +10,8 @@ use App\Exception\CancellationNotAllowedException;
 use App\Repository\TripRepository;
 use App\Security\TripVoter;
 use App\Service\CancellationService;
+use App\Service\TripCompletionService;
+use Doctrine\ORM\EntityManagerInterface;
 use App\Service\DriverLegSummary;
 use App\Model\PassengerRow;
 use App\Repository\ReviewRepository;
@@ -32,8 +34,9 @@ final class DriverTripController extends AbstractController
 
     #[Route('/driver/trips', name: 'app_driver_trips', methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED')]
-    public function index(TripRepository $trips, DriverLegSummary $legSummary): Response
+    public function index(TripRepository $trips, DriverLegSummary $legSummary, TripCompletionService $completion): Response
     {
+        $completion->completeFinishedTrips();
         $now = $this->clock->now();
         $upcoming = [];
         $past = [];
@@ -59,8 +62,12 @@ final class DriverTripController extends AbstractController
     }
 
     #[Route('/driver/trips/{id<\d+>}', name: 'app_driver_trip_show', methods: ['GET'])]
-    public function show(Trip $trip, DriverLegSummary $legSummary, TripMapBuilder $mapBuilder, TripSummaryBuilder $summaryBuilder, ReviewPolicy $policy, ReviewRepository $reviews, TrunkPlanBuilder $trunkPlan): Response
+    public function show(Trip $trip, DriverLegSummary $legSummary, TripMapBuilder $mapBuilder, TripSummaryBuilder $summaryBuilder, ReviewPolicy $policy, ReviewRepository $reviews, TrunkPlanBuilder $trunkPlan, TripCompletionService $completion, EntityManagerInterface $em): Response
     {
+        $this->denyAccessUnlessGranted(TripVoter::VIEW_PASSENGERS, $trip);
+        if ($completion->completeFinishedTrips() > 0) {
+            $em->refresh($trip); // the bulk update of bookings bypasses the loaded entities
+        }
         $this->denyAccessUnlessGranted(TripVoter::VIEW_PASSENGERS, $trip);
 
         if (TripStatus::Completed === $trip->getStatus()) {
@@ -98,12 +105,14 @@ final class DriverTripController extends AbstractController
         $summary = $legSummary->summarise($trip);
 
         $boarding = [];
+        $alighting = [];
         $cancelled = [];
         foreach ($trip->getBookings() as $booking) {
             if ($booking->getStatus()->isCancelled()) {
                 $cancelled[] = $booking;
             } elseif (\in_array($booking->getStatus(), [BookingStatus::Confirmed, BookingStatus::Completed], true)) {
                 $boarding[$booking->getFromStop()->getPosition()][] = $booking;
+                $alighting[$booking->getToStop()->getPosition()][] = $booking;
             }
         }
 
@@ -114,6 +123,7 @@ final class DriverTripController extends AbstractController
             'stops' => $stops,
             'summary' => $summary,
             'boarding' => $boarding,
+            'alighting' => $alighting,
             'cancelled' => $cancelled,
             'can_cancel' => $canCancel,
             'trunk' => $trunkPlan->build($trip),

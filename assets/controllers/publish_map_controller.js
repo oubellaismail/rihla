@@ -15,7 +15,7 @@ const ROW = '[data-stop-list-target="item"]';
  * JavaScript, or when the map services are down, the form still works.
  */
 export default class extends Controller {
-    static targets = ['canvas', 'note'];
+    static targets = ['canvas', 'note', 'status'];
     static values = { cities: Object };
 
     connect() {
@@ -158,10 +158,12 @@ export default class extends Controller {
         this.legLayer.clearLayers();
         if (used.length < 2) {
             this.noteTarget.hidden = true;
+            this.setStatus('');
             return;
         }
 
         const seq = ++this.routeSeq;
+        this.setStatus('Calcul de l\'itinéraire…');
         this.abort?.abort();
         this.abort = new AbortController();
         const points = used.map((u) => `${u.point[0]},${u.point[1]}`).join(';');
@@ -186,6 +188,7 @@ export default class extends Controller {
                 return;
             }
             this.noteTarget.hidden = true;
+            this.setStatus('Distances calculées : prix conseillés proposés.');
             this.drawRoute(used, legs);
             this.showSuggestions(used, legs);
         } catch (error) {
@@ -193,8 +196,20 @@ export default class extends Controller {
                 return;
             }
             this.noteTarget.hidden = false;
+            this.setStatus('Distance indisponible : fixez le prix de chaque tronçon vous-même.');
+            this.priceInputs().forEach((input) => { input.placeholder = 'Votre prix (MAD)'; });
             this.drawRoute(used, null);
         }
+    }
+
+    setStatus(text) {
+        if (this.hasStatusTarget) {
+            this.statusTarget.textContent = text;
+        }
+    }
+
+    priceInputs() {
+        return this.rows().map((row) => this.field(row, 'legPriceToNext')).filter(Boolean);
     }
 
     drawRoute(used, legs) {
