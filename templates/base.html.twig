@@ -63,9 +63,21 @@
         </main>
 
         <footer class="site-footer">
-            <div class="container">
-                <span>Rihla · covoiturage régional au Maroc</span>
-                <span>Projet réalisé pour l'EMC PFE Challenge 2026 · Photos Unsplash</span>
+            <div class="container footer-grid">
+                <div class="stack stack--tight">
+                    <strong class="footer-brand">Rihla</strong>
+                    <span>Covoiturage régional au Maroc, tronçon par tronçon.</span>
+                </div>
+                <nav class="stack stack--tight" aria-label="Voyager">
+                    <strong>Voyager</strong>
+                    <a href="{{ path('app_trip_search') }}">Prochains départs</a>
+                    <a href="{{ path('app_trip_new') }}">Publier un trajet</a>
+                </nav>
+                <div class="stack stack--tight">
+                    <strong>À propos</strong>
+                    <span>Projet réalisé pour l'EMC PFE Challenge 2026</span>
+                    <span>Photos Unsplash</span>
+                </div>
             </div>
         </footer>
     </body>
