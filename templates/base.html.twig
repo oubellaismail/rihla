@@ -49,10 +49,10 @@
 
         {% set flashes = app.flashes(['success', 'error', 'info']) %}
         {% if flashes|filter(m => m is not empty)|length %}
-            <div class="container" role="status">
+            <div class="container">
                 <div class="flashes">
                     {% for type, messages in flashes %}
-                        {% for message in messages %}<p class="flash flash--{{ type }}">{{ message }}</p>{% endfor %}
+                        {% for message in messages %}<p class="flash flash--{{ type }}" role="{{ type == 'error' ? 'alert' : 'status' }}">{{ message }}</p>{% endfor %}
                     {% endfor %}
                 </div>
             </div>
