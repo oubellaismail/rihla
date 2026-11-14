@@ -219,7 +219,7 @@ final class LuggageTest extends WebFlowTestCase
         self::assertNull($this->bookingOf($salma));
         self::assertSelectorTextContains('h1', 'Choisissez votre place');
         self::assertStringContainsString("Le coffre s'est rempli entre-temps", $this->pageText());
-        self::assertStringContainsString('il reste 54 L sur cette portion', $this->pageText());
+        self::assertStringContainsString('Vos bagages ne passent plus sur cette portion : il reste de la place pour un bagage cabine.', $this->pageText());
         self::assertSelectorExists('input[name="seatCodes[]"][value="B1"][checked]', 'the seat stays chosen');
         self::assertSelectorExists('input[name="bags[large]"][value="1"]', 'the bags stay as typed');
 

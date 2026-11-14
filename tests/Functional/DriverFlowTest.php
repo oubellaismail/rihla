@@ -89,7 +89,7 @@ final class DriverFlowTest extends WebFlowTestCase
         $this->client->request('POST', $form->getUri(), $values);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertStringContainsString('Les horaires des arrêts doivent être strictement croissants.', $this->pageText());
+        self::assertStringContainsString("Arrêt 2 (Essaouira) : l'heure doit être après celle de l'arrêt précédent.", $this->pageText());
         self::assertNull($this->em->getRepository(Trip::class)->findOneBy(['driver' => $karim]));
     }
 
