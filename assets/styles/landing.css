@@ -114,7 +114,7 @@
 
 /* 5. Luggage */
 .luggage-band { display: flex; align-items: center; gap: 24px; padding: 24px 28px; border-radius: 24px; background: var(--white); box-shadow: 0 20px 40px -28px rgba(60, 38, 20, 0.4); }
-.luggage-band__icon { width: 56px; height: 56px; flex: none; border-radius: 16px; background: #FCE4D4; color: var(--sunset-text); display: inline-flex; align-items: center; justify-content: center; }
+.luggage-band__photo { width: 96px; height: 96px; flex: none; border-radius: 16px; object-fit: cover; }
 .luggage-band__text { flex: 1; min-width: 0; }
 .luggage-band__text h3 { font-size: 20px; }
 .luggage-band__text p { margin-top: 4px; color: var(--muted); font-size: 16px; }
@@ -211,7 +211,7 @@ a.route-card:hover { color: var(--asphalt); transform: translateY(-4px); box-sha
     .trust-band { padding: 64px 0; margin-top: 64px; }
     .site-footer .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .luggage-band { flex-wrap: wrap; }
-    .luggage-band__link { margin-left: 80px; }
+    .luggage-band__link { margin-left: 120px; }
     .cta-banner { padding: 56px 32px; }
 }
 @media (max-width: 640px) {
@@ -234,6 +234,7 @@ a.route-card:hover { color: var(--asphalt); transform: translateY(-4px); box-sha
     .trust-item + .trust-item { border-top: 1px solid rgba(255, 255, 255, 0.14); }
     .review blockquote { font-size: 19px; }
     .luggage-band { padding: 20px; gap: 16px; }
+    .luggage-band__photo { width: 72px; height: 72px; }
     .luggage-band__link { margin-left: 0; }
     .feature__chip { left: 12px; }
     .site-footer .footer-grid { grid-template-columns: minmax(0, 1fr); gap: 24px; }
