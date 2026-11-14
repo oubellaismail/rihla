@@ -22,6 +22,8 @@ use App\Service\PriceCalculator;
 use App\Service\Seat\SeatLayout;
 use App\Service\Seat\SeatMap;
 use App\Service\SeatAvailabilityCalculator;
+use App\Model\SearchCriteria;
+use App\Service\SearchFilter;
 use App\Service\TripSearch;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Clock\ClockInterface;
@@ -50,8 +52,10 @@ final class TripController extends AbstractController
         CityRepository $cities,
         TripSearch $tripSearch,
         ReviewRepository $reviews,
+        SearchFilter $searchFilter,
     ): Response {
         $now = $clock->now();
+        $criteria = SearchCriteria::fromQuery($request->query);
         $fromName = trim((string) $request->query->get('from', ''));
         $toName = trim((string) $request->query->get('to', ''));
         $date = \DateTimeImmutable::createFromFormat('!Y-m-d', (string) $request->query->get('date', '')) ?: null;
@@ -60,6 +64,7 @@ final class TripController extends AbstractController
         $searched = '' !== $fromName && '' !== $toName;
         $unknownCity = null;
         $results = [];
+        $found = 0;
         $upcoming = [];
 
         if ($searched) {
@@ -71,6 +76,8 @@ final class TripController extends AbstractController
                 foreach ($tripSearch->search($from, $to, $date, $seats) as $match) {
                     $results[] = ['match' => $match, 'rating' => $reviews->summaryFor($match->trip->getDriver())];
                 }
+                $found = count($results);
+                $results = $searchFilter->apply($results, $criteria);
             }
         } else {
             foreach ($tripSearch->upcoming(self::UPCOMING_LIST) as $match) {
@@ -87,6 +94,8 @@ final class TripController extends AbstractController
             'searched' => $searched,
             'unknownCity' => $unknownCity,
             'results' => $results,
+            'found' => $found,
+            'criteria' => $criteria,
             'resultDays' => $this->groupByDay($results, $now),
             'upcomingDays' => $this->groupByDay($upcoming, $now),
             'cityNames' => $cities->findAllNames(),

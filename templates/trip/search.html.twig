@@ -7,16 +7,41 @@
     {% set trip = match.trip %}
     {% set partial = match.from.position != trip.firstStop.position or match.to.position != trip.lastStop.position %}
     <a class="card card--link result{{ match.full ? ' result--full' : '' }}" href="/trips/{{ trip.id }}?from={{ match.from.position }}&amp;to={{ match.to.position }}">
-        <div class="result-times">
-            <span><strong class="num">{{ match.from.departureAt|date('H:i') }}</strong> {{ match.from.city.name }}</span>
-            <span><strong class="num">{{ match.to.departureAt|date('H:i') }}</strong> {{ match.to.city.name }}</span>
-            {% if partial %}<span class="small muted">trajet complet {{ trip.firstStop.city.name }} → {{ trip.lastStop.city.name }}</span>{% endif %}
-        </div>
+        {% set first = trip.firstStop %}
+        {% set last = trip.lastStop %}
+        <ol class="result-timeline">
+            {% if match.from.position != first.position %}
+                <li class="result-stop result-stop--before">
+                    <time class="result-stop__time" datetime="{{ first.departureAt|date('c') }}">{{ first.departureAt|date('H:i') }}</time>
+                    <span class="result-stop__dot"></span>
+                    <span class="result-stop__body">{{ first.city.name }} <span class="result-stop__note">Départ de la voiture</span></span>
+                </li>
+            {% endif %}
+            <li class="result-stop result-stop--boarding">
+                <time class="result-stop__time" datetime="{{ match.from.departureAt|date('c') }}">{{ match.from.departureAt|date('H:i') }}</time>
+                <span class="result-stop__dot"></span>
+                <span class="result-stop__body"><strong>{{ match.from.city.name }}</strong><span class="result-stop__note">{{ match.from.meetingPoint }}</span></span>
+                <span class="result-duration">{{ match.from.departureAt|duration(match.to.departureAt) }}</span>
+            </li>
+            <li class="result-stop result-stop--drop-off">
+                <time class="result-stop__time" datetime="{{ match.to.departureAt|date('c') }}">{{ match.to.departureAt|date('H:i') }}</time>
+                <span class="result-stop__dot"></span>
+                <span class="result-stop__body"><strong>{{ match.to.city.name }}</strong></span>
+            </li>
+            {% if match.to.position != last.position %}
+                <li class="result-stop result-stop--after">
+                    <time class="result-stop__time" datetime="{{ last.departureAt|date('c') }}">{{ last.departureAt|date('H:i') }}</time>
+                    <span class="result-stop__dot"></span>
+                    <span class="result-stop__body">{{ last.city.name }} <span class="result-stop__note">Terminus</span></span>
+                </li>
+            {% endif %}
+        </ol>
         <div class="result-driver">
             {{ ui.avatar(trip.driver) }}
             <span class="result-driver__name">
                 <strong>{{ trip.driver.publicName }}</strong>
                 <span class="small">{{ ui.rating(result.rating) }}</span>
+                <span class="small muted">{{ trip.vehicle.model }} {{ trip.vehicle.color }}</span>
             </span>
         </div>
         <div class="result-price">
@@ -99,21 +124,74 @@
                 <h2>Aucun trajet pour « {{ unknownCity }} »</h2>
                 <p>Cette ville n’est pas encore desservie sur Rihla. Vérifiez l’orthographe ou choisissez une ville dans la liste proposée.</p>
             </div>
-        {% elseif results %}
+        {% elseif found > 0 %}
+            {% set base = {from: from, to: to}|merge(date ? {date: date|date('Y-m-d')} : {})|merge({seats: seats}) %}
             <div class="page-head">
-                <h1>{{ results|length == 1 ? '1 trajet' : results|length ~ ' trajets' }}{% if date %} {{ date|format_datetime(pattern: 'EEEE d MMMM') }}{% endif %}</h1>
+                <h1>{{ results|length == 0 ? 'Aucun trajet' : (results|length == 1 ? '1 trajet' : results|length ~ ' trajets') }}{% if date %} {{ date|format_datetime(pattern: 'EEEE d MMMM') }}{% endif %}</h1>
                 <p>{{ from|capitalize }} vers {{ to|capitalize }}</p>
             </div>
-            {% if date %}
-                {% for result in results %}{{ _self.card(result) }}{% endfor %}
-            {% else %}
-                {% for day in resultDays %}
-                    <section class="upcoming-day stack">
-                        <h2 class="upcoming-day__title">{{ day.title }}</h2>
-                        {% for result in day.rows %}{{ _self.card(result) }}{% endfor %}
-                    </section>
-                {% endfor %}
-            {% endif %}
+            <div class="search-layout">
+                <details class="search-filters-fold"{% if criteria.filtered %} open{% endif %}>
+                    <summary>{{ ui.icon('filter') }} Filtres{% if criteria.filtered %} <span class="search-filters-fold__on">actifs</span>{% endif %}</summary>
+                    <form class="search-filters" method="get" action="/trips" data-controller="search-filters" data-action="change->search-filters#apply">
+                        <input type="hidden" name="from" value="{{ from }}">
+                        <input type="hidden" name="to" value="{{ to }}">
+                        <input type="hidden" name="date" value="{{ date ? date|date('Y-m-d') : '' }}">
+                        <input type="hidden" name="seats" value="{{ seats }}">
+                        {% if criteria.sort != 'departure' %}<input type="hidden" name="sort" value="{{ criteria.sort }}">{% endif %}
+
+                        <fieldset>
+                            <legend>Heure de départ</legend>
+                            {% for slot, label in {morning: 'Matin (avant 12 h)', afternoon: 'Après-midi (12 h – 18 h)', evening: 'Soir (après 18 h)'} %}
+                                <label class="search-filters__option"><input type="checkbox" name="time[]" value="{{ slot }}"{% if slot in criteria.times %} checked{% endif %}> <span>{{ label }}</span></label>
+                            {% endfor %}
+                        </fieldset>
+                        <fieldset>
+                            <legend>Prix maximum</legend>
+                            <label class="search-filters__price"><input type="number" name="maxPrice" value="{{ criteria.maxPrice }}" min="1" step="5" inputmode="numeric" placeholder="Sans limite" aria-label="Prix maximum par place, en dirhams"> <span>MAD par place</span></label>
+                        </fieldset>
+                        <fieldset>
+                            <legend>Bagages</legend>
+                            {% for value, label in {'': 'Peu importe', medium: 'Une valise moyenne passe', large: 'Une grande valise passe'} %}
+                                <label class="search-filters__option"><input type="radio" name="bag" value="{{ value }}"{% if (criteria.bag ? criteria.bag.value : '') == value %} checked{% endif %}> <span>{{ label }}</span></label>
+                            {% endfor %}
+                        </fieldset>
+                        <fieldset>
+                            <legend>Conducteur</legend>
+                            <label class="search-filters__option"><input type="checkbox" name="rated" value="1"{% if criteria.rated %} checked{% endif %}> <span>Noté 4 et plus</span></label>
+                        </fieldset>
+                        <div class="search-filters__actions">
+                            <button class="btn btn--outline" type="submit" data-search-filters-target="submit">Appliquer</button>
+                            {% if criteria.filtered %}<a class="search-filters__clear" href="{{ path('app_trip_search', base) }}">Effacer les filtres</a>{% endif %}
+                        </div>
+                    </form>
+                </details>
+
+                <div class="search-main stack stack--l">
+                    <nav class="search-sort" aria-label="Tri des résultats">
+                        <span class="search-sort__label">Trier :</span>
+                        {% for key, label in {departure: 'Départ le plus tôt', price: 'Prix le plus bas', rating: 'Mieux noté'} %}
+                            <a href="{{ path('app_trip_search', base|merge(criteria.toQuery(key))) }}"{% if criteria.sort == key %} aria-current="true"{% endif %}>{{ label }}</a>
+                        {% endfor %}
+                    </nav>
+                    {% if results is empty %}
+                        <div class="empty card">
+                            <h2>Aucun trajet ne correspond à vos filtres.</h2>
+                            <p>Des trajets existent sur cette route : élargissez votre recherche.</p>
+                            <a class="btn btn--outline search-filters__clear" href="{{ path('app_trip_search', base) }}">Effacer les filtres</a>
+                        </div>
+                    {% elseif date or criteria.sort != 'departure' %}
+                        {% for result in results %}{{ _self.card(result) }}{% endfor %}
+                    {% else %}
+                        {% for day in resultDays %}
+                            <section class="upcoming-day stack">
+                                <h2 class="upcoming-day__title">{{ day.title }}</h2>
+                                {% for result in day.rows %}{{ _self.card(result) }}{% endfor %}
+                            </section>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
         {% else %}
             <div class="empty card">
                 <h2>{{ date ? 'Aucun trajet ce jour-là' : 'Aucun trajet prochainement' }}</h2>

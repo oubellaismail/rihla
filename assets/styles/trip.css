@@ -11,8 +11,6 @@
 /* Search results */
 .searchbar + .search-results, .search-summary + .search-results { margin-top: 40px; }
 .result { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) auto; gap: 20px 32px; align-items: center; }
-.result-times { display: flex; flex-direction: column; gap: 4px; }
-.result-times .num { margin-right: 8px; font-size: 20px; }
 .result-price { display: flex; flex-direction: column; align-items: flex-end; }
 .result-price .num { font-size: 26px; }
 
@@ -70,8 +68,7 @@
     .searchbar + .search-results, .search-summary + .search-results { margin-top: 20px; }
     .search-results .page-head h1 { font-size: 28px; }
     .result { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "times price" "driver driver" "trunk trunk"; gap: 8px 12px; padding: 14px 16px; }
-    .result-times { grid-area: times; }
-    .result-times .num { font-size: 18px; margin-right: 6px; }
+    .result-timeline { grid-area: times; }
     .result-price { grid-area: price; align-items: flex-end; }
     .result-price .num { font-size: 22px; }
     .result-driver { grid-area: driver; flex-direction: row; font-size: 14px; }
@@ -88,3 +85,55 @@
     .search-summary::details-content { content-visibility: visible; display: block; }
 }
 .portion-form .portion-note { flex: 1 1 100%; margin: 0; font-size: 0.9rem; }
+
+/* Result card: the portion drawn like the trip page timeline, smaller */
+.result-timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.result-stop { display: grid; grid-template-columns: 52px 20px minmax(0, 1fr); gap: 0 12px; align-items: start; position: relative; padding-bottom: 14px; }
+.result-stop:last-child { padding-bottom: 0; }
+.result-stop:not(:last-child)::after { content: ""; position: absolute; left: calc(52px + 12px + 9px); top: 20px; bottom: 0; width: 2px; background: #D9CBB8; }
+.result-stop__time { font: 700 17px var(--font-display); color: var(--ink); font-variant-numeric: tabular-nums; }
+.result-stop__dot { width: 16px; height: 16px; border-radius: 50%; border: 3px solid var(--dusk); background: var(--sand); margin: 3px 2px 0; position: relative; z-index: 1; box-sizing: border-box; }
+.result-stop__body { display: flex; flex-direction: column; min-width: 0; color: var(--ink); line-height: 1.3; }
+.result-stop__note { font-size: 14px; color: var(--muted); }
+.result-stop--boarding .result-stop__dot, .result-stop--drop-off .result-stop__dot { background: var(--sunset); border-color: var(--sunset); }
+.result-stop--boarding::after { background: var(--sunset); }
+.result-stop--boarding { padding-bottom: 28px; }
+.result-duration { position: absolute; left: calc(52px + 12px + 20px + 12px); bottom: 3px; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.result-stop--before, .result-stop--after { opacity: 0.55; }
+.result-stop--before .result-stop__dot, .result-stop--after .result-stop__dot { border-color: #BFAE97; }
+.result-stop--before::after { background: none; width: 0; border-left: 2px dashed #D9CBB8; }
+.result-stop--drop-off:not(:last-child)::after { background: none; width: 0; border-left: 2px dashed #D9CBB8; }
+.result-stop--drop-off:not(:last-child) { padding-bottom: 14px; }
+.result-driver__name .muted { font-size: 14px; }
+
+/* Filters and sort */
+.search-layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 32px; align-items: start; }
+.search-filters-fold > summary { display: none; }
+.search-filters { display: flex; flex-direction: column; gap: 20px; padding: 20px; background: var(--white); border-radius: var(--radius-m); box-shadow: var(--shadow-float); }
+.search-filters fieldset { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.search-filters legend { padding: 0; margin-bottom: 6px; font: 700 15px var(--font-display); color: var(--ink); }
+.search-filters__option, .search-filters__price { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; font-size: 16px; }
+.search-filters__option input { width: 20px; height: 20px; flex: none; accent-color: var(--dusk); margin: 0; }
+.search-filters__price input { width: 110px; min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--radius-s); background: var(--sand); color: var(--ink); font: inherit; }
+.search-filters__price span { color: var(--muted); font-size: 15px; }
+.search-filters__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
+.search-filters__actions .btn[hidden] { display: none; }
+.search-filters__clear { display: inline-flex; align-items: center; min-height: 44px; color: var(--dusk); text-decoration: underline; text-underline-offset: 3px; font-weight: 600; }
+.search-filters__clear.btn { text-decoration: none; padding: 0 20px; border: 2px solid var(--dusk); border-radius: 999px; }
+.search-main { min-width: 0; }
+.search-sort { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.search-sort__label { color: var(--muted); font-weight: 600; margin-right: 4px; }
+.search-sort a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--white); color: var(--ink); text-decoration: none; font-weight: 600; font-size: 15px; }
+.search-sort a:hover { border-color: var(--dusk); }
+.search-sort a[aria-current="true"] { background: var(--dusk); border-color: var(--dusk); color: var(--white); }
+@media (min-width: 901px) {
+    .search-filters-fold::details-content { content-visibility: visible; display: block; }
+    .search-filters-fold { position: sticky; top: 24px; }
+}
+@media (max-width: 900px) {
+    .search-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .search-filters-fold > summary { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 8px 16px; background: var(--white); border-radius: var(--radius-m); box-shadow: var(--shadow-float); cursor: pointer; list-style: none; font-weight: 600; }
+    .search-filters-fold > summary::-webkit-details-marker { display: none; }
+    .search-filters-fold__on { margin-left: auto; font-size: 14px; color: var(--dusk); }
+    .search-filters-fold[open] > summary { margin-bottom: 8px; }
+}
