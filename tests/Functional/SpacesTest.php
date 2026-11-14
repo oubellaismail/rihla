@@ -5,20 +5,21 @@ namespace App\Tests\Functional;
 use Symfony\Component\DomCrawler\Crawler;
 
 /**
- * One account, two spaces (like inDrive): a « Passager | Conducteur » switch in the header, and a menu per space.
+ * One account, two spaces (like inDrive): a « Passager | Conducteur » switch in the one-row header, whose links
+ * depend on the space. « Publier un trajet » stays in the header in both spaces; « Mes véhicules » is in the account menu.
  * "Now" is 2026-11-10 10:00.
  *
  * - Passenger space: /trips (Rechercher) and /bookings (Mes réservations).
  * - Driver space: /driver (Tableau de bord), /driver/trips (Mes trajets publiés), /driver/earnings (Mes gains),
- *   /account/vehicles (Véhicules) and /trips/new (Publier).
+ *   and its other pages /account/vehicles and /trips/new.
  * - Pages of a space switch to it; other pages (home, profile, account) keep the last space; a new session starts as passenger.
  */
 final class SpacesTest extends WebFlowTestCase
 {
-    /** @return list<string> hrefs of the space menu */
+    /** @return list<string> hrefs of the links of the current space, in the header */
     private function menu(Crawler $crawler): array
     {
-        return $crawler->filter('nav.space-nav a')->each(static fn (Crawler $a): string => (string) $a->attr('href'));
+        return $crawler->filter('.site-header .space-links a')->each(static fn (Crawler $a): string => (string) $a->attr('href'));
     }
 
     private function currentSpace(Crawler $crawler): string
@@ -31,7 +32,7 @@ final class SpacesTest extends WebFlowTestCase
         $this->client->request('GET', '/');
 
         self::assertSelectorNotExists('.space-switch');
-        self::assertSelectorNotExists('nav.space-nav');
+        self::assertSelectorNotExists('.space-links');
     }
 
     public function testASignedInUserStartsAsPassenger(): void
@@ -44,6 +45,9 @@ final class SpacesTest extends WebFlowTestCase
         self::assertSame(['/trips', '/bookings'], $this->menu($crawler));
         self::assertSelectorExists('.space-switch a[href="/trips"]');
         self::assertSelectorExists('.space-switch a[href="/driver"]');
+        self::assertSelectorExists('.site-header a.btn[href="/trips/new"]', 'publishing stays one click away');
+        self::assertSelectorExists('.site-header .menu-panel a[href="/account/vehicles"]');
+        self::assertSelectorNotExists('nav.space-nav', 'one header row, no second bar');
     }
 
     public function testDriverPagesShowTheDriverMenu(): void
@@ -55,8 +59,9 @@ final class SpacesTest extends WebFlowTestCase
         $crawler = $this->client->request('GET', '/driver/trips');
 
         self::assertSame('Conducteur', $this->currentSpace($crawler));
-        self::assertSame(['/driver', '/driver/trips', '/driver/earnings', '/account/vehicles', '/trips/new'], $this->menu($crawler));
-        self::assertSelectorExists('nav.space-nav a[href="/driver/trips"][aria-current="page"]');
+        self::assertSame(['/driver', '/driver/trips', '/driver/earnings'], $this->menu($crawler));
+        self::assertSelectorExists('.site-header .space-links a[href="/driver/trips"][aria-current="page"]');
+        self::assertSelectorExists('.site-header a.btn[href="/trips/new"]');
     }
 
     public function testTheSpaceStaysOnPagesThatBelongToNeither(): void

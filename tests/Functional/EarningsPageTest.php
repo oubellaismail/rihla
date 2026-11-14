@@ -59,6 +59,6 @@ final class EarningsPageTest extends WebFlowTestCase
 
         $this->client->request('GET', '/driver/earnings');
 
-        self::assertSelectorExists('nav.space-nav a[href="/driver/earnings"][aria-current="page"]');
+        self::assertSelectorExists('.site-header .space-links a[href="/driver/earnings"][aria-current="page"]');
     }
 }
