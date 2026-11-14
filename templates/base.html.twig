@@ -21,9 +21,8 @@
         {% if space == 'driver' %}
             {% set menu = [
                 {href: path('app_driver_dashboard'), label: 'Tableau de bord', short: 'Accueil', routes: ['app_driver_dashboard']},
-                {href: path('app_driver_trips'), label: 'Mes trajets publiés', short: 'Trajets', routes: ['app_driver_trips', 'app_driver_trip_show', 'app_driver_trip_cancel']},
+                {href: path('app_driver_trips'), label: 'Mes trajets', short: 'Trajets', routes: ['app_driver_trips', 'app_driver_trip_show', 'app_driver_trip_cancel']},
                 {href: path('app_driver_earnings'), label: 'Mes gains', short: 'Gains', routes: ['app_driver_earnings']},
-                {href: path('app_vehicles'), label: 'Véhicules', routes: ['app_vehicles', 'app_vehicle_delete']},
             ] %}
         {% else %}
             {% set menu = [
@@ -39,6 +38,12 @@
                 </a>
                 <div class="nav-links">
                     {% if app.user %}
+                        <span class="space-links">
+                            {% for item in menu %}
+                                <a href="{{ item.href }}" {% if route in item.routes %}aria-current="page"{% endif %}>{% if item.short is defined %}<span class="hide-sm">{{ item.label }}</span><span class="show-sm">{{ item.short }}</span>{% else %}{{ item.label }}{% endif %}</a>
+                            {% endfor %}
+                        </span>
+                        <a class="btn btn--outline" href="{{ path('app_trip_new') }}" {% if route == 'app_trip_new' %}aria-current="page"{% endif %}>{{ ui.icon('plus') }} <span class="hide-sm">Publier un trajet</span><span class="visually-hidden-sm">Publier un trajet</span></a>
                         <div class="space-switch" role="group" aria-label="Espace">
                             <a href="{{ path('app_trip_search') }}" {% if space == 'passenger' %}aria-current="true"{% endif %}>Passager</a>
                             <a href="{{ path('app_driver_dashboard') }}" {% if space == 'driver' %}aria-current="true"{% endif %}>Conducteur</a>
@@ -49,6 +54,7 @@
                                 <div class="menu-who"><strong>{{ app.user.fullName }}</strong><br><span class="small muted">{{ app.user.email }}</span></div>
                                 <a href="{{ path('app_user_profile', {id: app.user.id}) }}">Mon profil public</a>
                                 <a href="{{ path('app_account') }}">Mon compte</a>
+                                <a href="{{ path('app_vehicles') }}">Mes véhicules</a>
                                 {% if is_granted('ROLE_ADMIN') %}<a href="{{ path('admin') }}">Back-office</a>{% endif %}
                                 <a href="{{ path('app_logout') }}">Déconnexion</a>
                             </div>
@@ -61,18 +67,6 @@
                 </div>
             </nav>
         </header>
-        {% if app.user %}
-            <nav class="space-nav" aria-label="{{ space == 'driver' ? 'Espace conducteur' : 'Espace passager' }}">
-                <div class="container space-nav__row">
-                    {% for item in menu %}
-                        <a href="{{ item.href }}" {% if route in item.routes %}aria-current="page"{% endif %}>{% if item.short is defined %}<span class="hide-sm">{{ item.label }}</span><span class="show-sm">{{ item.short }}</span>{% else %}{{ item.label }}{% endif %}</a>
-                    {% endfor %}
-                    {% if space == 'driver' %}
-                        <a class="btn btn--primary space-nav__publish" href="{{ path('app_trip_new') }}" {% if route == 'app_trip_new' %}aria-current="page"{% endif %}>{{ ui.icon('plus') }} <span class="hide-sm">Publier un trajet</span><span class="visually-hidden-sm">Publier un trajet</span></a>
-                    {% endif %}
-                </div>
-            </nav>
-        {% endif %}
 
         {% set flashes = app.flashes(['success', 'error', 'info']) %}
         {% if flashes|filter(m => m is not empty)|length %}
