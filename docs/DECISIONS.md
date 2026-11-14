@@ -174,3 +174,9 @@ Same reasoning as the driver's checklist: a passenger does not think in litres.
 - **One sentence says where you stand**, updated as you pick: « Vous emportez 1 valise moyenne. Il reste encore de la place pour un bagage cabine. » With nothing picked: « Vous n'emportez rien en soute. Il reste de la place pour 4 grandes valises. » When nothing fits: « Le coffre est plein sur votre portion. »
 - **The reason sits on the row.** A size that no longer fits says so on its own row (« Plus assez de place pour une grande valise ») and its + is disabled.
 - **Litres stay only where they are a fact**: the 409 page when the trunk filled meanwhile (« il reste 54 L sur cette portion »), and the driver's pages.
+
+## 2026-11-14 — Publishing: times filled in for the driver
+
+- **Empty times are filled in, never overwritten.** When Rihla knows the road time of a leg (OSRM), it fills in the next stop's time if that field is still empty, and says so under it: « Heure calculée par Rihla : 09:45, modifiable ». A time the driver typed is never replaced; it gets the usual « Heure conseillée : 09:45 · Utiliser ». A time Rihla filled in follows a new calculation (cities changed) until the driver edits it.
+- **The driver keeps the last word.** Passengers rely on these times to be at the meeting point; only the driver knows the breaks, the traffic and the slow roads.
+- **Labels say which time it is:** « Date et heure de départ » on the first stop, « Départ de cet arrêt » on the middle stops, « Arrivée prévue » on the last one, rendered by the server and kept right by the stop list when stops are added or removed (review of the flows, B-6).
