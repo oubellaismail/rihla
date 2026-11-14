@@ -49,33 +49,75 @@ final class LandingPageTest extends WebFlowTestCase
         self::assertSelectorNotExists('.next-departure');
     }
 
-    public function testARouteTileCountsDeparturesAndShowsTheLowestPrice(): void
+    public function testTheHeroHasTheEyebrowAndTheFullSearchBar(): void
+    {
+        $this->client->request('GET', '/');
+
+        self::assertSelectorTextContains('.hero .hero__eyebrow', 'Covoiturage régional au Maroc');
+        self::assertSelectorExists('.hero form.searchbar select[name="seats"]');
+        self::assertSelectorExists('.hero form.searchbar button[type="button"][data-action*="swap"]', 'swaps departure and arrival');
+    }
+
+    public function testThePrincipleExplainsThePortionWithAWorkedExample(): void
+    {
+        $crawler = $this->client->request('GET', '/');
+
+        self::assertCount(3, $crawler->filter('#principe .principle-step'));
+        self::assertSelectorExists('#principe .fare-demo[data-controller~="fare-demo"]');
+        self::assertCount(4, $crawler->filter('#principe .fare-demo [data-fare-demo-target="stop"]'));
+        self::assertSelectorTextContains('#principe .fare-demo', 'Essaouira → Marrakech');
+        self::assertSelectorTextContains('#principe .fare-demo', 'Vous gardez 130 MAD en poche');
+    }
+
+    public function testPassengerAndDriverBandsLeadToTheirAction(): void
+    {
+        $this->client->request('GET', '/');
+
+        self::assertSelectorExists('#passagers a[href="/trips"]');
+        self::assertSelectorExists('#conducteurs a[href="/trips/new"]');
+        self::assertSelectorTextContains('.luggage-band', 'Et vos bagages aussi.');
+    }
+
+    public function testTheRoutesEndWithAnInvitationToPublishWhenTheyAreFew(): void
     {
         $this->db->trip();
         $this->em->flush();
 
         $crawler = $this->client->request('GET', '/');
 
-        $tile = $crawler->filter('.route-tile')->reduce(static fn ($t) => str_contains($t->text(), 'Agadir → Marrakech'));
-        self::assertCount(1, $tile);
-        self::assertStringContainsString('1 départ', $tile->text());
-        self::assertStringContainsString('dès 125 MAD', $tile->text());
-        self::assertStringContainsString('/trips?from=Agadir&to=Marrakech', (string) $tile->attr('href'));
+        self::assertCount(1, $crawler->filter('#trajets .route-card:not(.route-card--empty)'));
+        $empty = $crawler->filter('#trajets .route-card--empty');
+        self::assertCount(1, $empty);
+        self::assertStringContainsString('Casablanca → Marrakech', $empty->text());
+        self::assertStringContainsString('Aucun départ prévu', $empty->text());
+        self::assertSame('/trips/new', $empty->filter('a')->last()->attr('href') ?? $empty->attr('href'));
     }
 
-    public function testEmptyRoutesOnlyFillOneRowAndInviteDriversToPublish(): void
+    public function testTrustReviewsAndTheClosingCall(): void
     {
-        foreach (['Casablanca', 'Marrakech', 'Agadir', 'Essaouira', 'Rabat', 'Tanger'] as $name) {
-            $this->db->city($name);
-        }
+        $crawler = $this->client->request('GET', '/');
+
+        self::assertCount(4, $crawler->filter('#confiance .trust-item'));
+        self::assertSelectorExists('.cta-banner a[href="/trips"]');
+        self::assertSelectorExists('.cta-banner a[href="/trips/new"]');
+        self::assertSelectorTextContains('.site-footer', 'Bonne route');
+    }
+
+    public function testARouteCardShowsThePhotoOfItsArrivalCity(): void
+    {
+        $this->db->trip(); // Agadir → Casablanca
         $this->em->flush();
 
         $crawler = $this->client->request('GET', '/');
 
-        $empty = $crawler->filter('.route-tile--empty');
-        self::assertLessThanOrEqual(4, $empty->count());
-        self::assertGreaterThan(0, $empty->count());
-        self::assertSame('/trips/new', $empty->first()->attr('href'));
-        self::assertStringContainsString('Aucun départ prévu', $empty->first()->text());
+        self::assertStringContainsString('city-casablanca', (string) $crawler->filter('#trajets .route-card:not(.route-card--empty) img')->attr('src'));
+    }
+
+    public function testTheFooterCreditsAiGeneratedPhotos(): void
+    {
+        $this->client->request('GET', '/');
+
+        self::assertSelectorTextContains('.site-footer', 'Photos générées par IA');
+        self::assertSelectorTextNotContains('.site-footer', 'Unsplash');
     }
 }
