@@ -21,7 +21,7 @@
                     {{ form_errors(form.stops) }}
                     <ol class="stop-list" data-stop-list-target="list">
                         {% for stop in form.stops %}
-                            {{ include('publish/_stop.html.twig', {stop: stop}) }}
+                            {{ include('publish/_stop.html.twig', {stop: stop, role: loop.first ? 'first' : (loop.last ? 'last' : 'middle'), position: loop.index0}) }}
                         {% endfor %}
                     </ol>
                     <div><button type="button" class="btn btn--outline" data-action="stop-list#add">{{ ui.icon('plus') }} Ajouter un arrêt</button></div>

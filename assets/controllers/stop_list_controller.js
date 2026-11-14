@@ -34,6 +34,10 @@ export default class extends Controller {
             const isLast = i === last;
             item.querySelector('[data-stop-list-target="label"]').textContent =
                 isFirst ? 'Départ' : isLast ? 'Arrivée' : `Arrêt ${i}`;
+            const timeLabel = item.querySelector('label[for$="_departureAt"]');
+            if (timeLabel) {
+                timeLabel.textContent = isFirst ? 'Date et heure de départ' : isLast ? 'Arrivée prévue' : 'Départ de cet arrêt';
+            }
             // Departure and arrival cannot be removed.
             item.querySelector('[data-stop-list-target="removeButton"]').hidden = isFirst || isLast;
             // The arrival has no leg after it, so no price.

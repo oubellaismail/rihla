@@ -252,9 +252,29 @@ export default class extends Controller {
                 this.refreshPriceHint(from.row);
             }
             if (typeof leg.suggestedNextDeparture === 'string' && leg.suggestedNextDeparture.length >= 16) {
-                this.offer(to.row, 'time-suggestion', `Heure conseillée : ${leg.suggestedNextDeparture.slice(11, 16)}`, () => {
-                    this.fill(this.field(to.row, 'departureAt'), leg.suggestedNextDeparture);
-                });
+                const suggestion = leg.suggestedNextDeparture;
+                const input = this.field(to.row, 'departureAt');
+                const hhmm = suggestion.slice(11, 16);
+                if (input && (input.value === '' || input.dataset.autofilled === '1')) {
+                    // Empty, or still the value Rihla filled in: follow the new calculation.
+                    this.fill(input, suggestion);
+                    input.dataset.autofilled = '1'; // after fill(): its synthetic events clear the flag
+                    if (!input.dataset.autofillWatched) {
+                        input.dataset.autofillWatched = '1';
+                        const forget = () => { delete input.dataset.autofilled; };
+                        input.addEventListener('input', forget);
+                        input.addEventListener('change', forget);
+                    }
+                    const el = to.row.querySelector('[data-role="time-suggestion"]');
+                    if (el) {
+                        el.replaceChildren(`Heure calculée par Rihla : ${hhmm}, modifiable`);
+                        el.hidden = false;
+                    }
+                } else {
+                    this.offer(to.row, 'time-suggestion', `Heure conseillée : ${hhmm}`, () => {
+                        this.fill(input, suggestion);
+                    });
+                }
             }
         });
     }
