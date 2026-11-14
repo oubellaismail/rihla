@@ -1,0 +1,119 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as ui %}
+{% block title %}Mes gains{% endblock %}
+{% block body %}
+{% set done = report.rows|filter(r => r.state == 'completed')|length %}
+{% set peak = 0 %}
+{% for m in report.months %}{% set peak = max(peak, m.earned + m.upcoming) %}{% endfor %}
+<div class="page"><div class="container">
+    <div class="page-head"><h1>Mes gains</h1></div>
+    {% include 'booking/_tabs.html.twig' with {active: 'earnings'} %}
+
+    {% if report.rows is empty %}
+        <div class="empty card">
+            <h2>Vous n’avez encore rien gagné</h2>
+            <p>Publiez un trajet : chaque place réservée, même sur une portion de route, apparaîtra ici.</p>
+            <a class="btn btn--primary" href="{{ path('app_trip_new') }}">Publier un trajet</a>
+        </div>
+    {% else %}
+        <section class="earnings-kpis" aria-label="Résumé">
+            <div class="earnings-kpi earnings-kpi--earned">
+                <span class="earnings-kpi__label">Gagné</span>
+                <strong class="earnings-kpi__value">{{ report.earned }} MAD</strong>
+                <span class="earnings-kpi__note">{{ done }} trajet{{ done > 1 ? 's' }} terminé{{ done > 1 ? 's' }}</span>
+            </div>
+            <div class="earnings-kpi earnings-kpi--upcoming">
+                <span class="earnings-kpi__label">À venir</span>
+                <strong class="earnings-kpi__value">{{ report.upcoming }} MAD</strong>
+                <span class="earnings-kpi__note">{{ report.upcomingBookings }} réservation{{ report.upcomingBookings > 1 ? 's' }} confirmée{{ report.upcomingBookings > 1 ? 's' }}</span>
+            </div>
+            <div class="earnings-kpi earnings-kpi--seats">
+                <span class="earnings-kpi__label">Places vendues</span>
+                <strong class="earnings-kpi__value">{{ report.seatsSold }}</strong>
+                <span class="earnings-kpi__note">sur {{ report.tripsWithSales }} trajet{{ report.tripsWithSales > 1 ? 's' }}</span>
+            </div>
+            <div class="earnings-kpi earnings-kpi--rating">
+                <span class="earnings-kpi__label">Note moyenne</span>
+                {% if rating.average is not null %}
+                    <strong class="earnings-kpi__value">{{ rating.average|number_format(1, ',') }} / 5</strong>
+                    <span class="earnings-kpi__note">{{ rating.count }} avis</span>
+                {% else %}
+                    <strong class="earnings-kpi__value earnings-kpi__value--none">Pas encore d’avis</strong>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="card earnings-chart" aria-labelledby="chart-title">
+            <div class="earnings-chart__head">
+                <h2 id="chart-title" class="section-title">Six derniers mois</h2>
+                <ul class="earnings-legend">
+                    <li><span class="earnings-swatch earnings-swatch--earned" aria-hidden="true"></span>Gagné</li>
+                    <li><span class="earnings-swatch earnings-swatch--upcoming" aria-hidden="true"></span>À venir</li>
+                </ul>
+            </div>
+            <div class="earnings-chart__bars">
+                {% for m in report.months %}
+                    {% set total = m.earned + m.upcoming %}
+                    <div class="earnings-chart__month" role="group" aria-label="{{ m.month|format_datetime(pattern: 'MMMM') }} : {{ m.earned }} MAD gagnés, {{ m.upcoming }} MAD à venir">
+                        <span class="earnings-chart__amount" aria-hidden="true">{{ total > 0 ? total : "" }}</span>
+                        <div class="earnings-chart__plot" aria-hidden="true">
+                            {% if total > 0 %}
+                                {% if m.upcoming > 0 %}<span class="earnings-bar earnings-bar--upcoming" style="height: {{ (m.upcoming / peak * 100)|round(1) }}%"></span>{% endif %}
+                                {% if m.earned > 0 %}<span class="earnings-bar earnings-bar--earned" style="height: {{ (m.earned / peak * 100)|round(1) }}%"></span>{% endif %}
+                            {% else %}
+                                <span class="earnings-bar earnings-bar--none"></span>
+                            {% endif %}
+                        </div>
+                        <span class="earnings-chart__label" aria-hidden="true">{{ m.month|format_datetime(pattern: 'MMM') }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <div class="earnings-insights">
+            <section class="card earnings-resold">
+                <h2 class="section-title">L’effet tronçon</h2>
+                <p class="earnings-big">{{ report.resoldSeats }} {{ report.resoldSeats == 1 ? 'place revendue' : 'places revendues' }}</p>
+                <p class="muted">en cours de route : un passager descend, un autre monte sur le même siège.</p>
+            </section>
+            <section class="card earnings-fill">
+                <h2 class="section-title">Remplissage moyen</h2>
+                {% if report.fillRate is not null %}
+                    <p class="earnings-big">{{ report.fillRate }} % <span class="earnings-big__unit">des places offertes</span></p>
+                {% else %}
+                    <p class="muted">Pas encore de places offertes.</p>
+                {% endif %}
+            </section>
+        </div>
+
+        <div class="earnings-table-wrap">
+            <table class="earnings-table">
+                <thead>
+                    <tr><th scope="col">Trajet</th><th scope="col">Date</th><th scope="col">Places</th><th scope="col">Remplissage</th><th scope="col" class="earnings-table__amount">Montant</th></tr>
+                </thead>
+                <tbody>
+                    {% for row in report.rows %}
+                        {% set trip = row.trip %}
+                        <tr>
+                            <td data-label="Trajet">
+                                <a class="earnings-table__route" href="{{ path('app_driver_trip_show', {id: trip.id}) }}">{{ ui.route(trip.firstStop.city.name, trip.lastStop.city.name) }}</a>
+                                <span class="badge {{ row.state == 'upcoming' ? 'badge--warn' : (row.state == 'completed' ? 'badge--ok' : 'badge--off') }}">{{ {upcoming: 'À venir', completed: 'Terminé', cancelled: 'Annulé'}[row.state] }}</span>
+                            </td>
+                            <td data-label="Date">{{ trip.firstStop.departureAt|format_datetime(pattern: 'd MMM yyyy') }}</td>
+                            <td data-label="Places">{{ row.seats }}</td>
+                            <td data-label="Remplissage">
+                                <span class="earnings-legs" role="img" aria-label="{% for n in row.legs %}tronçon {{ loop.index }} : {{ n }} place{{ n > 1 ? 's' }} sur {{ trip.seatsOffered }}{{ not loop.last ? ', ' }}{% endfor %}">
+                                    {% for n in row.legs %}
+                                        <span class="earnings-leg"><span class="earnings-leg__fill" style="height: {{ trip.seatsOffered > 0 ? min(100, (n / trip.seatsOffered * 100)|round) : 0 }}%"></span></span>
+                                    {% endfor %}
+                                </span>
+                            </td>
+                            <td data-label="Montant" class="earnings-table__amount">{{ row.amount }} MAD</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div></div>
+{% endblock %}

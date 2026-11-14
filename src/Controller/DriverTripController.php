@@ -12,6 +12,7 @@ use App\Security\TripVoter;
 use App\Service\CancellationService;
 use App\Service\TripCompletionService;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Service\DriverEarnings;
 use App\Service\DriverLegSummary;
 use App\Model\PassengerRow;
 use App\Repository\ReviewRepository;
@@ -59,6 +60,19 @@ final class DriverTripController extends AbstractController
         usort($past, static fn (array $a, array $b) => $b['trip']->getFirstStop()->getDepartureAt() <=> $a['trip']->getFirstStop()->getDepartureAt());
 
         return $this->render('driver/index.html.twig', ['upcoming' => $upcoming, 'past' => $past]);
+    }
+
+    #[Route('/driver/earnings', name: 'app_driver_earnings', methods: ['GET'])]
+    #[IsGranted('IS_AUTHENTICATED')]
+    public function earnings(DriverEarnings $earnings, TripCompletionService $completion, ReviewRepository $reviews): Response
+    {
+        $completion->completeFinishedTrips();
+        $driver = $this->currentUser();
+
+        return $this->render('driver/earnings.html.twig', [
+            'report' => $earnings->forDriver($driver),
+            'rating' => $reviews->summaryFor($driver),
+        ]);
     }
 
     #[Route('/driver/trips/{id<\d+>}', name: 'app_driver_trip_show', methods: ['GET'])]

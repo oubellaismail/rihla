@@ -66,6 +66,29 @@ class TripRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * All trips of a driver with stops, bookings and payments in one query (no N+1).
+     *
+     * @return list<Trip>
+     */
+    public function findForDriverWithBookings(User $driver): array
+    {
+        if (null === $driver->getId()) {
+            return []; // not flushed yet: cannot own any trip
+        }
+
+        return $this->createQueryBuilder('t')
+            ->addSelect('s', 'b', 'p')
+            ->join('t.stops', 's')
+            ->leftJoin('t.bookings', 'b')
+            ->leftJoin('b.payment', 'p')
+            ->where('t.driver = :driver')
+            ->setParameter('driver', $driver)
+            ->orderBy('s.position', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     /** Number of trips of this driver that were completed. */
     public function countCompletedBy(User $driver): int
     {
