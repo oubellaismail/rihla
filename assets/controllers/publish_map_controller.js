@@ -252,12 +252,16 @@ export default class extends Controller {
                 this.refreshPriceHint(from.row);
             }
             if (typeof leg.suggestedNextDeparture === 'string' && leg.suggestedNextDeparture.length >= 16) {
-                const suggestion = leg.suggestedNextDeparture;
+                const suggestion = leg.suggestedNextDeparture.slice(0, 16); // datetime-local value
                 const input = this.field(to.row, 'departureAt');
                 const hhmm = suggestion.slice(11, 16);
                 if (input && (input.value === '' || input.dataset.autofilled === '1')) {
-                    // Empty, or still the value Rihla filled in: follow the new calculation.
-                    this.fill(input, suggestion);
+                    // Empty, or still the value Rihla filled in: follow the new calculation. Write
+                    // only a different time: fill() fires « change », which recalculates the
+                    // route, so writing the same time again would loop forever.
+                    if (input.value !== suggestion) {
+                        this.fill(input, suggestion);
+                    }
                     input.dataset.autofilled = '1'; // after fill(): its synthetic events clear the flag
                     if (!input.dataset.autofillWatched) {
                         input.dataset.autofillWatched = '1';

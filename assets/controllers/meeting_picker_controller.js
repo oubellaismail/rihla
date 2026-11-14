@@ -39,7 +39,12 @@ export default class extends Controller {
 
         this.element.classList.add('has-picker');
         this.onKeydown = (event) => this.handleKeydown(event);
-        this.onChange = () => this.syncAll();
+        this.onChange = (event) => {
+            if (event.type === 'change' && event.target.matches?.('[name$="[city]"]')) {
+                this.forgetPointOfAnotherCity(event.target.closest(ROW));
+            }
+            this.syncAll();
+        };
         this.element.addEventListener('keydown', this.onKeydown);
         this.element.addEventListener('change', this.onChange);
         this.element.addEventListener('input', this.onChange);
@@ -120,6 +125,19 @@ export default class extends Controller {
         if (label) {
             label.textContent = 'Précision (facultatif si le point est sur la carte)';
         }
+    }
+
+    /**
+     * A stop whose city changes loses the meeting point placed in the previous city, with the
+     * place name the picker wrote for it: otherwise the route and the price would use a point
+     * in the wrong town (the server refuses it anyway, 15 km rule). Words the driver typed
+     * without placing a point are kept.
+     */
+    forgetPointOfAnotherCity(row) {
+        if (!row || this.meetingPoint(row) === null) {
+            return;
+        }
+        ['meetingLatitude', 'meetingLongitude', 'meetingPoint'].forEach((name) => this.fill(this.field(row, name), ''));
     }
 
     clear(event) {
