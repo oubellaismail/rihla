@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 {% import 'macros.html.twig' as ui %}
-{% block title %}Mes trajets conducteur{% endblock %}
+{% block title %}Mes trajets publiés{% endblock %}
 {% macro item(it) %}
 {% import 'macros.html.twig' as ui %}
 {% import 'driver/_summary.html.twig' as sum %}
@@ -21,8 +21,7 @@
 {% endmacro %}
 {% block body %}
 <div class="page"><div class="container container--narrow">
-    <div class="page-head"><h1>Mes trajets</h1></div>
-    {% include 'booking/_tabs.html.twig' with {active: 'driver'} %}
+    <div class="page-head"><h1>Mes trajets publiés</h1></div>
 
     {% if upcoming is empty and past is empty %}
         <div class="empty card">

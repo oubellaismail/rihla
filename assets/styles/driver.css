@@ -1,0 +1,11 @@
+/* Driver dashboard: next departure card and two money tiles. Orange is only the call to action. */
+.dashboard-onboarding, .dashboard-next { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 24px; margin-bottom: 16px; }
+.dashboard-onboarding p { margin: 0; color: var(--soft); }
+.dashboard-next .section-title { margin: 0; }
+.dashboard-next__when, .dashboard-next__seats { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 600; color: var(--ink); }
+.dashboard-next__when svg, .dashboard-next__seats svg { color: var(--dusk); flex: none; }
+.dashboard-next__none { margin: 0; font: 700 20px var(--font-display); color: var(--ink); }
+.dashboard-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+.dashboard-kpi { display: flex; flex-direction: column; gap: 4px; padding: 16px; background: var(--white); border-radius: var(--radius-m); box-shadow: var(--shadow-card); min-width: 0; }
+.dashboard-kpi__label { font-size: 14px; font-weight: 600; color: var(--muted); }
+.dashboard-kpi__value { font: 700 26px/1.1 var(--font-display); color: var(--dusk); overflow-wrap: anywhere; }

@@ -8,6 +8,7 @@ use App\Enum\BookingStatus;
 use App\Enum\TripStatus;
 use App\Exception\CancellationNotAllowedException;
 use App\Repository\TripRepository;
+use App\Repository\VehicleRepository;
 use App\Security\TripVoter;
 use App\Service\CancellationService;
 use App\Service\TripCompletionService;
@@ -31,6 +32,32 @@ final class DriverTripController extends AbstractController
 {
     public function __construct(private readonly ClockInterface $clock)
     {
+    }
+
+    #[Route('/driver', name: 'app_driver_dashboard', methods: ['GET'])]
+    #[IsGranted('IS_AUTHENTICATED')]
+    public function dashboard(TripRepository $trips, VehicleRepository $vehicles, DriverEarnings $earnings, TripCompletionService $completion): Response
+    {
+        $completion->completeFinishedTrips();
+        $driver = $this->currentUser();
+        $hasVehicle = [] !== $vehicles->findBy(['owner' => $driver], [], 1);
+        $next = null;
+        $reservedSeats = 0;
+        if ($hasVehicle) {
+            $next = $trips->upcomingPublishedBy($driver, $this->clock->now())[0] ?? null;
+            foreach ($next?->getBookings() ?? [] as $booking) {
+                if (BookingStatus::Confirmed === $booking->getStatus()) {
+                    $reservedSeats += $booking->getSeats();
+                }
+            }
+        }
+
+        return $this->render('driver/dashboard.html.twig', [
+            'has_vehicle' => $hasVehicle,
+            'next' => $next,
+            'reserved_seats' => $reservedSeats,
+            'report' => $hasVehicle ? $earnings->forDriver($driver) : null,
+        ]);
     }
 
     #[Route('/driver/trips', name: 'app_driver_trips', methods: ['GET'])]

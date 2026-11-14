@@ -8,3 +8,4 @@ import './styles/picker.css';
 import './styles/seats.css';
 import './styles/luggage.css';
 import './styles/earnings.css';
+import './styles/driver.css';

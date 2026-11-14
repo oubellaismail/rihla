@@ -1,0 +1,48 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as ui %}
+{% block title %}Tableau de bord{% endblock %}
+{% block body %}
+<div class="page"><div class="container container--narrow">
+    <div class="page-head"><h1>Tableau de bord</h1></div>
+
+    {% if not has_vehicle %}
+        <section class="card dashboard-onboarding">
+            <h2>Devenir conducteur</h2>
+            <p>Ajoutez votre voiture et c’est tout : vous pouvez ensuite publier vos trajets.<br>Les passagers réservent seulement la portion de route qui les concerne.</p>
+            <a class="btn btn--primary" href="{{ path('app_vehicles') }}">Ajouter ma voiture</a>
+        </section>
+    {% else %}
+        <section class="card dashboard-next" aria-labelledby="next-title">
+            <h2 id="next-title" class="section-title">Prochain départ</h2>
+            {% if next %}
+                {% set stops = next.stops.toArray %}
+                <div class="dashboard-next__route">
+                    {% if stops|length <= 3 %}
+                        <span class="route">{% for stop in stops %}{{ stop.city.name }}{% if not loop.last %} {{ ui.icon('arrow') }} {% endif %}{% endfor %}</span>
+                    {% else %}
+                        {{ ui.route(next.firstStop.city.name, next.lastStop.city.name) }}
+                    {% endif %}
+                </div>
+                <p class="dashboard-next__when">{{ ui.icon('calendar') }} {{ next.firstStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }} à {{ next.firstStop.departureAt|date('H:i') }}</p>
+                <p class="dashboard-next__seats">{{ ui.icon('seat') }} {% if reserved_seats == 0 %}Aucune place réservée{% elseif reserved_seats == 1 %}1 place réservée{% else %}{{ reserved_seats }} places réservées{% endif %}</p>
+                <a class="link-arrow" href="{{ path('app_driver_trip_show', {id: next.id}) }}">Voir le trajet {{ ui.icon('arrow') }}</a>
+            {% else %}
+                <p class="dashboard-next__none">Aucun trajet à venir</p>
+                <a class="btn btn--primary" href="{{ path('app_trip_new') }}">{{ ui.icon('plus') }} Publier un trajet</a>
+            {% endif %}
+        </section>
+
+        <section class="dashboard-kpis" aria-label="Mes gains">
+            <div class="dashboard-kpi dashboard-kpi--earned">
+                <span class="dashboard-kpi__label">Gagné</span>
+                <strong class="dashboard-kpi__value">{{ report.earned }} MAD</strong>
+            </div>
+            <div class="dashboard-kpi dashboard-kpi--upcoming">
+                <span class="dashboard-kpi__label">À venir</span>
+                <strong class="dashboard-kpi__value">{{ report.upcoming }} MAD</strong>
+            </div>
+        </section>
+        <a class="link-arrow" href="{{ path('app_driver_earnings') }}">Voir mes gains {{ ui.icon('arrow') }}</a>
+    {% endif %}
+</div></div>
+{% endblock %}

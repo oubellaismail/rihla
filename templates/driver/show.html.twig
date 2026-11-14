@@ -5,7 +5,7 @@
 {% block body %}
 <div class="page"><div class="container">
     <div class="page-head">
-        <p class="muted small"><a href="{{ path('app_driver_trips') }}">Mes trajets</a></p>
+        <p class="muted small"><a href="{{ path('app_driver_trips') }}">Mes trajets publiés</a></p>
         <h1>{{ ui.route(trip.firstStop.city.name, trip.lastStop.city.name) }}</h1>
         <p class="driver-summary muted">{{ sum.passengers(summary) }} · {{ sum.free_runs(summary) }}</p>
         <p class="row">{{ trip.firstStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}

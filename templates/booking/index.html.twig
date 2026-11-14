@@ -1,9 +1,8 @@
 {% extends 'base.html.twig' %}
-{% block title %}Mes trajets{% endblock %}
+{% block title %}Mes réservations{% endblock %}
 {% block body %}
 <div class="page"><div class="container container--narrow">
-    <div class="page-head"><h1>Mes trajets</h1></div>
-    {% include 'booking/_tabs.html.twig' with {active: 'passenger'} %}
+    <div class="page-head"><h1>Mes réservations</h1></div>
 
     {% if upcoming is empty and past is empty %}
         <div class="empty card">
