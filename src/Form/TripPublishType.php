@@ -13,6 +13,8 @@ use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Validator\Constraints\NotNull;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -69,6 +71,17 @@ final class TripPublishType extends AbstractType
                 'label' => false,
             ])
             ->add('save', SubmitType::class, ['label' => 'Publier le trajet', 'attr' => ['class' => 'btn btn--primary']]);
+
+        // « Ajouter un arrêt » gives a new stop the next free number (stops[2], stops[3]…) but
+        // inserts it before the arrival (stops[1]). The browser sends the fields in page order:
+        // renumber them in that order, or the arrival would become the second stop.
+        $builder->addEventListener(FormEvents::PRE_SUBMIT, static function (FormEvent $event): void {
+            $data = $event->getData();
+            if (\is_array($data) && \is_array($data['stops'] ?? null)) {
+                $data['stops'] = array_values($data['stops']);
+                $event->setData($data);
+            }
+        });
     }
 
     public function configureOptions(OptionsResolver $resolver): void

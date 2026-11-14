@@ -21,6 +21,10 @@ final class PublishStopOrderTest extends WebFlowTestCase
         $values = $crawler->selectButton('Publier le trajet')->form()->getPhpValues();
         $values['trip']['vehicle'] = $vehicle->getId();
         $values['trip']['seatsOffered'] = 3;
+        foreach (['Casablanca', 'El Jadida', 'Essaouira', 'Agadir'] as $name) {
+            $this->db->city($name);
+        }
+        $this->em->flush(); // new cities need an id before the form refers to them
         $stop = fn (string $city, string $at, int|string $price) => ['city' => $this->db->city($city)->getId(), 'departureAt' => $at, 'meetingPoint' => 'Centre-ville', 'legPriceToNext' => $price];
         $values['trip']['stops'] = [
             0 => $stop('Casablanca', '2026-11-12T08:00', 35),
