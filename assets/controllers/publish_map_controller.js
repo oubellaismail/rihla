@@ -255,23 +255,31 @@ export default class extends Controller {
                 const suggestion = leg.suggestedNextDeparture.slice(0, 16); // datetime-local value
                 const input = this.field(to.row, 'departureAt');
                 const hhmm = suggestion.slice(11, 16);
-                if (input && (input.value === '' || input.dataset.autofilled === '1')) {
-                    // Empty, or still the value Rihla filled in: follow the new calculation. Write
-                    // only a different time: fill() fires « change », which recalculates the
-                    // route, so writing the same time again would loop forever.
+                const auto = input && (input.value === '' || input.dataset.autofilled === '1');
+                const impossible = input && !auto && this.tooEarly(input.value, suggestion);
+                if (auto || impossible) {
+                    // Empty, still the value Rihla filled in, or too early to be possible (a typed
+                    // or restored time before the previous departure plus the road): follow the
+                    // calculation. Write only a different time: fill() fires « change », which
+                    // recalculates the route, so writing the same time again would loop forever.
                     if (input.value !== suggestion) {
                         this.fill(input, suggestion);
                     }
                     input.dataset.autofilled = '1'; // after fill(): its synthetic events clear the flag
+                    if (impossible) {
+                        input.dataset.adjusted = '1'; // keeps « ajustée » on the next calculations
+                    }
                     if (!input.dataset.autofillWatched) {
                         input.dataset.autofillWatched = '1';
-                        const forget = () => { delete input.dataset.autofilled; };
+                        const forget = () => { delete input.dataset.autofilled; delete input.dataset.adjusted; };
                         input.addEventListener('input', forget);
                         input.addEventListener('change', forget);
                     }
                     const el = to.row.querySelector('[data-role="time-suggestion"]');
                     if (el) {
-                        el.replaceChildren(`Heure calculée par Rihla : ${hhmm}, modifiable`);
+                        el.replaceChildren(input.dataset.adjusted === '1'
+                            ? `Heure ajustée par Rihla : ${hhmm}, le trajet depuis ${this.cityName(from.row)} prend plus de temps`
+                            : `Heure calculée par Rihla : ${hhmm}, modifiable`);
                         el.hidden = false;
                     }
                 } else {
@@ -281,6 +289,22 @@ export default class extends Controller {
                 }
             }
         });
+    }
+
+    /**
+     * True when a time is earlier than the road allows. The suggestion is the driving time plus a
+     * 10-minute pause, rounded up to 5 minutes (ArrivalTimeSuggester): a time up to 15 minutes
+     * before it is still possible, earlier is not. Later times are the driver's (breaks, meals).
+     */
+    tooEarly(value, suggestion) {
+        const typed = Date.parse(value);
+        const suggested = Date.parse(suggestion);
+        return Number.isFinite(typed) && Number.isFinite(suggested) && typed < suggested - 15 * 60 * 1000;
+    }
+
+    cityName(row) {
+        const select = this.field(row, 'city');
+        return select && select.value ? select.options[select.selectedIndex].text.trim() : 'l\'arrêt précédent';
     }
 
     refreshPriceHint(row) {
