@@ -16,19 +16,27 @@
                 <button class="btn btn--primary" type="submit">{{ ui.icon('search') }} C’est parti</button>
                 <datalist id="city-names">{% for name in cityNames %}<option value="{{ name }}">{% endfor %}</datalist>
             </form>
-            <p class="search-example small"><a href="/trips?from=Essaouira&amp;to=Marrakech">Exemple : Essaouira → Marrakech</a></p>
-        </div>
-
-        {% if latestBooking %}
-            <div class="float-note hero__note">
-                {{ ui.avatar(latestBooking.passenger) }}
-                <span class="stack stack--tight">
-                    <strong>{{ latestBooking.passenger.firstName }} monte à {{ latestBooking.fromStop.city.name }}</strong>
-                    <span class="small muted">réservé {{ latestBookingAgo }} · <span class="num">{{ latestBooking.totalPrice }} MAD</span></span>
-                </span>
+            <div class="quick-routes">
+                <span>Souvent cherché :</span>
+                {% for pair in quickRoutes %}
+                    <a class="quick-route" href="/trips?from={{ pair[0]|url_encode }}&amp;to={{ pair[1]|url_encode }}">{{ pair[0] }} → {{ pair[1] }}</a>
+                {% endfor %}
             </div>
-        {% endif %}
+        </div>
     </div>
+
+    {% if nextDeparture %}
+        {% set next = nextDeparture.trip %}
+        <a class="next-departure" href="{{ path('app_trip_show', {id: next.id}) }}">
+            <span class="container next-departure__inner">
+                <span class="next-departure__dot" aria-hidden="true"></span>
+                <span class="next-departure__label">Prochain départ</span>
+                <strong>{{ next.firstStop.city.name }} → {{ next.lastStop.city.name }}</strong>
+                <span class="next-departure__meta">{{ next.firstStop.departureAt|format_datetime(pattern: 'EEE d MMM') }}, {{ next.firstStop.departureAt|date('H:i') }} · {% if nextDeparture.freeSeats > 0 %}{{ nextDeparture.freeSeats }} {{ nextDeparture.freeSeats > 1 ? 'places' : 'place' }}{% else %}places sur une partie{% endif %} · dès <span class="num">{{ nextDeparture.price }} MAD</span></span>
+                <span class="next-departure__go">Voir le trajet {{ ui.icon('arrow', 16) }}</span>
+            </span>
+        </a>
+    {% endif %}
 </section>
 
 <section class="container page promo-bands">
@@ -129,12 +137,30 @@
     </div>
 </section>
 
-{% set pairs = [['Casablanca', 'Marrakech'], ['Agadir', 'Marrakech'], ['Essaouira', 'Marrakech'], ['Rabat', 'Casablanca'], ['Tanger', 'Rabat'], ['Fès', 'Meknès'], ['Marrakech', 'Ouarzazate'], ['Agadir', 'Essaouira'], ['Casablanca', 'El Jadida']] %}
 <section class="container page">
     <h2 class="section-title">Routes populaires</h2>
-    <ul class="popular">
-        {% for pair in pairs|filter(p => p[0] in cityNames and p[1] in cityNames) %}
-            <li><a href="{{ path('app_trip_search', {from: pair[0], to: pair[1]}) }}">{{ pair[0] }} → {{ pair[1] }} {{ ui.icon('arrow', 16) }}</a></li>
+    <ul class="route-tiles">
+        {% for route in popularRoutes %}
+            <li>
+                {% if route.departures > 0 %}
+                    <a class="route-tile" href="{{ path('app_trip_search', {from: route.from, to: route.to}) }}">
+                        <span class="route-tile__line" aria-hidden="true"><i></i><b></b><i class="end"></i></span>
+                        <strong>{{ route.from }} → {{ route.to }}</strong>
+                        <span class="route-tile__meta">Prochain : {{ route.next|format_datetime(pattern: 'EEE d MMM') }}, {{ route.next|date('H:i') }}</span>
+                        <span class="route-tile__foot">
+                            <span>{{ route.departures }} {{ route.departures > 1 ? 'départs' : 'départ' }}</span>
+                            <span><span class="muted">dès</span> <span class="num">{{ route.price }} MAD</span></span>
+                        </span>
+                    </a>
+                {% else %}
+                    <a class="route-tile route-tile--empty" href="{{ path('app_trip_new') }}">
+                        <span class="route-tile__line" aria-hidden="true"><i></i><b></b><i class="end"></i></span>
+                        <strong>{{ route.from }} → {{ route.to }}</strong>
+                        <span class="route-tile__meta">Aucun départ prévu pour l’instant.</span>
+                        <span class="route-tile__foot"><span>Vous faites la route ?</span><span class="route-tile__cta">Publier</span></span>
+                    </a>
+                {% endif %}
+            </li>
         {% endfor %}
     </ul>
 </section>
