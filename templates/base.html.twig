@@ -86,20 +86,30 @@
         <footer class="site-footer">
             <div class="container footer-grid">
                 <div class="stack stack--tight">
-                    <strong class="footer-brand">Rihla</strong>
+                    <a class="brand" href="{{ path('app_home') }}" aria-label="Rihla, accueil">
+                        {{ ui.logo(40) }}
+                        <span class="footer-brand">Rihla</span>
+                    </a>
                     <span>Covoiturage régional au Maroc, tronçon par tronçon.</span>
                 </div>
                 <nav class="stack stack--tight" aria-label="Voyager">
                     <strong>Voyager</strong>
                     <a href="{{ path('app_trip_search') }}">Prochains départs</a>
+                    <a href="{{ path('app_home') }}#principe">Comment ça marche</a>
+                    <a href="{{ path('app_home') }}#avis">Avis passagers</a>
+                </nav>
+                <nav class="stack stack--tight" aria-label="Conduire">
+                    <strong>Conduire</strong>
                     <a href="{{ path('app_trip_new') }}">Publier un trajet</a>
+                    <a href="{{ path('app_home') }}#confiance">Confiance et sécurité</a>
                 </nav>
                 <div class="stack stack--tight">
                     <strong>À propos</strong>
-                    <span>Projet réalisé pour l'EMC PFE Challenge 2026</span>
-                    <span>Photos Unsplash</span>
+                    <span>Projet réalisé pour l’EMC PFE Challenge 2026.</span>
+                    <span>Photos générées par IA.</span>
                 </div>
             </div>
+            <div class="container footer-bottom">© 2026 Rihla. Bonne route.</div>
         </footer>
     </body>
 </html>
