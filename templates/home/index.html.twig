@@ -1,28 +1,26 @@
 {% extends 'base.html.twig' %}
 {% import 'macros.html.twig' as ui %}
 
-
 {% block body %}
-<section class="container hero">
-    <div class="hero-text">
-        <h1>Yalla, on partage la <span>route.</span></h1>
-        <p>Trouvez une place dans une voiture qui fait déjà le chemin. Montez à Essaouira, descendez à Marrakech&nbsp;: vous ne payez que votre bout de route.</p>
+<section class="hero hero--photo">
+    <img class="hero__bg" src="{{ asset('images/hero-sunset-al-haouz.jpg') }}" alt="Une voiture sur une route de montagne d’Al Haouz au coucher du soleil">
+    <div class="container hero__inner">
+        <div class="hero-text">
+            <h1>Votre bout de route,<br><span>au prix juste.</span></h1>
+            <p>Montez là où la voiture passe, descendez où vous voulez. Vous ne payez que votre tronçon.</p>
 
-        <form class="searchbar" action="{{ path('app_trip_search') }}" method="get">
-            <label><span>Départ</span><input type="text" name="from" list="city-names" placeholder="Essaouira" autocomplete="off" required></label>
-            <label><span>Arrivée</span><input type="text" name="to" list="city-names" placeholder="Marrakech" autocomplete="off" required></label>
-            <label><span>Quand</span><input type="date" name="date" value="" min="{{ today }}"></label>
-            <button class="btn btn--primary" type="submit">{{ ui.icon('search') }} C’est parti</button>
-            <datalist id="city-names">{% for name in cityNames %}<option value="{{ name }}">{% endfor %}</datalist>
-        </form>
-        <p class="search-example small"><a href="/trips?from=Essaouira&amp;to=Marrakech">Exemple : Essaouira → Marrakech</a></p>
-    </div>
-
-    <div class="hero-photo">
-        <img src="{{ asset('images/hero-sunset-al-haouz.jpg') }}" alt="Une voiture sur une route de montagne d’Al Haouz au coucher du soleil">
+            <form class="searchbar" action="{{ path('app_trip_search') }}" method="get">
+                <label><span>Départ</span><input type="text" name="from" list="city-names" placeholder="Essaouira" autocomplete="off" required></label>
+                <label><span>Arrivée</span><input type="text" name="to" list="city-names" placeholder="Marrakech" autocomplete="off" required></label>
+                <label><span>Quand</span><input type="date" name="date" value="" min="{{ today }}"></label>
+                <button class="btn btn--primary" type="submit">{{ ui.icon('search') }} C’est parti</button>
+                <datalist id="city-names">{% for name in cityNames %}<option value="{{ name }}">{% endfor %}</datalist>
+            </form>
+            <p class="search-example small"><a href="/trips?from=Essaouira&amp;to=Marrakech">Exemple : Essaouira → Marrakech</a></p>
+        </div>
 
         {% if latestBooking %}
-            <div class="float-note float-note--top">
+            <div class="float-note hero__note">
                 {{ ui.avatar(latestBooking.passenger) }}
                 <span class="stack stack--tight">
                     <strong>{{ latestBooking.passenger.firstName }} monte à {{ latestBooking.fromStop.city.name }}</strong>
@@ -30,73 +28,115 @@
                 </span>
             </div>
         {% endif %}
+    </div>
+</section>
 
-        {% if spotlight %}
-            <div class="float-note float-note--bottom">
-                <span class="small muted">Places libres par tronçon · {{ spotlight.trip.firstStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}</span>
-                <div class="leg-counts">
-                    {% for leg in spotlight.legs|slice(0, 4) %}
-                        <span><strong{% if leg.free == 0 %} class="is-full"{% endif %}>{{ leg.free }}</strong>{{ leg.from|slice(0, 3) }} · {{ leg.to|slice(0, 3) }}</span>
-                    {% endfor %}
-                </div>
-            </div>
-        {% endif %}
+<section class="container page promo-bands">
+    <div class="promo">
+        <img src="{{ asset('images/route-essaouira-coast.jpg') }}" alt="La route côtière vers Essaouira" loading="lazy">
+        <div class="promo__text">
+            <span class="eyebrow">Passagers</span>
+            <h2>Montez où la voiture passe.</h2>
+            <p>Une voiture va d’Agadir à Casablanca ? Prenez-la d’Essaouira à Marrakech. Vous choisissez votre place et vous payez votre tronçon, pas le trajet entier.</p>
+            <a class="link-arrow" href="{{ path('app_trip_search') }}">Voir les prochains départs {{ ui.icon('arrow') }}</a>
+        </div>
+    </div>
+
+    <div class="promo promo--flip">
+        <img src="{{ asset('images/route-tizi-n-tichka.jpg') }}" alt="Les lacets du col du Tizi n’Tichka" loading="lazy">
+        <div class="promo__text">
+            <span class="eyebrow">Conducteurs</span>
+            <h2>Vous faites la route&nbsp;? Remplissez la voiture.</h2>
+            <p>Fixez un prix par tronçon. Une place libérée à Essaouira repart avec quelqu’un d’autre, et votre coffre est planifié arrêt par arrêt.</p>
+            <a class="link-arrow" href="{{ path('app_trip_new') }}">Publier un trajet {{ ui.icon('arrow') }}</a>
+        </div>
     </div>
 </section>
 
 <section class="band">
     <div class="container page">
-        <div class="row row--between section-head">
-            <div class="stack stack--tight">
-                <h2>Les routes du moment</h2>
-                <p class="muted">Des conducteurs partent bientôt. Il reste de la place.</p>
+        <h2 class="section-title">Une appli, trois façons de voyager</h2>
+        <div class="uses">
+            <div class="use card">
+                <span class="use__icon">{{ ui.icon('seat', 26) }}</span>
+                <h3>Passagers</h3>
+                <p>Cherchez votre bout de route, choisissez votre siège sur le plan de la voiture.</p>
+                <a class="link-arrow" href="{{ path('app_trip_search') }}">Trouver une place {{ ui.icon('arrow') }}</a>
             </div>
-            <a class="btn btn--outline" href="{{ path('app_trip_search') }}">Voir toutes les routes {{ ui.icon('arrow') }}</a>
-        </div>
-
-        {% if cards %}
-            <div class="grid">
-                {% for card in cards %}
-                    {% set trip = card.trip %}
-                    <a class="card card--link card--flush route-card" href="{{ path('app_trip_show', {id: trip.id}) }}">
-                        <img src="{{ asset(card.photo) }}" alt="" loading="lazy">
-                        <div class="body">
-                            {{ ui.route(trip.firstStop.city.name, trip.lastStop.city.name) }}
-                            <span class="muted small">{{ trip.firstStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}, {{ trip.firstStop.departureAt|date('H:i') }} · {{ trip.driver.publicName }}</span>
-                            <div class="foot">
-                                <span class="small"><span class="muted">dès</span> <span class="num">{{ card.price }} MAD</span></span>
-                                <span class="small {{ card.freeSeats ? 'muted' : '' }}">{% if card.freeSeats > 0 %}{{ card.freeSeats }}{{ card.freeSeats > 1 ? ' places libres' : ' place libre' }}{% elseif card.someLegFree %}Places sur une partie du trajet{% else %}Complet{% endif %}</span>
-                            </div>
-                        </div>
-                    </a>
-                {% endfor %}
+            <div class="use card">
+                <span class="use__icon">{{ ui.icon('car', 26) }}</span>
+                <h3>Conducteurs</h3>
+                <p>Ajoutez vos arrêts, Rihla calcule les heures et propose un prix pour chaque tronçon.</p>
+                <a class="link-arrow" href="{{ path('app_trip_new') }}">Publier un trajet {{ ui.icon('arrow') }}</a>
             </div>
-        {% else %}
-            <div class="empty card">
-                <h3>Aucun départ annoncé pour le moment</h3>
-                <p>Vous faites la route bientôt ? Publiez votre trajet, les passagers viendront à vous.</p>
-                <a class="btn btn--primary" href="{{ path('app_trip_new') }}">Publier un trajet</a>
+            <div class="use card">
+                <span class="use__icon">{{ ui.icon('suitcase', 26) }}</span>
+                <h3>Bagages</h3>
+                <p>Les passagers annoncent leurs bagages. Le conducteur sait à chaque arrêt ce qui monte et ce qui descend.</p>
+                <a class="link-arrow" href="{{ path('app_trip_search') }}">Voyager avec une valise {{ ui.icon('arrow') }}</a>
             </div>
-        {% endif %}
-    </div>
-</section>
-
-<section class="band--dusk band">
-    <div class="container page">
-        <div class="stack stack--l measure">
-            <h2>Une place libérée à Essaouira repart avec quelqu’un d’autre.</h2>
-            <p>Rihla compte les places tronçon par tronçon. Vous payez votre bout de route, le conducteur remplit sa voiture jusqu’au bout.</p>
         </div>
     </div>
 </section>
 
 <section class="container page">
-    <h2 class="section-title">Comment ça marche</h2>
-    <div class="steps">
-        <div class="stack"><span class="n">1</span><h3>Cherchez votre bout de route</h3><p>Indiquez où vous montez et où vous descendez, même si la voiture va plus loin.</p></div>
-        <div class="stack"><span class="n">2</span><h3>Réservez en deux clics</h3><p>Votre place est bloquée dès que vous confirmez. Personne ne peut vous la prendre.</p></div>
-        <div class="stack"><span class="n n--end">3</span><h3>Voyagez, puis notez</h3><p>Après le trajet, conducteur et passagers se laissent un avis. La confiance se construit route après route.</p></div>
+    <div class="row row--between section-head">
+        <div class="stack stack--tight">
+            <h2>Les routes du moment</h2>
+            <p class="muted">Des conducteurs partent bientôt. Il reste de la place.</p>
+        </div>
+        <a class="btn btn--outline" href="{{ path('app_trip_search') }}">Voir toutes les routes {{ ui.icon('arrow') }}</a>
     </div>
+
+    {% if cards %}
+        <div class="grid">
+            {% for card in cards %}
+                {% set trip = card.trip %}
+                <a class="card card--link card--flush route-card" href="{{ path('app_trip_show', {id: trip.id}) }}">
+                    <img src="{{ asset(card.photo) }}" alt="" loading="lazy">
+                    <div class="body">
+                        {{ ui.route(trip.firstStop.city.name, trip.lastStop.city.name) }}
+                        <span class="muted small">{{ trip.firstStop.departureAt|format_datetime(pattern: 'EEEE d MMMM') }}, {{ trip.firstStop.departureAt|date('H:i') }} · {{ trip.driver.publicName }}</span>
+                        <div class="foot">
+                            <span class="small"><span class="muted">dès</span> <span class="num">{{ card.price }} MAD</span></span>
+                            <span class="small {{ card.freeSeats ? 'muted' : '' }}">{% if card.freeSeats > 0 %}{{ card.freeSeats }}{{ card.freeSeats > 1 ? ' places libres' : ' place libre' }}{% elseif card.someLegFree %}Places sur une partie du trajet{% else %}Complet{% endif %}</span>
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty card">
+            <h3>Aucun départ annoncé pour le moment</h3>
+            <p>Vous faites la route bientôt ? Publiez votre trajet, les passagers viendront à vous.</p>
+            <a class="btn btn--primary" href="{{ path('app_trip_new') }}">Publier un trajet</a>
+        </div>
+    {% endif %}
+</section>
+
+<section class="band--dusk band">
+    <div class="container page trust">
+        <span class="trust__icon">{{ ui.icon('shield', 40) }}</span>
+        <div class="stack stack--l">
+            <h2>La confiance se construit route après route.</h2>
+            <ul class="trust__list">
+                <li>{{ ui.icon('check') }} Chaque conducteur a un profil public, avec ses avis et son véhicule.</li>
+                <li>{{ ui.icon('check') }} Votre place est bloquée dès que vous confirmez. Personne ne peut vous la prendre.</li>
+                <li>{{ ui.icon('check') }} Remboursement intégral jusqu’à 24 h avant le départ, 50 % ensuite.</li>
+                <li>{{ ui.icon('check') }} Après le trajet, conducteur et passagers se laissent un avis.</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+{% set pairs = [['Casablanca', 'Marrakech'], ['Agadir', 'Marrakech'], ['Essaouira', 'Marrakech'], ['Rabat', 'Casablanca'], ['Tanger', 'Rabat'], ['Fès', 'Meknès'], ['Marrakech', 'Ouarzazate'], ['Agadir', 'Essaouira'], ['Casablanca', 'El Jadida']] %}
+<section class="container page">
+    <h2 class="section-title">Routes populaires</h2>
+    <ul class="popular">
+        {% for pair in pairs|filter(p => p[0] in cityNames and p[1] in cityNames) %}
+            <li><a href="{{ path('app_trip_search', {from: pair[0], to: pair[1]}) }}">{{ pair[0] }} → {{ pair[1] }} {{ ui.icon('arrow', 16) }}</a></li>
+        {% endfor %}
+    </ul>
 </section>
 
 {% if reviews %}
