@@ -135,13 +135,15 @@ final class EmailNoticesTest extends WebFlowTestCase
     public function testATripCancelledFromTheBackOfficeIsSentToo(): void
     {
         $trip = $this->db->trip();
-        $this->db->booking($trip, 0, 1, passenger: $this->passenger('Mehdi'));
+        $mehdi = $this->passenger('Mehdi');
+        $this->db->booking($trip, 0, 1, passenger: $mehdi);
         $admin = $this->db->user('Admin')->setRoles(['ROLE_ADMIN']);
         $this->login($admin);
 
         $this->confirm(sprintf('/admin/trip/%d', $trip->getId()), 'Annuler le trajet');
 
-        self::assertCount(1, $this->sent());
+        // The driver is told too since driver notices exist (see DriverNotificationsTest): count the passenger's.
+        self::assertCount(1, array_filter($this->sent(), fn (Email $e): bool => $this->to($e) === $mehdi->getEmail()));
         self::assertSame(TripStatus::Cancelled, $this->em->find(Trip::class, $trip->getId())->getStatus());
     }
 

@@ -15,6 +15,9 @@
         <ini name="error_reporting" value="-1" />
         <server name="APP_ENV" value="test" force="true" />
         <env name="APP_ENV" value="test" force="true" />
+        <!-- Docker gives the container MAILER_DSN=smtp://mailer:1025 (Mailpit); tests must not send real e-mails. -->
+        <server name="MAILER_DSN" value="null://null" force="true" />
+        <env name="MAILER_DSN" value="null://null" force="true" />
         <server name="SHELL_VERBOSITY" value="-1" />
     </php>
 
