@@ -40,6 +40,40 @@ class ReviewRepository extends ServiceEntityRepository
     }
 
     /**
+     * Same as summaryFor() for several users at once, in one GROUP BY query (list pages: no query per row).
+     *
+     * @param iterable<User> $users
+     *
+     * @return array<int, RatingSummary> indexed by user id; users without review get RatingSummary(null, 0)
+     */
+    public function summariesFor(iterable $users): array
+    {
+        $summaries = [];
+        foreach ($users as $user) {
+            if (null !== $user->getId()) {
+                $summaries[$user->getId()] = new RatingSummary(null, 0);
+            }
+        }
+        if ([] === $summaries) {
+            return [];
+        }
+
+        $rows = $this->createQueryBuilder('r')
+            ->select('IDENTITY(r.target) AS target', 'COUNT(r.id) AS total', 'AVG(r.rating) AS average')
+            ->where('r.target IN (:ids)')
+            ->setParameter('ids', array_keys($summaries))
+            ->groupBy('r.target')
+            ->getQuery()
+            ->getArrayResult();
+
+        foreach ($rows as $row) {
+            $summaries[(int) $row['target']] = new RatingSummary(round((float) $row['average'], 1), (int) $row['total']);
+        }
+
+        return $summaries;
+    }
+
+    /**
      * Latest reviews that come with a written comment, written about the driver of the trip
      * (testimonials: passengers speaking of drivers, never drivers rating passengers).
      *

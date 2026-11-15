@@ -82,7 +82,9 @@ final class TripSearch
         }
         $pairs = array_values($pairs);
 
-        $bookingsByTrip = $this->loadBookings(array_map(static fn (array $p): Trip => $p[0]->getTrip(), $pairs));
+        $matchedTrips = array_map(static fn (array $p): Trip => $p[0]->getTrip(), $pairs);
+        $this->loadTripDetails($matchedTrips);
+        $bookingsByTrip = $this->loadBookings($matchedTrips);
 
         $fitting = [];
         $full = [];
@@ -131,6 +133,7 @@ final class TripSearch
             return [];
         }
 
+        $this->loadTripDetails($trips);
         $bookingsByTrip = $this->loadBookings($trips);
 
         $matches = [];
@@ -191,6 +194,24 @@ final class TripSearch
     }
 
     /**
+     * Initialises, for all the trips in one query, what the result cards read per trip: every stop
+     * (ordered by position) with its city, the driver and the vehicle. Without it each trip would
+     * lazy-load them one by one.
+     *
+     * @param list<Trip> $trips
+     */
+    private function loadTripDetails(array $trips): void
+    {
+        $this->em->createQuery(
+            'SELECT trip, s, c, d, v FROM '.Trip::class.' trip
+             JOIN trip.stops s JOIN s.city c JOIN trip.driver d LEFT JOIN trip.vehicle v
+             WHERE trip IN (:trips)'
+        )
+            ->setParameter('trips', $trips)
+            ->getResult();
+    }
+
+    /**
      * Loads the bookings of all the trips in one query, grouped by trip id.
      *
      * @param list<Trip> $trips
@@ -200,11 +221,12 @@ final class TripSearch
     private function loadBookings(array $trips): array
     {
         // Fetch-joining the collection also initialises Trip::getBookings(), so later reads
-        // (trunk space on the result cards) cost no extra query per trip.
+        // (trunk space on the result cards) cost no extra query per trip. Payment is the inverse
+        // side of a OneToOne, which Doctrine only loads with one query per booking unless joined.
         /** @var list<Trip> $loaded */
         $loaded = $this->em->createQuery(
-            'SELECT trip, b, f, t FROM '.Trip::class.' trip
-             LEFT JOIN trip.bookings b LEFT JOIN b.fromStop f LEFT JOIN b.toStop t
+            'SELECT trip, b, f, t, p FROM '.Trip::class.' trip
+             LEFT JOIN trip.bookings b LEFT JOIN b.fromStop f LEFT JOIN b.toStop t LEFT JOIN b.payment p
              WHERE trip IN (:trips)'
         )
             ->setParameter('trips', $trips)

@@ -74,15 +74,19 @@ final class TripController extends AbstractController
             if (null === $from || null === $to) {
                 $unknownCity = null === $from ? $fromName : $toName;
             } else {
-                foreach ($tripSearch->search($from, $to, $date, $seats) as $match) {
-                    $results[] = ['match' => $match, 'rating' => $reviews->summaryFor($match->trip->getDriver())];
+                $matches = $tripSearch->search($from, $to, $date, $seats);
+                $ratings = $reviews->summariesFor(array_map(static fn ($m) => $m->trip->getDriver(), $matches));
+                foreach ($matches as $match) {
+                    $results[] = ['match' => $match, 'rating' => $ratings[$match->trip->getDriver()->getId()]];
                 }
                 $found = count($results);
                 $results = $searchFilter->apply($results, $criteria);
             }
         } else {
-            foreach ($tripSearch->upcoming(self::UPCOMING_LIST) as $match) {
-                $upcoming[] = ['match' => $match, 'rating' => $reviews->summaryFor($match->trip->getDriver())];
+            $matches = $tripSearch->upcoming(self::UPCOMING_LIST);
+            $ratings = $reviews->summariesFor(array_map(static fn ($m) => $m->trip->getDriver(), $matches));
+            foreach ($matches as $match) {
+                $upcoming[] = ['match' => $match, 'rating' => $ratings[$match->trip->getDriver()->getId()]];
             }
             $upcomingTotal = count($upcoming);
             $upcoming = $searchFilter->apply($upcoming, $criteria, true);

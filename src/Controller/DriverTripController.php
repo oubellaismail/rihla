@@ -68,7 +68,7 @@ final class DriverTripController extends AbstractController
         $now = $this->clock->now();
         $upcoming = [];
         $past = [];
-        foreach ($trips->findForDriver($this->currentUser()) as $trip) {
+        foreach ($trips->findForDriverWithBookings($this->currentUser()) as $trip) {
             $stops = $trip->getStops()->toArray();
             $carried = 0;
             foreach ($trip->getBookings() as $booking) {

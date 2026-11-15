@@ -67,7 +67,7 @@ class TripRepository extends ServiceEntityRepository
     }
 
     /**
-     * All trips of a driver with stops, bookings and payments in one query (no N+1).
+     * All trips of a driver with stops (and their cities), bookings and payments in one query (no N+1).
      *
      * @return list<Trip>
      */
@@ -78,8 +78,9 @@ class TripRepository extends ServiceEntityRepository
         }
 
         return $this->createQueryBuilder('t')
-            ->addSelect('s', 'b', 'p')
+            ->addSelect('s', 'c', 'b', 'p')
             ->join('t.stops', 's')
+            ->join('s.city', 'c')
             ->leftJoin('t.bookings', 'b')
             ->leftJoin('b.payment', 'p')
             ->where('t.driver = :driver')
