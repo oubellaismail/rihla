@@ -66,6 +66,7 @@ final class TripController extends AbstractController
         $results = [];
         $found = 0;
         $upcoming = [];
+        $upcomingTotal = 0;
 
         if ($searched) {
             $from = $cities->findOneByNameInsensitive($fromName);
@@ -81,8 +82,10 @@ final class TripController extends AbstractController
             }
         } else {
             foreach ($tripSearch->upcoming(self::UPCOMING_LIST) as $match) {
-                $upcoming[] = ['match' => $match];
+                $upcoming[] = ['match' => $match, 'rating' => $reviews->summaryFor($match->trip->getDriver())];
             }
+            $upcomingTotal = count($upcoming);
+            $upcoming = $searchFilter->apply($upcoming, $criteria, true);
         }
 
         return $this->render('trip/search.html.twig', [
@@ -97,7 +100,9 @@ final class TripController extends AbstractController
             'found' => $found,
             'criteria' => $criteria,
             'resultDays' => $this->groupByDay($results, $now),
-            'upcomingDays' => $this->groupByDay($upcoming, $now),
+            'upcoming' => $upcoming,
+            'upcomingTotal' => $upcomingTotal,
+            'upcomingDays' => 'departure' === $criteria->sort ? $this->groupByDay($upcoming, $now) : [],
             'cityNames' => $cities->findAllNames(),
         ]);
     }

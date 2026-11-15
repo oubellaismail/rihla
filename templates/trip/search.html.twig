@@ -1,16 +1,15 @@
 {% extends 'base.html.twig' %}
 {% import 'macros.html.twig' as ui %}
 
-{% macro card(result) %}
+{% macro card(result, wholeTrip = false) %}
     {% import 'macros.html.twig' as ui %}
     {% set match = result.match %}
     {% set trip = match.trip %}
-    {% set partial = match.from.position != trip.firstStop.position or match.to.position != trip.lastStop.position %}
-    <a class="card card--link result{{ match.full ? ' result--full' : '' }}" href="/trips/{{ trip.id }}?from={{ match.from.position }}&amp;to={{ match.to.position }}">
+    <a class="card card--link result{{ wholeTrip ? ' result--whole' : '' }}{{ match.full ? ' result--full' : '' }}" href="/trips/{{ trip.id }}{{ wholeTrip ? '' : '?from=' ~ match.from.position ~ '&amp;to=' ~ match.to.position }}">
         {% set first = trip.firstStop %}
         {% set last = trip.lastStop %}
         <ol class="result-timeline">
-            {% if match.from.position != first.position %}
+            {% if not wholeTrip and match.from.position != first.position %}
                 <li class="result-stop result-stop--before">
                     <time class="result-stop__time" datetime="{{ first.departureAt|date('c') }}">{{ first.departureAt|date('H:i') }}</time>
                     <span class="result-stop__dot"></span>
@@ -23,12 +22,21 @@
                 <span class="result-stop__body"><strong>{{ match.from.city.name }}</strong><span class="result-stop__note">{{ match.from.meetingPoint }}</span></span>
                 <span class="result-duration">{{ match.from.departureAt|duration(match.to.departureAt) }}</span>
             </li>
+            {% if wholeTrip %}
+                {% for stop in trip.stops %}{% if not loop.first and not loop.last %}
+                    <li class="result-stop result-stop--via">
+                        <time class="result-stop__time" datetime="{{ stop.departureAt|date('c') }}">{{ stop.departureAt|date('H:i') }}</time>
+                        <span class="result-stop__dot"></span>
+                        <span class="result-stop__body">{{ stop.city.name }}</span>
+                    </li>
+                {% endif %}{% endfor %}
+            {% endif %}
             <li class="result-stop result-stop--drop-off">
                 <time class="result-stop__time" datetime="{{ match.to.departureAt|date('c') }}">{{ match.to.departureAt|date('H:i') }}</time>
                 <span class="result-stop__dot"></span>
                 <span class="result-stop__body"><strong>{{ match.to.city.name }}</strong></span>
             </li>
-            {% if match.to.position != last.position %}
+            {% if not wholeTrip and match.to.position != last.position %}
                 <li class="result-stop result-stop--after">
                     <time class="result-stop__time" datetime="{{ last.departureAt|date('c') }}">{{ last.departureAt|date('H:i') }}</time>
                     <span class="result-stop__dot"></span>
@@ -45,7 +53,10 @@
             </span>
         </div>
         <div class="result-price">
-            {% if match.full %}
+            {% if wholeTrip %}
+                <span>dès <strong class="num">{{ match.cheapestLegPrice }} MAD</strong></span>
+                <span class="small muted">{{ match.full ? 'Complet' : (match.partlyFree ? 'Places sur une partie du trajet' : (match.freeSeats ~ ' ' ~ (match.freeSeats > 1 ? 'places libres' : 'place libre'))) }}</span>
+            {% elseif match.full %}
                 <span class="result-full-label small">Complet sur votre portion</span>
             {% else %}
                 <strong class="num">{{ match.pricePerSeat }} MAD</strong>
@@ -56,6 +67,15 @@
             {% include 'luggage/_trunk_line.html.twig' with {trunk: trunk_line(trip, match.from, match.to)} only %}
         </div>
     </a>
+{% endmacro %}
+
+{% macro sort(criteria, base) %}
+    <nav class="search-sort" aria-label="Tri des résultats">
+        <span class="search-sort__label">Trier :</span>
+        {% for key, label in {departure: 'Départ le plus tôt', price: 'Prix le plus bas', rating: 'Mieux noté'} %}
+            <a href="{{ path('app_trip_search', base|merge(criteria.toQuery(key))) }}"{% if criteria.sort == key %} aria-current="true"{% endif %}>{{ label }}</a>
+        {% endfor %}
+    </nav>
 {% endmacro %}
 
 {% block title %}Rechercher un trajet{% endblock %}
@@ -93,32 +113,39 @@
                 <h1>Prochains départs</h1>
                 <p>Les trajets annoncés par les conducteurs, avec toutes leurs étapes : vous ne payez que votre portion.</p>
             </div>
-            {% for day in upcomingDays %}
-                <section class="upcoming-day stack">
-                    <h2 class="upcoming-day__title">{{ day.title }}</h2>
-                    {% for row in day.rows %}
-                        {% set match = row.match %}
-                        {% set trip = match.trip %}
-                        <a class="card card--link upcoming{{ match.full ? ' upcoming--full' : '' }}" href="/trips/{{ trip.id }}">
-                            <span class="upcoming__time num">{{ match.from.departureAt|date('H:i') }}</span>
-                            <span class="upcoming__body">
-                                <strong>{% for stop in trip.stops %}{{ stop.city.name }}{% if not loop.last %} · {% endif %}{% endfor %}</strong>
-                                <span class="small muted">{{ trip.driver.publicName }}</span>
-                            </span>
-                            <span class="upcoming__price">
-                                <span class="num">dès {{ match.cheapestLegPrice }} MAD</span>
-                                {% if match.full %}<span class="small muted">Complet</span>{% elseif match.partlyFree %}<span class="small muted">Places sur une partie du trajet</span>{% endif %}
-                            </span>
-                        </a>
-                    {% endfor %}
-                </section>
-            {% else %}
+            {% if upcomingTotal == 0 %}
                 <div class="empty card">
                     <h2>Aucun départ annoncé pour le moment</h2>
                     <p>Vous faites la route bientôt ? Publiez votre trajet, les passagers viendront à vous.</p>
                     <a class="btn btn--primary" href="{{ path('app_trip_new') }}">Publier un trajet</a>
                 </div>
-            {% endfor %}
+            {% else %}
+                {% set base = {} %}
+                <div class="search-layout">
+                    {% set clearUrl = path('app_trip_search') %}
+                    {% include 'trip/_filters.html.twig' %}
+
+                    <div class="search-main stack stack--l">
+                        {{ _self.sort(criteria, base) }}
+                        {% if upcoming is empty %}
+                            <div class="empty card">
+                                <h2>Aucun trajet ne correspond à vos filtres.</h2>
+                                <p>Des départs sont annoncés : élargissez votre recherche.</p>
+                                <a class="btn btn--outline search-filters__clear" href="{{ clearUrl }}">Effacer les filtres</a>
+                            </div>
+                        {% elseif criteria.sort != 'departure' %}
+                            {% for result in upcoming %}{{ _self.card(result, true) }}{% endfor %}
+                        {% else %}
+                            {% for day in upcomingDays %}
+                                <section class="upcoming-day stack">
+                                    <h2 class="upcoming-day__title">{{ day.title }}</h2>
+                                    {% for result in day.rows %}{{ _self.card(result, true) }}{% endfor %}
+                                </section>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
         {% elseif unknownCity %}
             <div class="empty card">
                 <h2>Aucun trajet pour « {{ unknownCity }} »</h2>
@@ -131,49 +158,11 @@
                 <p>{{ from|capitalize }} vers {{ to|capitalize }}</p>
             </div>
             <div class="search-layout">
-                <details class="search-filters-fold"{% if criteria.filtered %} open{% endif %}>
-                    <summary>{{ ui.icon('filter') }} Filtres{% if criteria.filtered %} <span class="search-filters-fold__on">actifs</span>{% endif %}</summary>
-                    <form class="search-filters" method="get" action="/trips" data-controller="search-filters" data-action="change->search-filters#apply">
-                        <input type="hidden" name="from" value="{{ from }}">
-                        <input type="hidden" name="to" value="{{ to }}">
-                        <input type="hidden" name="date" value="{{ date ? date|date('Y-m-d') : '' }}">
-                        <input type="hidden" name="seats" value="{{ seats }}">
-                        {% if criteria.sort != 'departure' %}<input type="hidden" name="sort" value="{{ criteria.sort }}">{% endif %}
-
-                        <fieldset>
-                            <legend>Heure de départ</legend>
-                            {% for slot, label in {morning: 'Matin (avant 12 h)', afternoon: 'Après-midi (12 h – 18 h)', evening: 'Soir (après 18 h)'} %}
-                                <label class="search-filters__option"><input type="checkbox" name="time[]" value="{{ slot }}"{% if slot in criteria.times %} checked{% endif %}> <span>{{ label }}</span></label>
-                            {% endfor %}
-                        </fieldset>
-                        <fieldset>
-                            <legend>Prix maximum</legend>
-                            <label class="search-filters__price"><input type="number" name="maxPrice" value="{{ criteria.maxPrice }}" min="1" step="5" inputmode="numeric" placeholder="Sans limite" aria-label="Prix maximum par place, en dirhams"> <span>MAD par place</span></label>
-                        </fieldset>
-                        <fieldset>
-                            <legend>Bagages</legend>
-                            {% for value, label in {'': 'Peu importe', medium: 'Une valise moyenne passe', large: 'Une grande valise passe'} %}
-                                <label class="search-filters__option"><input type="radio" name="bag" value="{{ value }}"{% if (criteria.bag ? criteria.bag.value : '') == value %} checked{% endif %}> <span>{{ label }}</span></label>
-                            {% endfor %}
-                        </fieldset>
-                        <fieldset>
-                            <legend>Conducteur</legend>
-                            <label class="search-filters__option"><input type="checkbox" name="rated" value="1"{% if criteria.rated %} checked{% endif %}> <span>Noté 4 et plus</span></label>
-                        </fieldset>
-                        <div class="search-filters__actions">
-                            <button class="btn btn--outline" type="submit" data-search-filters-target="submit">Appliquer</button>
-                            {% if criteria.filtered %}<a class="search-filters__clear" href="{{ path('app_trip_search', base) }}">Effacer les filtres</a>{% endif %}
-                        </div>
-                    </form>
-                </details>
+                {% set clearUrl = path('app_trip_search', base) %}
+                {% include 'trip/_filters.html.twig' %}
 
                 <div class="search-main stack stack--l">
-                    <nav class="search-sort" aria-label="Tri des résultats">
-                        <span class="search-sort__label">Trier :</span>
-                        {% for key, label in {departure: 'Départ le plus tôt', price: 'Prix le plus bas', rating: 'Mieux noté'} %}
-                            <a href="{{ path('app_trip_search', base|merge(criteria.toQuery(key))) }}"{% if criteria.sort == key %} aria-current="true"{% endif %}>{{ label }}</a>
-                        {% endfor %}
-                    </nav>
+                    {{ _self.sort(criteria, base) }}
                     {% if results is empty %}
                         <div class="empty card">
                             <h2>Aucun trajet ne correspond à vos filtres.</h2>

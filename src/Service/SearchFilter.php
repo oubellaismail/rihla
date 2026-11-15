@@ -18,38 +18,39 @@ final class SearchFilter
 
     /**
      * @param list<array{match: TripMatch, rating: RatingSummary}> $rows in departure order
+     * @param bool $byCheapestLeg compare the cheapest leg with a seat (upcoming list) instead of the price of the portion
      *
      * @return list<array{match: TripMatch, rating: RatingSummary}>
      */
-    public function apply(array $rows, SearchCriteria $criteria): array
+    public function apply(array $rows, SearchCriteria $criteria, bool $byCheapestLeg = false): array
     {
-        $rows = array_values(array_filter($rows, fn (array $row): bool => $this->keeps($row['match'], $row['rating'], $criteria)));
+        $rows = array_values(array_filter($rows, fn (array $row): bool => $this->keeps($row['match'], $row['rating'], $criteria, $byCheapestLeg)));
 
         if ('departure' === $criteria->sort) {
             return $rows; // already in departure order, full matches last
         }
 
         // usort is stable: ties keep the departure order.
-        usort($rows, static function (array $a, array $b) use ($criteria): int {
+        usort($rows, function (array $a, array $b) use ($criteria, $byCheapestLeg): int {
             $byFull = $a['match']->full <=> $b['match']->full;
             if (0 !== $byFull) {
                 return $byFull;
             }
 
             return 'price' === $criteria->sort
-                ? $a['match']->pricePerSeat <=> $b['match']->pricePerSeat
+                ? $this->price($a['match'], $byCheapestLeg) <=> $this->price($b['match'], $byCheapestLeg)
                 : ($b['rating']->average ?? -1.0) <=> ($a['rating']->average ?? -1.0);
         });
 
         return $rows;
     }
 
-    private function keeps(TripMatch $match, RatingSummary $rating, SearchCriteria $criteria): bool
+    private function keeps(TripMatch $match, RatingSummary $rating, SearchCriteria $criteria, bool $byCheapestLeg): bool
     {
         if ([] !== $criteria->times && !\in_array($this->slot((int) $match->from->getDepartureAt()->format('G')), $criteria->times, true)) {
             return false;
         }
-        if (null !== $criteria->maxPrice && $match->pricePerSeat > $criteria->maxPrice) {
+        if (null !== $criteria->maxPrice && $this->price($match, $byCheapestLeg) > $criteria->maxPrice) {
             return false;
         }
         if ($criteria->rated && (null === $rating->average || $rating->average < self::MIN_RATING)) {
@@ -63,6 +64,11 @@ final class SearchFilter
         }
 
         return true;
+    }
+
+    private function price(TripMatch $match, bool $byCheapestLeg): int
+    {
+        return $byCheapestLeg ? $match->cheapestLegPrice : $match->pricePerSeat;
     }
 
     private function slot(int $hour): string

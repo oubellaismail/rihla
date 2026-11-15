@@ -49,11 +49,7 @@
 .search-example a { text-decoration: underline; text-underline-offset: 3px; display: inline-block; padding: 12px 0; }
 .upcoming-day__title { font-size: 20px; }
 .upcoming-day__title::first-letter { text-transform: uppercase; }
-.upcoming { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 20px; align-items: center; min-height: 44px; }
-.upcoming__time { font-size: 20px; }
-.upcoming__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.upcoming__price { display: flex; flex-direction: column; align-items: flex-end; white-space: nowrap; }
-.upcoming--full, .result--full { opacity: 0.65; }
+.result--full { opacity: 0.65; }
 .result-driver { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .result-driver__name { display: flex; flex-direction: column; min-width: 0; }
 .result-full-label { font-weight: 600; color: var(--muted); text-align: right; }
@@ -78,8 +74,6 @@
     .result--full { grid-template-areas: "times times" "label label" "driver driver" "trunk trunk"; }
     .result--full .result-price { grid-area: label; align-items: flex-start; }
     .result--full .result-full-label { text-align: left; }
-    .upcoming { grid-template-columns: auto minmax(0, 1fr); }
-    .upcoming__price { grid-column: 2; align-items: flex-start; }
 }
 @media (min-width: 641px) {
     .search-summary::details-content { content-visibility: visible; display: block; }
@@ -105,6 +99,13 @@
 .result-stop--drop-off:not(:last-child)::after { background: none; width: 0; border-left: 2px dashed #D9CBB8; }
 .result-stop--drop-off:not(:last-child) { padding-bottom: 14px; }
 .result-driver__name .muted { font-size: 14px; }
+/* Whole trip (upcoming list): the stops in between, quiet, on one continuous line */
+.result--whole .result-stop--boarding::after { background: #D9CBB8; }
+.result--whole .result-stop--drop-off:not(:last-child)::after { border-left: 0; background: #D9CBB8; width: 2px; }
+.result-stop--via { padding-bottom: 10px; }
+.result-stop--via .result-stop__time { font: 500 14px var(--font-display); color: var(--muted); }
+.result-stop--via .result-stop__body { font-size: 14px; color: var(--muted); }
+.result-stop--via .result-stop__dot { width: 10px; height: 10px; border-width: 2px; border-color: #BFAE97; margin: 5px 5px 0; }
 
 /* Filters and sort */
 .search-layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 32px; align-items: start; }

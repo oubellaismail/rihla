@@ -1,0 +1,39 @@
+{# The filters of the search and of the upcoming list. Needs: criteria, clearUrl; from/to/date/seats only in a search (searched). #}
+{% import 'macros.html.twig' as ui %}
+<details class="search-filters-fold"{% if criteria.filtered %} open{% endif %}>
+    <summary>{{ ui.icon('filter') }} Filtres{% if criteria.filtered %} <span class="search-filters-fold__on">actifs</span>{% endif %}</summary>
+    <form class="search-filters" method="get" action="/trips" data-controller="search-filters" data-action="change->search-filters#apply">
+        {% if searched %}
+            <input type="hidden" name="from" value="{{ from }}">
+            <input type="hidden" name="to" value="{{ to }}">
+            <input type="hidden" name="date" value="{{ date ? date|date('Y-m-d') : '' }}">
+            <input type="hidden" name="seats" value="{{ seats }}">
+        {% endif %}
+        {% if criteria.sort != 'departure' %}<input type="hidden" name="sort" value="{{ criteria.sort }}">{% endif %}
+
+        <fieldset>
+            <legend>Heure de départ</legend>
+            {% for slot, label in {morning: 'Matin (avant 12 h)', afternoon: 'Après-midi (12 h – 18 h)', evening: 'Soir (après 18 h)'} %}
+                <label class="search-filters__option"><input type="checkbox" name="time[]" value="{{ slot }}"{% if slot in criteria.times %} checked{% endif %}> <span>{{ label }}</span></label>
+            {% endfor %}
+        </fieldset>
+        <fieldset>
+            <legend>Prix maximum</legend>
+            <label class="search-filters__price"><input type="number" name="maxPrice" value="{{ criteria.maxPrice }}" min="1" step="5" inputmode="numeric" placeholder="Sans limite" aria-label="Prix maximum par place, en dirhams"> <span>MAD par place</span></label>
+        </fieldset>
+        <fieldset>
+            <legend>Bagages</legend>
+            {% for value, label in {'': 'Peu importe', medium: 'Une valise moyenne passe', large: 'Une grande valise passe'} %}
+                <label class="search-filters__option"><input type="radio" name="bag" value="{{ value }}"{% if (criteria.bag ? criteria.bag.value : '') == value %} checked{% endif %}> <span>{{ label }}</span></label>
+            {% endfor %}
+        </fieldset>
+        <fieldset>
+            <legend>Conducteur</legend>
+            <label class="search-filters__option"><input type="checkbox" name="rated" value="1"{% if criteria.rated %} checked{% endif %}> <span>Noté 4 et plus</span></label>
+        </fieldset>
+        <div class="search-filters__actions">
+            <button class="btn btn--outline" type="submit" data-search-filters-target="submit">Appliquer</button>
+            {% if criteria.filtered %}<a class="search-filters__clear" href="{{ clearUrl }}">Effacer les filtres</a>{% endif %}
+        </div>
+    </form>
+</details>
