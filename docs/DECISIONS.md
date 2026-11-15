@@ -181,3 +181,56 @@ Same reasoning as the driver's checklist: a passenger does not think in litres.
 - **The driver keeps the last word.** Passengers rely on these times to be at the meeting point; only the driver knows the breaks, the traffic and the slow roads.
 - **Except for impossible times** (approved the same day, after a test). A time earlier than the previous departure plus the road is corrected, with « Heure ajustée par Rihla : 04:45, le trajet depuis Chichaoua prend plus de temps ». « Earlier » means more than 15 minutes before the suggestion, which already counts a 10-minute pause rounded up to 5 minutes. Later times stay the driver's. This also covers a form restored by the browser after a reload, where Rihla's own times come back looking typed.
 - **Labels say which time it is:** « Date et heure de départ » on the first stop, « Départ de cet arrêt » on the middle stops, « Arrivée prévue » on the last one, rendered by the server and kept right by the stop list when stops are added or removed (review of the flows, B-6).
+
+## 2026-11-14 — Search filters, two spaces and « Mes gains »
+
+- **Result cards draw the portion as a timeline**, like the trip page: the passenger's boarding and drop-off, faded stops where the car starts earlier or goes on, the travel time and the car. Seeing the whole route is what makes a portion bookable with confidence.
+- **Filters and sorting live in the address** (departure time, maximum price, a bag that still fits, drivers rated 4 or more; sort by departure, price or rating), so a filtered search can be shared or reloaded. The filters apply on change, without a « Filtrer » button.
+- **One account, two spaces.** A « Passager | Conducteur » switch in the header, with a menu per space, instead of tabs under « Mes trajets ». A person is often both; the switch says which hat they wear now. The driver space has a dashboard (next trip, money) and « Devenir conducteur » for someone without a car.
+- **« Mes gains »** shows what a driver earned and will earn, seats sold, the fill rate, and the seats resold along the way thanks to the legs: the rule of the subject, turned into a reason to publish.
+
+## 2026-11-14 — Landing page
+
+- **A landing page that sells the idea in one screen**: a full-screen golden-hour photo, the search bar, and the promise « vous ne payez que votre bout de route ». Then the live routes of the moment, the principle with a clickable price example, passengers, drivers, luggage, trust and reviews.
+- **City photos are AI-generated**, thirteen of them, and the footer says so. Real photos of each city under a free licence were not available in time.
+- **Removed after review (15 Nov)**: the « Souvent cherché » chips and the « Prochain départ » strip under the hero, and the caption cards on the passenger and driver photos. They competed with the search bar and repeated what the page says below.
+
+## 2026-11-15 — « Prochains départs » uses the search cards
+
+`/trips` without a search used to list one-line rows, different from the search results. It now uses the same cards, filters and sort.
+
+- **With no portion chosen, a card draws the whole trip**, every stop included, so a passenger can spot the portion they need.
+- **Its price is « dès » the cheapest leg that still has a seat**, and the maximum-price filter and the price sort use that same price. A trip full on some legs only says « Places sur une partie du trajet ».
+
+## 2026-11-15 — A driver edits and removes cars
+
+- **Editing a car never changes a published trip.** A trip keeps its seats and trunk volume (copied when it is published), so passengers who booked are not affected.
+- **Removing a car depends on its history.** Never used: deleted. Used on past or cancelled trips: archived, hidden from the list and from « Publier un trajet », but still shown on its old trips. Used on an upcoming trip: refused, with « Annulez ou terminez ce trajet avant de le retirer ». Deleting a used car would break the history and the reviews.
+
+## 2026-11-15 — Trip state comes from the clock, not from tracking
+
+- **A trip is « Terminé » once the time of its last stop has passed**, with its confirmed bookings. That is what unlocks reviews and counts a driver's earnings. A command (`app:trips:complete`) can run it on a schedule, and the trip and booking pages run it too.
+- **No live tracking** (driver started, leg completed, position, delay, passenger on board). It needs the driver's phone sending its position and live notifications: a mobile app, not a web page, and hard to demonstrate. Carpooling between cities relies on the agreed time, a phone call on the day, and the review afterwards. It is the first item for a next version.
+- **No « the trip did not happen » report either.** Considered and left out on purpose: the review already lets passengers and drivers say how it went.
+
+## 2026-11-15 — Performance: no query per trip
+
+Measured in prod mode on a copy of the demo data grown to 519 trips.
+
+- **Search ran 3 SQL queries per result** (the trip's stops, the payments, the driver's rating) and « Mes trajets » one per trip: 488 queries for a search with 170 results. Each list now loads what it shows in a few grouped queries: the Fès → Tanger search went from 488 queries and 749 ms to **9 queries and 174 ms**, « Mes trajets » from 356 to 5.
+- **A test now fails if a page runs more queries for six trips than for one**, so the problem cannot come back unnoticed.
+- **Load test** (`ab`, 500 requests, 20 at a time): no failed request; search went from 7 to 18 requests per second. Response times under load are still around one second on a laptop, because PHP-FPM runs 5 workers and Docker reads the code from the Mac: these numbers show the code has no structural problem, not production capacity.
+
+## 2026-11-15 — Error pages
+
+- **French pages for 404, 403 and 500, and a generic one for the other codes**, each with a road milestone carrying the code, one sentence and a way back (« Rechercher un trajet », « Retour à l'accueil »). Before, production showed Symfony's English « Oops! An Error Occurred ».
+- **The 500 page is standalone**: no site menu, no signed-in user, no database. If the error comes from the database or the layout, a page that uses them would fail too.
+
+## 2026-11-15 — The back-office
+
+A review found the back-office was the raw EasyAdmin default: the bookings list crashed, and any table could be created, edited or deleted by hand.
+
+- **What the application owns is read-only**: trips, stops, bookings, payments and vehicles. Editing them by hand skipped every rule (seats per leg, prices, refunds) and could create overbooked trips.
+- **One action changes a trip: « Annuler le trajet »**, which runs the driver's cancellation (full refunds). The bookings read « Annulée par le conducteur »: the existing status is reused rather than adding one for a rare case.
+- **Reviews can be deleted** (moderation). **Users can be edited**, the admin role is a checkbox, and an admin cannot drop their own. **Cities can be managed**, but a city used by a trip cannot be deleted.
+- **An admin account stays in the back-office.** Every page outside `/admin` sends it there: an admin manages the platform, they do not search, book or publish with that account. Someone who is both uses two accounts.
