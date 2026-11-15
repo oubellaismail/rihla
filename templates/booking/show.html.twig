@@ -18,8 +18,22 @@
             {% else %}{% include 'booking/_status.html.twig' %}{% endif %}</p>
     </div>
 
+    {% if booking.status.value == 'CONFIRMED' and booking.trip.delayMinutes > 0 %}
+        {% set delay = booking.trip.delayMinutes %}
+        {% set free = delay >= constant('App\\Service\\CancellationPolicy::FREE_CANCEL_DELAY_MINUTES') %}
+        <div class="notice stack" role="status">
+            <p class="notice__title">{{ ui.icon('clock', 20) }} Horaire modifié par le conducteur.</p>
+            <p>Départ {{ ui.of_city(booking.fromStop.city.name) }} à {{ booking.fromStop.departureAt|date('H:i') }} au lieu de {{ booking.fromStop.departureAt.modify('-' ~ delay ~ ' minutes')|date('H:i') }} ({{ delay_label }} de retard).{% if free %} Vous pouvez annuler sans frais : remboursement intégral.{% endif %}</p>
+            {% if free and can_cancel %}<a class="btn btn--outline" href="{{ path('app_booking_cancel', {id: booking.id}) }}">Annuler sans frais</a>{% endif %}
+        </div>
+    {% endif %}
+    {% if cancelled and booking.cancellationReason %}
+        <p class="notice notice--off" role="status">{{ ui.icon('alert', 20) }} {{ booking.cancellationReason }}</p>
+    {% endif %}
+
     <div class="split">
         <div class="stack stack--l">
+            {% if not (cancelled and (booking.fromStop.removed or booking.toStop.removed)) %}
             <section class="card">
                 <h2 class="section-title">Votre portion</h2>
                 <ol class="timeline">
@@ -48,6 +62,7 @@
                     </div>
                 {% endif %}
             </section>
+            {% endif %}
 
             <section class="card">
                 <h2 class="section-title">Conducteur</h2>

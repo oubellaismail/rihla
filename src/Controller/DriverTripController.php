@@ -3,14 +3,18 @@
 namespace App\Controller;
 
 use App\Entity\Trip;
+use App\Entity\TripStop;
 use App\Entity\User;
 use App\Enum\BookingStatus;
 use App\Enum\TripStatus;
 use App\Exception\CancellationNotAllowedException;
+use App\Exception\TripChangeNotAllowedException;
 use App\Repository\TripRepository;
 use App\Repository\VehicleRepository;
 use App\Security\TripVoter;
+use App\Service\CancellationPolicy;
 use App\Service\CancellationService;
+use App\Service\TripChangeService;
 use App\Service\TripCompletionService;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Service\DriverEarnings;
@@ -103,7 +107,7 @@ final class DriverTripController extends AbstractController
     }
 
     #[Route('/driver/trips/{id<\d+>}', name: 'app_driver_trip_show', methods: ['GET'])]
-    public function show(Trip $trip, DriverLegSummary $legSummary, TripMapBuilder $mapBuilder, TripSummaryBuilder $summaryBuilder, ReviewPolicy $policy, ReviewRepository $reviews, TrunkPlanBuilder $trunkPlan, TripCompletionService $completion, EntityManagerInterface $em): Response
+    public function show(Trip $trip, TripChangeService $changes, DriverLegSummary $legSummary, TripMapBuilder $mapBuilder, TripSummaryBuilder $summaryBuilder, ReviewPolicy $policy, ReviewRepository $reviews, TrunkPlanBuilder $trunkPlan, TripCompletionService $completion, EntityManagerInterface $em): Response
     {
         $this->denyAccessUnlessGranted(TripVoter::VIEW_PASSENGERS, $trip);
         if ($completion->completeFinishedTrips() > 0) {
@@ -167,6 +171,9 @@ final class DriverTripController extends AbstractController
             'alighting' => $alighting,
             'cancelled' => $cancelled,
             'can_cancel' => $canCancel,
+            'can_change' => $this->isGranted(TripVoter::CHANGE, $trip) && $changes->isChangeable($trip),
+            'delays' => TripChangeService::DELAYS,
+            'delay_label' => TripChangeService::label($trip->getDelayMinutes()),
             'trunk' => $trunkPlan->build($trip),
             'map' => $mapBuilder->build($trip, $this->currentUser()),
         ]);
@@ -195,6 +202,114 @@ final class DriverTripController extends AbstractController
         }
 
         return $this->redirectToRoute('app_driver_trip_show', ['id' => $trip->getId()]);
+    }
+
+    #[Route('/driver/trips/{id<\d+>}/delay', name: 'app_driver_trip_delay', methods: ['GET'])]
+    public function delayPreview(Trip $trip, Request $request, TripChangeService $changes): Response
+    {
+        $this->denyAccessUnlessGranted(TripVoter::VIEW_PASSENGERS, $trip);
+        $minutes = $request->query->getInt('minutes');
+        if (!$this->isGranted(TripVoter::CHANGE, $trip) || !$changes->isChangeable($trip) || !\in_array($minutes, TripChangeService::DELAYS, true)) {
+            $this->addFlash('error', 'Ce décalage n\'est pas possible.');
+
+            return $this->redirectToRoute('app_driver_trip_show', ['id' => $trip->getId()]);
+        }
+
+        $passengers = [];
+        foreach ($trip->getBookings() as $booking) {
+            if (BookingStatus::Confirmed === $booking->getStatus()) {
+                $passengers[$booking->getPassenger()->getId()] = true;
+            }
+        }
+        $first = $trip->getFirstStop();
+        $total = $trip->getDelayMinutes() + $minutes;
+
+        return $this->render('driver/delay.html.twig', [
+            'trip' => $trip,
+            'minutes' => $minutes,
+            'first' => $first,
+            'new_departure' => $first->getDepartureAt()->modify(sprintf('+%d minutes', $minutes)),
+            'passengers' => \count($passengers),
+            'total_label' => TripChangeService::label($total),
+            'free_cancel' => $total >= CancellationPolicy::FREE_CANCEL_DELAY_MINUTES,
+        ]);
+    }
+
+    #[Route('/driver/trips/{id<\d+>}/delay', name: 'app_driver_trip_delay_confirm', methods: ['POST'])]
+    public function delay(Trip $trip, Request $request, TripChangeService $changes): Response
+    {
+        $this->denyAccessUnlessGranted(TripVoter::VIEW_PASSENGERS, $trip);
+        $minutes = $request->request->getInt('minutes');
+
+        if (!$this->isCsrfTokenValid('delay_trip_'.$trip->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'Le formulaire a expiré. Veuillez réessayer.');
+        } else {
+            try {
+                $this->denyAccessUnlessGranted(TripVoter::CHANGE, $trip);
+                $changes->delay($trip, $minutes);
+                $this->addFlash('success', sprintf('Trajet décalé de %s.', TripChangeService::label($minutes)));
+            } catch (TripChangeNotAllowedException $e) {
+                $this->addFlash('error', $e->getMessage());
+            }
+        }
+
+        return $this->redirectToRoute('app_driver_trip_show', ['id' => $trip->getId()]);
+    }
+
+    #[Route('/driver/trips/{id<\d+>}/stops/{stopId<\d+>}/remove', name: 'app_driver_trip_stop_remove', methods: ['GET'])]
+    public function removeStopPreview(Trip $trip, int $stopId, TripChangeService $changes): Response
+    {
+        $this->denyAccessUnlessGranted(TripVoter::VIEW_PASSENGERS, $trip);
+        $stop = $this->intermediateStop($trip, $stopId, $changes);
+        if (!$this->isGranted(TripVoter::CHANGE, $trip) || !$changes->isChangeable($trip)) {
+            $this->addFlash('error', 'Ce trajet ne peut plus être modifié.');
+
+            return $this->redirectToRoute('app_driver_trip_show', ['id' => $trip->getId()]);
+        }
+
+        return $this->render('driver/remove_stop.html.twig', ['trip' => $trip, 'stop' => $stop] + $changes->affectedBookings($trip, $stop));
+    }
+
+    #[Route('/driver/trips/{id<\d+>}/stops/{stopId<\d+>}/remove', name: 'app_driver_trip_stop_remove_confirm', methods: ['POST'])]
+    public function removeStop(Trip $trip, int $stopId, Request $request, TripChangeService $changes): Response
+    {
+        $this->denyAccessUnlessGranted(TripVoter::VIEW_PASSENGERS, $trip);
+        $stop = $this->intermediateStop($trip, $stopId, $changes);
+
+        if (!$this->isCsrfTokenValid('remove_stop_'.$stop->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'Le formulaire a expiré. Veuillez réessayer.');
+        } else {
+            try {
+                $this->denyAccessUnlessGranted(TripVoter::CHANGE, $trip);
+                $city = $stop->getCity()->getName();
+                $count = $changes->removeStop($trip, $stop);
+                $this->addFlash('success', sprintf(
+                    'Étape %s retirée. %s',
+                    $city,
+                    match (true) {
+                        0 === $count => 'Aucune réservation concernée.',
+                        1 === $count => '1 réservation annulée et remboursée.',
+                        default => $count.' réservations annulées et remboursées.',
+                    },
+                ));
+            } catch (TripChangeNotAllowedException $e) {
+                $this->addFlash('error', $e->getMessage());
+            }
+        }
+
+        return $this->redirectToRoute('app_driver_trip_show', ['id' => $trip->getId()]);
+    }
+
+    /** The stop of this trip with this id, 404 unless it is an intermediate one (never the departure or arrival). */
+    private function intermediateStop(Trip $trip, int $stopId, TripChangeService $changes): TripStop
+    {
+        foreach ($trip->getStops() as $stop) {
+            if ($stop->getId() === $stopId && $changes->isIntermediate($trip, $stop)) {
+                return $stop;
+            }
+        }
+
+        throw $this->createNotFoundException();
     }
 
     private function currentUser(): User

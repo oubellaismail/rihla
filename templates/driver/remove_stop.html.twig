@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+{% block title %}Retirer {{ stop.city.name }}{% endblock %}
+{% block body %}
+{% macro names(bookings) %}{{ bookings|map(b => b.passenger.publicName)|join(', ') }}{% endmacro %}
+<div class="page"><div class="container container--narrow">
+    <div class="page-head">
+        <p class="muted small"><a href="{{ path('app_driver_trip_show', {id: trip.id}) }}">Retour au trajet</a></p>
+        <h1>Retirer {{ stop.city.name }}</h1>
+    </div>
+    <section class="card stack">
+        {% if cancelled is empty and through is empty %}
+            <p>Aucune réservation ne passe par {{ stop.city.name }}.</p>
+        {% endif %}
+        {% if cancelled is not empty %}
+            <p><strong>{{ cancelled|length }} {{ cancelled|length > 1 ? 'réservations seront annulées et remboursées intégralement' : 'réservation sera annulée et remboursée intégralement' }} :</strong></p>
+            <ul>
+                {% for b in cancelled %}
+                    <li>{{ b.passenger.publicName }} · {{ b.fromStop.city.name }} → {{ b.toStop.city.name }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% if through is not empty %}
+            <p>{{ _self.names(through) }} {{ through|length > 1 ? 'passent' : 'passe' }} par {{ stop.city.name }} : {{ through|length > 1 ? 'leur place et leur prix ne changent pas' : 'sa place et son prix ne changent pas' }}.</p>
+        {% endif %}
+        <form method="post" action="{{ path('app_driver_trip_stop_remove_confirm', {id: trip.id, stopId: stop.id}) }}" class="row">
+            <input type="hidden" name="_token" value="{{ csrf_token('remove_stop_' ~ stop.id) }}">
+            <button type="submit" class="btn btn--danger">Retirer {{ stop.city.name }}</button>
+            <a class="btn btn--ghost" href="{{ path('app_driver_trip_show', {id: trip.id}) }}">Retour au trajet</a>
+        </form>
+    </section>
+</div></div>
+{% endblock %}

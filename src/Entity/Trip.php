@@ -46,7 +46,11 @@ class Trip
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
-    /** @var Collection<int, TripStop> */
+    /** Total minutes the driver pushed the departure back (cumulative, never negative). */
+    #[ORM\Column(type: 'smallint', options: ['default' => 0])]
+    private int $delayMinutes = 0;
+
+    /** @var Collection<int, TripStop> every stop, including the ones removed after bookings: use getStops() */
     #[ORM\OneToMany(targetEntity: TripStop::class, mappedBy: 'trip', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['position' => 'ASC'])]
     #[Assert\Count(min: 2, minMessage: 'Un trajet a au moins un départ et une arrivée.')]
@@ -160,10 +164,27 @@ class Trip
         return $this;
     }
 
-    /** @return Collection<int, TripStop> stops ordered by position */
+    public function getDelayMinutes(): int
+    {
+        return $this->delayMinutes;
+    }
+
+    public function addDelay(int $minutes): static
+    {
+        $this->delayMinutes += $minutes;
+
+        return $this;
+    }
+
+    /**
+     * The stops still on the trip, ordered by position and numbered from 0. Stops removed by the driver are kept
+     * in the database for the history of cancelled bookings (see TripStop) but never appear here.
+     *
+     * @return Collection<int, TripStop>
+     */
     public function getStops(): Collection
     {
-        return $this->stops;
+        return new ArrayCollection(array_values($this->stops->filter(static fn (TripStop $s): bool => !$s->isRemoved())->toArray()));
     }
 
     /** Appends a stop at the next position. */
@@ -171,7 +192,7 @@ class Trip
     {
         if (!$this->stops->contains($stop)) {
             if (null === $stop->getPosition()) {
-                $stop->setPosition($this->stops->count());
+                $stop->setPosition($this->getStops()->count());
             }
             $this->stops->add($stop);
             $stop->setTrip($this);
@@ -189,12 +210,12 @@ class Trip
 
     public function getFirstStop(): ?TripStop
     {
-        return $this->stops->first() ?: null;
+        return $this->getStops()->first() ?: null;
     }
 
     public function getLastStop(): ?TripStop
     {
-        return $this->stops->last() ?: null;
+        return $this->getStops()->last() ?: null;
     }
 
     /** @return Collection<int, Booking> */

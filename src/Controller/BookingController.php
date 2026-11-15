@@ -16,6 +16,7 @@ use App\Service\CancellationService;
 use App\Service\Geo\TripMapBuilder;
 use App\Service\ReviewPolicy;
 use App\Service\ReviewService;
+use App\Service\TripChangeService;
 use App\Service\TripCompletionService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -87,6 +88,7 @@ final class BookingController extends AbstractController
             'is_passenger' => $booking->getPassenger() === $user,
             'can_cancel' => $this->isGranted(BookingVoter::CANCEL, $booking),
             'can_review' => $canReview,
+            'delay_label' => TripChangeService::label($booking->getTrip()->getDelayMinutes()),
             'map' => $mapBuilder->build($booking->getTrip(), $user),
         ]);
     }

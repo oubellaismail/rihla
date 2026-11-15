@@ -126,6 +126,35 @@
             </section>
             {% endif %}
 
+            {% if can_change %}
+            <section class="card stack">
+                <h2 class="section-title">Décaler l'horaire</h2>
+                <p class="muted">Tous les arrêts sont décalés d'autant. Un trajet réservé ne peut pas partir plus tôt.</p>
+                {% if trip.delayMinutes > 0 %}<p class="small">Retard déjà annoncé : <strong>{{ delay_label }}</strong></p>{% endif %}
+                <form method="get" action="{{ path('app_driver_trip_delay', {id: trip.id}) }}" class="stack">
+                    <fieldset class="chips">
+                        <legend class="visually-hidden">Retard</legend>
+                        {% for m in delays %}
+                            <span class="chip"><input type="radio" name="minutes" id="delay-{{ m }}" value="{{ m }}" required><label for="delay-{{ m }}">+{{ m < 60 ? m ~ ' min' : (m // 60) ~ ' h' }}</label></span>
+                        {% endfor %}
+                    </fieldset>
+                    <button type="submit" class="btn btn--outline">Décaler le trajet</button>
+                </form>
+            </section>
+            {% if stops|length >= 3 %}
+            <section class="card stack">
+                <h2 class="section-title">Retirer une étape</h2>
+                <p class="muted">Le départ et l'arrivée ne se retirent pas : annulez le trajet.</p>
+                <ul class="stop-removals">
+                    {% for stop in stops|slice(1, stops|length - 2) %}
+                        <li><span>{{ stop.city.name }} · {{ stop.departureAt|date('H:i') }}</span>
+                            <a class="btn btn--ghost" href="{{ path('app_driver_trip_stop_remove', {id: trip.id, stopId: stop.id}) }}">Retirer<span class="visually-hidden"> {{ stop.city.name }}</span></a></li>
+                    {% endfor %}
+                </ul>
+            </section>
+            {% endif %}
+            {% endif %}
+
             {% if can_cancel %}
             <section class="card stack">
                 <h2 class="section-title">Annuler le trajet</h2>

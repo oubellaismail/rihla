@@ -9,6 +9,11 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * A stop of a trip. The price and distance stored here belong to the leg
  * that starts at this stop; they are null on the last stop.
+ *
+ * A stop removed by the driver after bookings is never deleted: cancelled bookings still point to it (foreign
+ * keys) and their page must keep saying where they boarded. It is marked with removedAt and loses its position
+ * (null, so it frees its number in the unique constraint and can never match a position-based query or seat
+ * calculation). Trip::getStops() hides it; only history (cancelled bookings, admin) still reaches it.
  */
 #[ORM\Entity(repositoryClass: TripStopRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_TRIP_STOP_POSITION', fields: ['trip', 'position'])]
@@ -28,9 +33,14 @@ class TripStop
     #[ORM\JoinColumn(nullable: false)]
     private ?City $city = null;
 
-    #[ORM\Column(type: 'smallint')]
+    /** Null only once the stop is removed. */
+    #[ORM\Column(type: 'smallint', nullable: true)]
     #[Assert\PositiveOrZero]
     private ?int $position = null;
+
+    /** Set when the driver removed this stop from the trip after bookings. */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $removedAt = null;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $departureAt = null;
@@ -107,9 +117,28 @@ class TripStop
         return $this->position;
     }
 
-    public function setPosition(int $position): static
+    public function setPosition(?int $position): static
     {
         $this->position = $position;
+
+        return $this;
+    }
+
+    public function isRemoved(): bool
+    {
+        return null !== $this->removedAt;
+    }
+
+    public function getRemovedAt(): ?\DateTimeImmutable
+    {
+        return $this->removedAt;
+    }
+
+    /** Soft removal: the row stays for the history of cancelled bookings, without a position. */
+    public function markRemoved(\DateTimeImmutable $at): static
+    {
+        $this->removedAt = $at;
+        $this->position = null;
 
         return $this;
     }

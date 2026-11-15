@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as ui %}
+{% block title %}Décaler le trajet{% endblock %}
+{% block body %}
+<div class="page"><div class="container container--narrow">
+    <div class="page-head">
+        <p class="muted small"><a href="{{ path('app_driver_trip_show', {id: trip.id}) }}">Retour au trajet</a></p>
+        <h1>Décaler de {{ minutes < 60 ? minutes ~ ' min' : (minutes // 60) ~ ' h' }}</h1>
+    </div>
+    <section class="card stack">
+        <p><strong>Départ {{ ui.of_city(first.city.name) }} à {{ new_departure|date('H:i') }} au lieu de {{ first.departureAt|date('H:i') }}.</strong> Tous les arrêts sont décalés d'autant.</p>
+        {% if passengers == 0 %}
+            <p class="muted">Aucun passager concerné.</p>
+        {% elseif free_cancel %}
+            <p>{{ passengers }} {{ passengers > 1 ? 'passagers concernés' : 'passager concerné' }} : retard de {{ total_label }}, {{ passengers > 1 ? 'ils pourront' : 'il pourra' }} annuler sans frais.</p>
+        {% else %}
+            <p>{{ passengers }} {{ passengers > 1 ? 'passagers concernés' : 'passager concerné' }} : retard de {{ total_label }}, {{ passengers > 1 ? 'leur réservation est maintenue' : 'sa réservation est maintenue' }}.</p>
+        {% endif %}
+        <form method="post" action="{{ path('app_driver_trip_delay_confirm', {id: trip.id}) }}" class="row">
+            <input type="hidden" name="_token" value="{{ csrf_token('delay_trip_' ~ trip.id) }}">
+            <input type="hidden" name="minutes" value="{{ minutes }}">
+            <button type="submit" class="btn btn--primary">Confirmer le décalage</button>
+            <a class="btn btn--ghost" href="{{ path('app_driver_trip_show', {id: trip.id}) }}">Retour au trajet</a>
+        </form>
+    </section>
+</div></div>
+{% endblock %}

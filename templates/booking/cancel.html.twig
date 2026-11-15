@@ -9,7 +9,11 @@
     <div class="card stack">
         <p>Si vous annulez maintenant, vous serez remboursé de</p>
         <p class="price-big">{{ refund }} MAD <span class="muted small">({{ percent }} % de {{ booking.totalPrice }} MAD)</span></p>
+        {% if booking.trip.delayMinutes >= constant('App\\Service\\CancellationPolicy::FREE_CANCEL_DELAY_MINUTES') %}
+        <p class="muted">Le conducteur a décalé l'horaire : vous pouvez annuler sans frais, avec un remboursement intégral.</p>
+        {% else %}
         <p class="muted">Le remboursement est de 100 % jusqu'à 24 h avant votre départ, de 50 % ensuite, et nul une fois que la voiture est partie.</p>
+        {% endif %}
         <form method="post" class="row">
             <input type="hidden" name="_token" value="{{ csrf_token('cancel_booking_' ~ booking.id) }}">
             <button type="submit" class="btn btn--danger">Confirmer l'annulation</button>

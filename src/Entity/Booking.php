@@ -69,6 +69,10 @@ class Booking
     #[ORM\Column(type: 'smallint', options: ['default' => 0])]
     private int $largeBags = 0;
 
+    /** Why the driver cancelled this booking (e.g. a removed stop); null otherwise. */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $cancellationReason = null;
+
     #[ORM\OneToOne(mappedBy: 'booking')]
     private ?Payment $payment = null;
 
@@ -296,6 +300,18 @@ class Booking
     public function setLargeBags(int $largeBags): static
     {
         $this->largeBags = $largeBags;
+
+        return $this;
+    }
+
+    public function getCancellationReason(): ?string
+    {
+        return $this->cancellationReason;
+    }
+
+    public function setCancellationReason(?string $reason): static
+    {
+        $this->cancellationReason = $reason;
 
         return $this;
     }

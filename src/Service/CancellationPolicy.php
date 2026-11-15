@@ -19,6 +19,9 @@ final class CancellationPolicy
     public const PARTIAL_REFUND_PERCENT = 50;
     public const NO_REFUND_PERCENT = 0;
 
+    /** Total delay (minutes) from which the driver's late departure lets passengers cancel for a full refund. */
+    public const FREE_CANCEL_DELAY_MINUTES = 30;
+
     /**
      * Refund percentage (100, 50 or 0) for a passenger cancelling at $now.
      */
@@ -28,6 +31,11 @@ final class CancellationPolicy
 
         if ($now >= $departureAt) {
             return self::NO_REFUND_PERCENT;
+        }
+
+        // The driver pushed the trip back by 30 minutes or more: free cancellation, even in the last 24 hours.
+        if ($booking->getTrip()->getDelayMinutes() >= self::FREE_CANCEL_DELAY_MINUTES) {
+            return self::FULL_REFUND_PERCENT;
         }
 
         if ($now <= $departureAt->modify(sprintf('-%d hours', self::FULL_REFUND_HOURS))) {

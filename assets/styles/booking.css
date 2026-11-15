@@ -32,3 +32,11 @@
 /* Driver trip page */
 .driver-summary { margin: 4px 0 0; }
 .card > .timeline + .map-slot { margin-top: 28px; }
+
+/* Banner: the driver changed the trip (new time) or removed a stop. */
+.notice { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin: 0 0 24px; padding: 16px 20px; border-radius: var(--radius-m); background: #FCE4D4; color: var(--ink); }
+.notice p { margin: 0; }
+.notice__title { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.notice svg { flex: none; color: var(--sunset-text); }
+.notice--off { flex-direction: row; align-items: center; gap: 10px; background: var(--red-bg); color: var(--red); font-weight: 600; }
+.notice--off svg { color: var(--red); }

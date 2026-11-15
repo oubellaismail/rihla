@@ -13,10 +13,12 @@ final class TripVoter extends Voter
 {
     public const VIEW_PASSENGERS = 'TRIP_VIEW_PASSENGERS';
     public const CANCEL = 'TRIP_CANCEL';
+    /** Delay the trip or remove one of its stops. */
+    public const CHANGE = 'TRIP_CHANGE';
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return $subject instanceof Trip && \in_array($attribute, [self::VIEW_PASSENGERS, self::CANCEL], true);
+        return $subject instanceof Trip && \in_array($attribute, [self::VIEW_PASSENGERS, self::CANCEL, self::CHANGE], true);
     }
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token/* , ?Vote $vote = null */): bool
@@ -32,7 +34,7 @@ final class TripVoter extends Voter
         }
 
         return match ($attribute) {
-            self::CANCEL => TripStatus::Published === $subject->getStatus(),
+            self::CANCEL, self::CHANGE => TripStatus::Published === $subject->getStatus(),
             default => true,
         };
     }

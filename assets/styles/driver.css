@@ -9,3 +9,14 @@
 .dashboard-kpi { display: flex; flex-direction: column; gap: 4px; padding: 16px; background: var(--white); border-radius: var(--radius-m); box-shadow: var(--shadow-card); min-width: 0; }
 .dashboard-kpi__label { font-size: 14px; font-weight: 600; color: var(--muted); }
 .dashboard-kpi__value { font: 700 26px/1.1 var(--font-display); color: var(--dusk); overflow-wrap: anywhere; }
+
+/* Trip changes: delay chips and removable stops. Orange stays reserved for the main action of a page. */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; border: 0; margin: 0; padding: 0; min-width: 0; }
+.chip { position: relative; }
+.chip input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.chip label { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding: 0 16px; border-radius: 999px; border: 1.5px solid #DCCFBE; background: var(--white); font-weight: 600; color: var(--ink); }
+.chip input:checked + label { background: var(--dusk); border-color: var(--dusk); color: var(--white); }
+.chip input:focus-visible + label { outline: 3px solid var(--sunset); outline-offset: 3px; }
+.stop-removals { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.stop-removals li { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+.stop-removals .btn--ghost { align-self: auto; min-height: 44px; }
