@@ -49,7 +49,7 @@ final class DesktopPassengerTest extends WebFlowTestCase
         self::assertStringContainsString('dès 65 MAD', $card);
 
         $this->client->request('GET', '/trips');
-        self::assertStringContainsString('dès 65 MAD', $this->client->getCrawler()->filter('.upcoming')->text());
+        self::assertStringContainsString('dès 65 MAD', $this->client->getCrawler()->filter('.result-price')->text());
     }
 
     // ---- fix 3: seats and price on each leg ------------------------------------------------------

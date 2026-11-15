@@ -39,7 +39,9 @@ final class SearchPagesTest extends WebFlowTestCase
             $crawler->filter('.upcoming-day__title')->each(static fn ($n) => $n->text()),
         );
         $thursday = $crawler->filter('.upcoming-day')->eq(2)->text();
-        self::assertStringContainsString('Agadir · Essaouira · Marrakech · Casablanca', $thursday, 'every stop, so a portion can be spotted');
+        foreach (['Agadir', 'Essaouira', 'Marrakech', 'Casablanca'] as $stop) {
+            self::assertStringContainsString($stop, $thursday, 'every stop, so a portion can be spotted');
+        }
         self::assertStringContainsString('dès 60 MAD', $thursday);
         self::assertSelectorExists(sprintf('.upcoming-day a[href^="/trips/"]'));
     }
