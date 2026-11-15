@@ -4,6 +4,7 @@ namespace App\DataFixtures;
 
 use App\Entity\Booking;
 use App\Entity\City;
+use App\Entity\Notification;
 use App\Entity\Payment;
 use App\Entity\Review;
 use App\Entity\Trip;
@@ -13,9 +14,11 @@ use App\Entity\Vehicle;
 use App\Enum\BookingStatus;
 use App\Enum\LuggageSize;
 use App\Enum\TripStatus;
+use App\Service\DriverNotifier;
 use App\Service\Geo\RouteEnricher;
 use App\Service\Luggage\TrunkSpace;
 use App\Service\Seat\SeatLayout;
+use App\Service\TripChangeService;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -259,6 +262,8 @@ class AppFixtures extends Fixture
     public function __construct(
         private readonly UserPasswordHasherInterface $hasher,
         private readonly RouteEnricher $routeEnricher,
+        private readonly TripChangeService $tripChanges,
+        private readonly DriverNotifier $driverNotices,
     )
     {
     }
@@ -344,7 +349,7 @@ class AppFixtures extends Fixture
         $b2 = $this->book($manager, $past, $salma, 0, 1, 1, BookingStatus::Completed, ['B1'], ['cabin' => 2]);
         $this->review($manager, $b1, $mehdi, $karim, 5, 'Voiture propre, trajet tranquille jusqu\'à Marrakech.');
         $this->review($manager, $b1, $karim, $mehdi, 5, 'Passager ponctuel et agréable.');
-        $this->review($manager, $b2, $salma, $karim, 5, 'Ponctuel, prudent, et il connaît toutes les bonnes pauses.');
+        $karimReview = $this->review($manager, $b2, $salma, $karim, 5, 'Ponctuel, prudent, et il connaît toutes les bonnes pauses.');
 
         $pastTiznit = $this->trip($manager, $imane, $i20, 3, '-8 days', [
             ['Agadir', '17:00', 'Marina d\'Agadir', 90, 35],
@@ -361,8 +366,9 @@ class AppFixtures extends Fixture
         $this->book($manager, $cancelled, $salma, 0, 1, 1, BookingStatus::CancelledByDriver, ['A1']);
 
         // Upcoming: trips from a few hours away to three weeks out, some full or partly full.
-        foreach (self::UPCOMING as $row) {
-            $this->scheduled($manager, $row, TripStatus::Published);
+        $upcoming = [];
+        foreach (self::UPCOMING as $i => $row) {
+            $upcoming[$i] = $this->scheduled($manager, $row, TripStatus::Published);
         }
         // Past and completed: reviews in both directions.
         foreach (self::COMPLETED as $row) {
@@ -374,6 +380,44 @@ class AppFixtures extends Fixture
         }
 
         $manager->flush();
+
+        // ---- Changes after booking, and notices ----------------------------------------------------
+        // The services need persisted trips, so this comes after the flush. They use the real clock here and send
+        // their e-mails (to Mailpit in Docker); a failing mailer is caught by UserNotifier and never breaks the load.
+
+        // Hamid's trip in six days (UPCOMING[12]) is pushed back 45 minutes: Salma, confirmed on it since before the
+        // delay (tripDelayAtBooking = 0), sees « Horaire modifié par le conducteur » and may cancel free of charge.
+        $this->tripChanges->delay($upcoming[12], 45);
+
+        // Anas' Tanger → Rabat → Casablanca (UPCOMING[6]) loses its stop Rabat: Omar, who boarded there, is cancelled
+        // by the driver and refunded; Lina rides through and the trip stays published.
+        $this->tripChanges->removeStop($upcoming[6], $upcoming[6]->getStops()->get(1));
+
+        // Driver notices for Karim, written like the app does (same texts) but without e-mails. Unread and recent...
+        $flagshipBookings = $flagship->getBookings();
+        $this->notice($manager, $karim, Notification::KIND_NEW_BOOKING, $this->driverNotices->newBookingText($flagshipBookings[3]), '-1 day', $flagshipBookings[3]);
+        $this->notice($manager, $karim, Notification::KIND_NEW_BOOKING, $this->driverNotices->newBookingText($flagshipBookings[4]), '-3 hours', $flagshipBookings[4]);
+        $this->notice($manager, $karim, Notification::KIND_REVIEW, $this->driverNotices->reviewText($karimReview), '-2 days');
+        // ... and older ones he has already read, so the page shows both states.
+        $this->notice($manager, $karim, Notification::KIND_NEW_BOOKING, $this->driverNotices->newBookingText($b1), '-12 days', $b1, true);
+        $this->notice($manager, $karim, Notification::KIND_REVIEW, $this->driverNotices->reviewText($karimReview), '-9 days', null, true);
+
+        $manager->flush();
+    }
+
+    /**
+     * An in-app driver notice with texts from DriverNotifier, no e-mail. Never dated in the future.
+     *
+     * @param array{string, string} $text [subject, body]
+     */
+    private function notice(ObjectManager $manager, User $user, string $kind, array $text, string $ago, ?Booking $booking = null, bool $read = false): void
+    {
+        $at = new \DateTimeImmutable($ago);
+        $notice = new Notification($user, $booking, $kind, $text[0], $text[1], $at, $booking?->getTrip());
+        if ($read) {
+            $notice->markRead($at->modify('+2 hours'));
+        }
+        $manager->persist($notice);
     }
 
     /** @param list<string> $roles */
@@ -596,7 +640,7 @@ class AppFixtures extends Fixture
         }
     }
 
-    private function review(ObjectManager $manager, Booking $booking, User $author, User $target, int $rating, string $comment): void
+    private function review(ObjectManager $manager, Booking $booking, User $author, User $target, int $rating, string $comment): Review
     {
         $review = (new Review())
             ->setBooking($booking)
@@ -606,5 +650,7 @@ class AppFixtures extends Fixture
             ->setComment($comment)
             ->setCreatedAt($booking->getToStop()->getDepartureAt()->modify('+1 day'));
         $manager->persist($review);
+
+        return $review;
     }
 }

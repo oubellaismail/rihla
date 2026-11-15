@@ -24,7 +24,24 @@ final class DriverNotifier
 
     public function notifyNewBooking(Booking $booking): void
     {
-        $trip = $booking->getTrip();
+        [$subject, $body] = $this->newBookingText($booking);
+        $this->send($booking->getTrip(), Notification::KIND_NEW_BOOKING, $subject, $body, $booking);
+    }
+
+    public function notifyPassengerCancelled(Booking $booking): void
+    {
+        [$subject, $body] = $this->passengerCancelledText($booking);
+        $this->send($booking->getTrip(), Notification::KIND_PASSENGER_CANCELLED, $subject, $body, $booking);
+    }
+
+    /**
+     * The words of the « new booking » notice and e-mail: [subject, body]. Public so the demo data can create the same
+     * notice without sending anything.
+     *
+     * @return array{string, string}
+     */
+    public function newBookingText(Booking $booking): array
+    {
         [$from, $to] = $this->route($booking);
         $seats = $booking->getSeats();
         $places = sprintf('%d place%s', $seats, $seats > 1 ? 's' : '');
@@ -37,14 +54,31 @@ final class DriverNotifier
         }
         $parts[] = $booking->getTotalPrice().' MAD';
         $parts[] = 'trajet du '.$this->tripDate($booking);
-        $this->send($trip, Notification::KIND_NEW_BOOKING, sprintf('Nouvelle réservation : %s, %s → %s', $booking->getPassenger()->getPublicName(), $from, $to), implode(' · ', $parts), $booking);
+
+        return [sprintf('Nouvelle réservation : %s, %s → %s', $booking->getPassenger()->getPublicName(), $from, $to), implode(' · ', $parts)];
     }
 
-    public function notifyPassengerCancelled(Booking $booking): void
+    /** @return array{string, string} [subject, body] of the « booking cancelled by its passenger » notice */
+    public function passengerCancelledText(Booking $booking): array
     {
         [$from, $to] = $this->route($booking);
         $seats = $booking->getSeats();
-        $this->send($booking->getTrip(), Notification::KIND_PASSENGER_CANCELLED, sprintf('Réservation annulée : %s, %s → %s', $booking->getPassenger()->getPublicName(), $from, $to), sprintf('%d place%s libérée%s de %s à %s · trajet du %s', $seats, $seats > 1 ? 's' : '', $seats > 1 ? 's' : '', $from, $to, $this->tripDate($booking)), $booking);
+
+        return [
+            sprintf('Réservation annulée : %s, %s → %s', $booking->getPassenger()->getPublicName(), $from, $to),
+            sprintf('%d place%s libérée%s de %s à %s · trajet du %s', $seats, $seats > 1 ? 's' : '', $seats > 1 ? 's' : '', $from, $to, $this->tripDate($booking)),
+        ];
+    }
+
+    /** @return array{string, string} [subject, body] of the « new review » notice */
+    public function reviewText(Review $review): array
+    {
+        $comment = $review->getComment();
+
+        return [
+            sprintf('Nouvel avis de %s : %d/5', $review->getAuthor()->getPublicName(), $review->getRating()),
+            null === $comment || '' === $comment ? 'Sans commentaire.' : '« '.$comment.' »',
+        ];
     }
 
     public function notifyTripCancelledByAdmin(Trip $trip, int $passengers): void
@@ -63,13 +97,8 @@ final class DriverNotifier
         if (null === $target || null === $author) {
             return;
         }
-        $comment = $review->getComment();
-        $this->notices->notify(
-            $target,
-            Notification::KIND_REVIEW,
-            sprintf('Nouvel avis de %s : %d/5', $author->getPublicName(), $review->getRating()),
-            null === $comment || '' === $comment ? 'Sans commentaire.' : '« '.$comment.' »',
-        );
+        [$subject, $body] = $this->reviewText($review);
+        $this->notices->notify($target, Notification::KIND_REVIEW, $subject, $body);
     }
 
     private function send(Trip $trip, string $kind, string $subject, string $body, ?Booking $booking = null): void

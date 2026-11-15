@@ -108,4 +108,16 @@ class Notification
     {
         return $this->readAt;
     }
+
+    public function isRead(): bool
+    {
+        return null !== $this->readAt;
+    }
+
+    public function markRead(\DateTimeImmutable $at): static
+    {
+        $this->readAt = $at;
+
+        return $this;
+    }
 }
