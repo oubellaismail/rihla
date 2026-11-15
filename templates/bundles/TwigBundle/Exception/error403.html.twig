@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accès refusé{% endblock %}
+
+{% block body %}
+    <section class="error-page">
+        {% include '@Twig/Exception/_milestone.html.twig' %}
+        <h1>Ce passage est réservé</h1>
+        <p>Cette page appartient à un autre compte. Vérifiez que vous êtes connecté avec le bon.</p>
+        <div class="error-actions">
+            <a class="btn btn--primary" href="/">Retour à l'accueil</a>
+            <a class="btn btn--outline" href="/logout">Changer de compte</a>
+        </div>
+    </section>
+{% endblock %}

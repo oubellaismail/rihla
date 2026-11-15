@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Quelque chose n'a pas fonctionné{% endblock %}
+
+{% block body %}
+    <section class="error-page">
+        {% include '@Twig/Exception/_milestone.html.twig' %}
+        <h1>Quelque chose n'a pas fonctionné</h1>
+        <p>La page n'a pas pu s'afficher. Revenez à l'accueil pour reprendre votre route.</p>
+        <div class="error-actions">
+            <a class="btn btn--primary" href="/">Retour à l'accueil</a>
+            
+        </div>
+    </section>
+{% endblock %}

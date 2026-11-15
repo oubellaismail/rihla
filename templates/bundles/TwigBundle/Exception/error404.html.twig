@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Page introuvable{% endblock %}
+
+{% block body %}
+    <section class="error-page">
+        {% include '@Twig/Exception/_milestone.html.twig' %}
+        <h1>Cette route ne mène nulle part</h1>
+        <p>La page a peut-être été déplacée, ou ce trajet n'est plus en ligne.</p>
+        <div class="error-actions">
+            <a class="btn btn--primary" href="{{ path('app_trip_search') }}">Rechercher un trajet</a>
+            <a class="btn btn--outline" href="/">Retour à l'accueil</a>
+        </div>
+    </section>
+{% endblock %}

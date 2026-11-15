@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Erreur · Rihla</title>
+    <link rel="icon" href="{{ asset('images/rihla-icon.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Figtree:wght@400;700&display=swap">
+    {# Standalone on purpose: no layout, no user, no database, no importmap. #}
+    <style>
+        body { margin: 0; min-height: 100vh; background: #FBF5EC; color: #3D3A38; font: 400 17px/1.55 'Figtree', system-ui, sans-serif; }
+        .top { padding: 16px; }
+        .brand { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: #22305C; text-decoration: none; font: 800 22px 'Bricolage Grotesque', system-ui, sans-serif; }
+        .error-page { max-width: 520px; min-height: 60vh; margin: 0 auto; padding: 32px 16px 48px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .error-milestone { width: 120px; margin-bottom: 24px; }
+        .error-milestone svg { display: block; width: 100%; height: auto; }
+        h1 { margin: 0 0 12px; font: 800 32px/1.15 'Bricolage Grotesque', system-ui, sans-serif; color: #22305C; }
+        p { margin: 0 0 28px; }
+        .error-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; width: 100%; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 12px 20px; border-radius: 12px; border: 1.5px solid transparent; font: 700 16px 'Figtree', system-ui, sans-serif; text-decoration: none; box-sizing: border-box; }
+        .btn--primary { background: #E8743B; color: #1F1A17; }
+        .btn--outline { border-color: #22305C; color: #22305C; }
+        @media (max-width: 480px) {
+            .error-milestone { width: 96px; }
+            h1 { font-size: 26px; }
+            .error-actions { flex-direction: column; }
+            .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top">
+        <a class="brand" href="/" aria-label="Rihla, accueil">
+            <img src="{{ asset('images/rihla-icon.svg') }}" alt="" width="36" height="36">
+            <span>Rihla</span>
+        </a>
+    </div>
+    <main class="error-page">
+        {% include '@Twig/Exception/_milestone.html.twig' %}
+        <h1>Petit arrêt sur le bas-côté</h1>
+        <p>Une erreur s'est produite de notre côté. Réessayez dans un instant.</p>
+        <div class="error-actions">
+            <a class="btn btn--primary" href="" onclick="location.reload();return false;">Réessayer</a>
+            <a class="btn btn--outline" href="/">Retour à l'accueil</a>
+        </div>
+    </main>
+</body>
+</html>

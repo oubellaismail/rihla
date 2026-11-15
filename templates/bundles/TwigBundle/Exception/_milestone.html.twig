@@ -1,0 +1,12 @@
+{# Road milestone carrying the status code. No database, no user: safe on every error page. #}
+<div class="error-milestone">
+    <svg viewBox="0 0 120 146" width="120" height="146" aria-hidden="true" focusable="false">
+        <defs><clipPath id="milestone-stone"><path d="M20 140V52C20 26 38 8 60 8s40 18 40 44v88z"/></clipPath></defs>
+        <path d="M20 140V52C20 26 38 8 60 8s40 18 40 44v88z" fill="#FFFFFF"/>
+        <rect x="0" y="0" width="120" height="58" fill="#A3322A" clip-path="url(#milestone-stone)"/>
+        <path d="M20 140V52C20 26 38 8 60 8s40 18 40 44v88z" fill="none" stroke="#22305C" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M20 58h80" stroke="#22305C" stroke-width="4"/>
+        <text x="60" y="108" text-anchor="middle" font-family="'Bricolage Grotesque', system-ui, sans-serif" font-weight="800" font-size="30" fill="#22305C">{{ status_code }}</text>
+        <path d="M4 141h112" stroke="#22305C" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+</div>
