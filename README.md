@@ -46,6 +46,7 @@ A trip is a chain of **legs**. Each leg has its own price and its own free seats
 
 - **Publish a trip with stops.** Pick each meeting point on a map. Rihla fills in the times from road durations and suggests a price for each leg.
 - **See who gets in and out where.** Passengers are listed stop by stop, with the trunk as a checklist of bags to load and unload.
+- **Change plans honestly.** Delay the trip or drop a stop: Rihla shows who is affected first, refunds who must be, and lets passengers cancel free of charge from 30 minutes late. Passengers are told by e-mail and under the bell in their header.
 - **Track your earnings** in « Mes gains »: earned and upcoming amounts, fill rate, and the seats resold along the way thanks to the legs.
 - **Manage your cars.** A car used on past trips is archived, never erased from their history.
 
@@ -82,6 +83,7 @@ A five-minute tour:
 3. « Choisir ma place », sign in as Salma, choose a seat and a suitcase, then « Réserver ».
 4. Sign in as Karim and switch to « Conducteur »: the dashboard, the passengers of a trip stop by stop, « Mes gains ».
 5. « Publier un trajet »: add a stop and watch the times and prices fill in.
+6. As Karim, open an upcoming trip and « Décaler l'horaire ». Then open the demo mailbox at <http://localhost:8025> (linked from the login page) to read the e-mails the passengers got, and sign in as one of them to see the bell.
 
 The full guide (configuration, tests, reset, troubleshooting) is in [`INSTALL.md`](INSTALL.md).
 
@@ -89,7 +91,7 @@ The full guide (configuration, tests, reset, troubleshooting) is in [`INSTALL.md
 
 Built for the **EMC PFE Challenge** (Education Media Company, Agadir), **Subject 3: regional carpooling platform**, from 9 to 15 November 2026.
 
-All five levels are done, plus two bonuses: seat choice and luggage. The project has 548 automated tests. What works, the measured performance, the known limits and what comes next are in [`docs/STATUS.md`](docs/STATUS.md).
+All five levels are done, plus two bonuses: seat choice and luggage. The project has 600 automated tests. What works, the measured performance, the known limits and what comes next are in [`docs/STATUS.md`](docs/STATUS.md).
 
 ## Under the hood
 
