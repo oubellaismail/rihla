@@ -347,7 +347,7 @@ class AppFixtures extends Fixture
         ], TripStatus::Completed);
         $b1 = $this->book($manager, $past, $mehdi, 0, 1, 1, BookingStatus::Completed, ['A1'], ['medium' => 1]);
         $b2 = $this->book($manager, $past, $salma, 0, 1, 1, BookingStatus::Completed, ['B1'], ['cabin' => 2]);
-        $this->review($manager, $b1, $mehdi, $karim, 5, 'Voiture propre, trajet tranquille jusqu\'à Marrakech.');
+        $mehdiReview = $this->review($manager, $b1, $mehdi, $karim, 5, 'Voiture propre, trajet tranquille jusqu\'à Marrakech.');
         $this->review($manager, $b1, $karim, $mehdi, 5, 'Passager ponctuel et agréable.');
         $karimReview = $this->review($manager, $b2, $salma, $karim, 5, 'Ponctuel, prudent, et il connaît toutes les bonnes pauses.');
 
@@ -400,7 +400,7 @@ class AppFixtures extends Fixture
         $this->notice($manager, $karim, Notification::KIND_REVIEW, $this->driverNotices->reviewText($karimReview), '-2 days');
         // ... and older ones he has already read, so the page shows both states.
         $this->notice($manager, $karim, Notification::KIND_NEW_BOOKING, $this->driverNotices->newBookingText($b1), '-12 days', $b1, true);
-        $this->notice($manager, $karim, Notification::KIND_REVIEW, $this->driverNotices->reviewText($karimReview), '-9 days', null, true);
+        $this->notice($manager, $karim, Notification::KIND_REVIEW, $this->driverNotices->reviewText($mehdiReview), '-9 days', null, true);
 
         $manager->flush();
     }
