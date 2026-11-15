@@ -6,13 +6,6 @@ use App\Entity\Booking;
 use App\Entity\Notification;
 use App\Entity\Trip;
 use App\Entity\TripStop;
-use Doctrine\ORM\EntityManagerInterface;
-use Psr\Log\LoggerInterface;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
-use Symfony\Component\Clock\ClockInterface;
-use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
-use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Address;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
@@ -23,11 +16,8 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 final class PassengerNotifier
 {
     public function __construct(
-        private readonly MailerInterface $mailer,
+        private readonly UserNotifier $notices,
         private readonly UrlGeneratorInterface $urls,
-        private readonly LoggerInterface $logger,
-        private readonly EntityManagerInterface $em,
-        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -50,7 +40,7 @@ final class PassengerNotifier
                 'meetingPoint' => $from->getMeetingPoint(),
                 'newTime' => $new->format('H:i'),
                 'oldTime' => $oldTime,
-                'date' => self::date($new),
+                'date' => UserNotifier::date($new),
                 'freeCancel' => $freeCancel,
                 'bookingUrl' => $this->urls->generate('app_booking_show', ['id' => $booking->getId()], UrlGeneratorInterface::ABSOLUTE_URL),
             ]);
@@ -68,7 +58,7 @@ final class PassengerNotifier
                 'stopCity' => $city,
                 'first' => $trip->getFirstStop()->getCity()->getName(),
                 'last' => $trip->getLastStop()->getCity()->getName(),
-                'date' => self::date($trip->getFirstStop()->getDepartureAt()),
+                'date' => UserNotifier::date($trip->getFirstStop()->getDepartureAt()),
                 'amount' => $amount,
                 'searchUrl' => $this->searchUrl($booking),
             ]);
@@ -80,7 +70,7 @@ final class PassengerNotifier
     {
         $first = $trip->getFirstStop()->getCity()->getName();
         $last = $trip->getLastStop()->getCity()->getName();
-        $date = self::date($trip->getFirstStop()->getDepartureAt());
+        $date = UserNotifier::date($trip->getFirstStop()->getDepartureAt());
         foreach ($bookings as $booking) {
             $amount = $this->amount($booking);
             $this->send($booking, Notification::KIND_TRIP_CANCELLED, sprintf('Remboursement intégral : %d MAD', $amount), sprintf('Trajet annulé : %s → %s, %s', $first, $last, $date), 'trip_cancelled', [
@@ -93,14 +83,6 @@ final class PassengerNotifier
                 'searchUrl' => $this->searchUrl($booking),
             ]);
         }
-    }
-
-    /** « jeudi 19 novembre » */
-    private static function date(\DateTimeInterface $at): string
-    {
-        $formatter = new \IntlDateFormatter('fr_FR', \IntlDateFormatter::NONE, \IntlDateFormatter::NONE, $at->getTimezone(), \IntlDateFormatter::GREGORIAN, 'EEEE d MMMM');
-
-        return (string) $formatter->format($at);
     }
 
     private function amount(Booking $booking): int
@@ -120,19 +102,6 @@ final class PassengerNotifier
     private function send(Booking $booking, string $kind, string $body, string $subject, string $template, array $context): void
     {
         $passenger = $booking->getPassenger();
-        // The in-app notice is saved first: a failing mailer must never lose it.
-        $this->em->persist(new Notification($passenger, $booking, $kind, $subject, $body, \DateTimeImmutable::createFromInterface($this->clock->now())));
-        $this->em->flush();
-        try {
-            $this->mailer->send((new TemplatedEmail())
-                ->from(new Address('noreply@rihla.ma', 'Rihla'))
-                ->to(new Address((string) $passenger->getEmail(), (string) $passenger->getFullName()))
-                ->subject($subject)
-                ->htmlTemplate('email/'.$template.'.html.twig')
-                ->textTemplate('email/'.$template.'.txt.twig')
-                ->context($context + ['subject' => $subject, 'firstName' => $passenger->getFirstName()]));
-        } catch (TransportExceptionInterface $e) {
-            $this->logger->error('Passenger e-mail not sent: '.$e->getMessage(), ['booking' => $booking->getId(), 'template' => $template]);
-        }
+        $this->notices->notify($passenger, $kind, $subject, $body, $booking, null, $template, $context + ['firstName' => $passenger->getFirstName()]);
     }
 }

@@ -24,6 +24,7 @@ final class ReviewService
         private readonly ReviewPolicy $policy,
         private readonly ReviewRepository $reviews,
         private readonly ClockInterface $clock,
+        private readonly DriverNotifier $driverNotifier,
     ) {
     }
 
@@ -56,6 +57,7 @@ final class ReviewService
 
         $this->em->persist($review);
         $this->em->flush();
+        $this->driverNotifier->notifyNewReview($review);
 
         return $review;
     }

@@ -39,6 +39,7 @@ final class BookingService
         private readonly SeatMap $seatMap,
         private readonly SeatLayout $seatLayout,
         private readonly TrunkSpace $trunkSpace,
+        private readonly DriverNotifier $driverNotifier,
     ) {
     }
 
@@ -62,7 +63,7 @@ final class BookingService
     {
         $this->assertRequestIsValid($trip, $from, $to, $seats, $passenger, $seatCodes, $bags);
 
-        return $this->em->wrapInTransaction(function () use ($trip, $from, $to, $seats, $passenger, $onLocked, $seatCodes, $bags): Booking {
+        $booking = $this->em->wrapInTransaction(function () use ($trip, $from, $to, $seats, $passenger, $onLocked, $seatCodes, $bags): Booking {
             $this->em->lock($trip, LockMode::PESSIMISTIC_WRITE);
             // The status may have changed while we waited for the lock.
             $this->em->refresh($trip);
@@ -101,6 +102,11 @@ final class BookingService
 
             return $booking;
         });
+
+        // After the commit: a mailer failure must not undo the booking.
+        $this->driverNotifier->notifyNewBooking($booking);
+
+        return $booking;
     }
 
     /** Checks that need no database access, so they run before taking the lock. */

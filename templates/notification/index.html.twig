@@ -7,7 +7,7 @@
 <div class="container page">
     <div class="stack">
         <h1>Notifications</h1>
-        <p class="muted">Ce que les conducteurs ont changé sur vos trajets.</p>
+        <p class="muted">Ce qui change sur vos trajets, comme passager et comme conducteur.</p>
 
         {% if notifications is empty %}
             <p class="muted">Aucune notification pour le moment.</p>
@@ -15,13 +15,23 @@
             <div class="notification-list">
                 {% for notification in notifications %}
                     <article class="notification{% if notification.readAt is null %} notification--unread{% endif %}">
-                        <span class="notification__icon notification__icon--{{ notification.kind == 'delay' ? 'delay' : 'cancel' }}">{{ ui.icon(notification.kind == 'delay' ? 'clock' : 'close', 20) }}</span>
+                        {% set kind = notification.kind %}
+                        {% set iconName = kind == 'delay' ? 'clock' : (kind == 'new_booking' ? 'plus' : (kind == 'review' ? 'star' : 'close')) %}
+                        {% set iconClass = kind == 'delay' ? 'delay' : (kind == 'new_booking' ? 'new' : (kind == 'review' ? 'review' : 'cancel')) %}
+                        <span class="notification__icon notification__icon--{{ iconClass }}">{{ ui.icon(iconName, 20) }}</span>
                         <div class="notification__content">
                             <strong>{{ notification.title }}</strong>
                             <p>{{ notification.body }}</p>
                             <div class="notification__meta">
                                 <span class="small muted">{{ time_ago(notification.createdAt) }}</span>
-                                {% if notification.booking %}<a href="{{ path('app_booking_show', {id: notification.booking.id}) }}">Voir ma réservation</a>{% endif %}
+                                {% if kind in ['new_booking', 'passenger_cancelled', 'trip_cancelled_by_admin'] %}
+                                    {% set tripId = notification.trip ? notification.trip.id : (notification.booking ? notification.booking.trip.id : null) %}
+                                    {% if tripId %}<a href="{{ path('app_driver_trip_show', {id: tripId}) }}">Voir le trajet</a>{% endif %}
+                                {% elseif kind == 'review' %}
+                                    <a href="{{ path('app_user_profile', {id: notification.user.id}) }}">Voir mon profil</a>
+                                {% elseif notification.booking %}
+                                    <a href="{{ path('app_booking_show', {id: notification.booking.id}) }}">Voir ma réservation</a>
+                                {% endif %}
                             </div>
                         </div>
                     </article>

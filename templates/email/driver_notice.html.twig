@@ -1,0 +1,7 @@
+{% extends 'email/layout.html.twig' %}
+{% block title %}{{ subject }}{% endblock %}
+{% block content %}
+<p style="margin:0 0 16px;"><strong>{{ subject }}</strong></p>
+<div style="background:#fbf3e4;border-left:4px solid #f2a541;padding:12px 16px;margin:0 0 16px;">{{ body }}</div>
+{% endblock %}
+{% block button %}{% include 'email/_button.html.twig' with {url: tripUrl, label: 'Voir le trajet'} %}{% endblock %}

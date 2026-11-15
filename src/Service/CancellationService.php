@@ -23,6 +23,7 @@ final class CancellationService
         private readonly CancellationPolicy $policy,
         private readonly ClockInterface $clock,
         private readonly PassengerNotifier $notifier,
+        private readonly DriverNotifier $driverNotifier,
     ) {
     }
 
@@ -49,6 +50,7 @@ final class CancellationService
         $booking->setStatus(BookingStatus::CancelledByPassenger)->setCancelledAt($now);
         $payment->refund($this->policy->passengerRefundAmount($booking, $now));
         $this->em->flush();
+        $this->driverNotifier->notifyPassengerCancelled($booking);
 
         return $payment;
     }
@@ -81,7 +83,10 @@ final class CancellationService
      */
     public function cancelTripByAdmin(Trip $trip): int
     {
-        return $this->cancelTrip($trip);
+        $cancelled = $this->cancelTrip($trip);
+        $this->driverNotifier->notifyTripCancelledByAdmin($trip, $cancelled);
+
+        return $cancelled;
     }
 
     /** Shared transaction body: lock, check status/start, cancel the trip and fully refund confirmed bookings. */

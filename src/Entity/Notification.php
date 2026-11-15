@@ -6,7 +6,7 @@ use App\Repository\NotificationRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * An in-app notice for a passenger (the bell): created with the e-mail of the same event and saying the same thing.
+ * An in-app notice for a passenger or a driver (the bell): created with the e-mail of the same event and saying the same thing.
  */
 #[ORM\Entity(repositoryClass: NotificationRepository::class)]
 class Notification
@@ -14,6 +14,10 @@ class Notification
     public const KIND_DELAY = 'delay';
     public const KIND_STOP_REMOVED = 'stop_removed';
     public const KIND_TRIP_CANCELLED = 'trip_cancelled';
+    public const KIND_NEW_BOOKING = 'new_booking';
+    public const KIND_PASSENGER_CANCELLED = 'passenger_cancelled';
+    public const KIND_TRIP_CANCELLED_BY_ADMIN = 'trip_cancelled_by_admin';
+    public const KIND_REVIEW = 'review';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -27,6 +31,11 @@ class Notification
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Booking $booking;
+
+    /** The trip a driver notice is about (a booking is not always involved). */
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Trip $trip;
 
     /** One of the KIND_* constants. */
     #[ORM\Column(length: 30)]
@@ -44,8 +53,9 @@ class Notification
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?\DateTimeImmutable $readAt = null;
 
-    public function __construct(User $user, ?Booking $booking, string $kind, string $title, string $body, \DateTimeImmutable $createdAt)
+    public function __construct(User $user, ?Booking $booking, string $kind, string $title, string $body, \DateTimeImmutable $createdAt, ?Trip $trip = null)
     {
+        $this->trip = $trip;
         $this->user = $user;
         $this->booking = $booking;
         $this->kind = $kind;
@@ -67,6 +77,11 @@ class Notification
     public function getBooking(): ?Booking
     {
         return $this->booking;
+    }
+
+    public function getTrip(): ?Trip
+    {
+        return $this->trip;
     }
 
     public function getKind(): string
