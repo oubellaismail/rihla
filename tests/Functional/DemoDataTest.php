@@ -4,16 +4,15 @@ namespace App\Tests\Functional;
 
 use App\DataFixtures\AppFixtures;
 use App\Entity\Booking;
+use App\Entity\Notification;
 use App\Entity\Review;
 use App\Entity\Trip;
 use App\Entity\User;
 use App\Enum\BookingStatus;
 use App\Enum\TripStatus;
-use App\Service\Geo\RouteEnricher;
 use App\Tests\Support\FakeGeoApis;
 use Doctrine\Common\DataFixtures\Purger\ORMPurger;
 use Symfony\Component\DomCrawler\Crawler;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
  * The demo data a reviewer gets on a fresh install: a platform that looks alive, with upcoming trips over the next
@@ -36,8 +35,13 @@ final class DemoDataTest extends WebFlowTestCase
     private function load(): void
     {
         (new ORMPurger($this->em))->purge();
+        // Built from the container by constructor type, so the fixtures may use any service (hasher, OSRM, trip changes).
         $container = static::getContainer();
-        $fixtures = new AppFixtures($container->get(UserPasswordHasherInterface::class), $container->get(RouteEnricher::class));
+        $args = array_map(
+            static fn (\ReflectionParameter $p): object => $container->get((string) $p->getType()),
+            (new \ReflectionClass(AppFixtures::class))->getConstructor()->getParameters(),
+        );
+        $fixtures = new AppFixtures(...$args);
         $fixtures->load($this->em);
         $this->em->flush();
         $this->em->clear();
@@ -216,6 +220,73 @@ final class DemoDataTest extends WebFlowTestCase
         $button = $crawler->filter('.demo-accounts button[data-email="admin@rihla.ma"]');
         self::assertCount(1, $button);
         self::assertSame('Admin, back-office', trim($button->text()));
+    }
+
+    // ---- what changed on trips, and the notices ---------------------------------------------------
+
+    public function testSalmaRidesADelayedTripAndCanCancelFreeOfCharge(): void
+    {
+        $this->load();
+
+        $delayed = array_filter(
+            $this->em->getRepository(Booking::class)->findBy(['passenger' => $this->user('salma@rihla.ma'), 'status' => BookingStatus::Confirmed]),
+            static fn (Booking $b): bool => $b->getDelayMinutes() >= 30,
+        );
+        self::assertNotEmpty($delayed, 'one of her upcoming trips was delayed after she booked');
+        $booking = array_values($delayed)[0];
+        $this->login($this->user('salma@rihla.ma'));
+        $this->client->request('GET', sprintf('/bookings/%d', $booking->getId()));
+        self::assertStringContainsString('Horaire modifié par le conducteur', $this->pageText());
+        self::assertStringContainsString('Annuler sans frais', $this->pageText());
+    }
+
+    public function testAStopWasRemovedAndItsPassengerToldWhy(): void
+    {
+        $this->load();
+
+        $cancelled = array_filter(
+            $this->em->getRepository(Booking::class)->findBy(['status' => BookingStatus::CancelledByDriver]),
+            static fn (Booking $b): bool => str_contains((string) $b->getCancellationReason(), "a retiré l'étape"),
+        );
+        self::assertNotEmpty($cancelled, 'a booking cancelled because its stop was removed');
+        $trip = array_values($cancelled)[0]->getTrip();
+        self::assertSame(TripStatus::Published, $trip->getStatus(), 'the trip itself goes on');
+    }
+
+    public function testSalmaAndKarimFindUnreadNotices(): void
+    {
+        $this->load();
+        $notices = $this->em->getRepository(Notification::class);
+
+        $salma = array_filter($notices->findBy(['user' => $this->user('salma@rihla.ma')]), static fn (Notification $n): bool => !$n->isRead());
+        self::assertGreaterThanOrEqual(1, \count($salma), 'Salma, as a passenger');
+
+        $karim = array_filter($notices->findBy(['user' => $this->user('karim@rihla.ma')]), static fn (Notification $n): bool => !$n->isRead());
+        $kinds = array_unique(array_map(static fn (Notification $n): string => $n->getKind(), $karim));
+        self::assertGreaterThanOrEqual(3, \count($karim), 'Karim, as a driver');
+        self::assertContains(Notification::KIND_NEW_BOOKING, $kinds);
+        self::assertContains(Notification::KIND_REVIEW, $kinds);
+
+        foreach (['salma@rihla.ma', 'karim@rihla.ma'] as $email) {
+            $this->login($this->user($email));
+            $crawler = $this->client->request('GET', '/');
+            self::assertCount(1, $crawler->filter('header a.notification-bell .notification-bell__count'), $email.' sees a count on the bell');
+        }
+    }
+
+    public function testEveryNoticeIsAboutItsOwnPerson(): void
+    {
+        $this->load();
+
+        foreach ($this->em->getRepository(Notification::class)->findAll() as $notice) {
+            self::assertLessThanOrEqual($this->now, $notice->getCreatedAt(), 'no notice from the future');
+            $booking = $notice->getBooking();
+            if (null === $booking) {
+                continue;
+            }
+            $people = [$booking->getPassenger()->getId(), $booking->getTrip()->getDriver()->getId()];
+            self::assertContains($notice->getUser()->getId(), $people, 'a notice goes to the passenger or the driver of its booking');
+        }
     }
 
     // ---- road data --------------------------------------------------------------------------------
