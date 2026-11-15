@@ -91,7 +91,14 @@ The full guide (configuration, tests, reset, troubleshooting) is in [`INSTALL.md
 
 Built for the **EMC PFE Challenge** (Education Media Company, Agadir), **Subject 3: regional carpooling platform**, from 9 to 15 November 2026.
 
-All five levels are done, plus two bonuses: seat choice and luggage. The project has 600 automated tests. What works, the measured performance, the known limits and what comes next are in [`docs/STATUS.md`](docs/STATUS.md).
+All five levels are done, plus two bonuses: seat choice and luggage. The project has 609 automated tests. What works, the measured performance, the known limits and what comes next are in [`docs/STATUS.md`](docs/STATUS.md).
+
+**What is left to do:**
+- **Real payment:** payments and refunds are simulated; a payment provider is the next step.
+- **Live tracking:** the app doesn't know when the car leaves, where it is or whether it is late on the road; a trip ends by the clock. This needs a mobile app for drivers.
+- **More notifications:** passengers and drivers get an e-mail and a notice when a trip changes or someone books or cancels, but there are no SMS or push notifications and no reminder the day before.
+- **A few trip edits:** a driver can delay the whole trip or remove a stop, but can't change one stop's time on its own or add a stop once people have booked.
+- **Deployment:** Rihla runs locally with Docker; a server with HTTPS, backups and our own map services comes next.
 
 ## Under the hood
 

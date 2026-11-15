@@ -40,7 +40,7 @@ Where Rihla stands at the deadline (15 November 2026), for the challenge: levels
 
 ## Tests
 
-**600 tests, 2,125 assertions**, all green: `docker compose exec php composer test`.
+**609 tests, 2,165 assertions**, all green: `docker compose exec php composer test`.
 
 - Unit tests for the pure rules (seats per leg, prices, refunds, permissions).
 - Integration tests on a separate `rihla_test` database, including a real concurrency test where two processes book the last seat at the same time.
@@ -63,14 +63,14 @@ Load test with `ab` (500 requests, 20 at a time): no failed request; search went
 
 - **Payments are simulated.** No payment provider; refunds are recorded, not sent.
 - **No live tracking.** The app does not know when the driver leaves, where the car is, or whether it is late. A trip ends by the clock.
-- **No in-app messaging between passenger and driver**, and no SMS or push notifications. Passengers get an e-mail and a notice in the app when their trip is delayed, a stop is removed or the trip is cancelled; drivers get no notices yet.
+- **No in-app messaging between passenger and driver**, and no SMS or push notifications. Passengers get an e-mail and a notice in the app when their trip is delayed, a stop is removed or the trip is cancelled; drivers when someone books or cancels, when Rihla cancels their trip, and when they get a review.
 - **City photos on the landing page are AI-generated** (stated in the footer).
 - **Nominatim and OSRM are the public demo servers**, rate-limited; a production version would host its own or use a paid provider.
 
 ## With one more week
 
 1. A payment provider (CMI or a card processor) and real refunds.
-2. More notifications: SMS and push, notices for drivers (new booking, cancellation), booking confirmation and a reminder the day before.
+2. More notifications: SMS and push, a booking confirmation for the passenger and a reminder the day before.
 3. A mobile version for drivers: « Je suis parti », position shared during the trip, lateness warning.
 4. Recurring trips (« every Friday Agadir → Casablanca »).
 5. Deployment on a server with HTTPS, backups and monitoring.

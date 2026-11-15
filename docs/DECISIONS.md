@@ -256,4 +256,6 @@ A passenger whose trip changed only found out by opening their booking. For a tr
 - **In Docker, every e-mail lands in Mailpit** (<http://localhost:8025>), one inbox for the whole demo, searchable by recipient (`to:salma@rihla.ma`). In production only the mailer address changes. E-mails are sent at once rather than queued: no worker runs in this setup.
 - **A notification bell**, next to the avatar, with the unread count and a « Notifications » page. E-mail reaches people who do not open the app; the bell keeps the history inside it. Each notice is saved with its e-mail, before sending, so a mail failure never loses it.
 - **A delay is capped at 6 hours in total.** Beyond that, a trip is no longer the one passengers booked: the driver cancels it, which refunds everyone.
-- **Still not built**: SMS and push notifications, and notices for drivers (a new booking, a passenger cancelling).
+- **Drivers are told too** (added the same evening): a new booking and a passenger's cancellation by e-mail and under the bell, a trip cancelled from the back-office likewise, and a new review under the bell only (an e-mail per review would be too much). A driver who cancels their own trip is not told about it.
+- **A delay only counts from the moment of booking.** A passenger who books an already delayed trip has booked the new time: each booking keeps the trip's delay when it is made, and only later delays give a banner or a free cancellation.
+- **Still not built**: SMS and push notifications, a booking confirmation for the passenger, a reminder the day before.
