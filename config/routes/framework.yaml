@@ -1,4 +1,7 @@
-when@dev:
+when@dev: &errors
     _errors:
         resource: '@FrameworkBundle/Resources/config/routing/errors.php'
         prefix: /_error
+
+# Tests render the error pages through the same preview route (it shows them as in production).
+when@test: *errors
