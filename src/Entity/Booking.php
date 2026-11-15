@@ -69,6 +69,10 @@ class Booking
     #[ORM\Column(type: 'smallint', options: ['default' => 0])]
     private int $largeBags = 0;
 
+    /** The trip's cumulative delay (minutes) when this booking was made: a delay only counts from the booking on. */
+    #[ORM\Column(type: 'smallint', options: ['default' => 0])]
+    private int $tripDelayAtBooking = 0;
+
     /** Why the driver cancelled this booking (e.g. a removed stop); null otherwise. */
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $cancellationReason = null;
@@ -302,6 +306,24 @@ class Booking
         $this->largeBags = $largeBags;
 
         return $this;
+    }
+
+    public function getTripDelayAtBooking(): int
+    {
+        return $this->tripDelayAtBooking;
+    }
+
+    public function setTripDelayAtBooking(int $minutes): static
+    {
+        $this->tripDelayAtBooking = $minutes;
+
+        return $this;
+    }
+
+    /** How late this passenger's trip is compared to what they booked (the delay announced after the booking). */
+    public function getDelayMinutes(): int
+    {
+        return max(0, $this->getTrip()->getDelayMinutes() - $this->tripDelayAtBooking);
     }
 
     public function getCancellationReason(): ?string

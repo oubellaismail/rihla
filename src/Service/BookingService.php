@@ -88,6 +88,7 @@ final class BookingService
                 ->setSeatCodes($seatCodes)
                 ->setBags($bags)
                 ->setTotalPrice($totalPrice)
+                ->setTripDelayAtBooking($trip->getDelayMinutes())
                 ->setStatus(BookingStatus::Confirmed)
                 ->setCreatedAt($this->clock->now());
             $payment = (new Payment())

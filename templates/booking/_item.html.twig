@@ -11,6 +11,6 @@
     <div class="booking-item__side">
         <span class="num">{{ booking.totalPrice }} MAD</span>
         {% include 'booking/_status.html.twig' %}
-        {% if booking.status.value == 'CONFIRMED' and booking.trip.delayMinutes > 0 %}<span class="badge badge--warn">Horaire modifié</span>{% endif %}
+        {% if booking.status.value == 'CONFIRMED' and booking.delayMinutes > 0 %}<span class="badge badge--warn">Horaire modifié</span>{% endif %}
     </div>
 </a>

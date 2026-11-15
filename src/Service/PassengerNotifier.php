@@ -32,7 +32,7 @@ final class PassengerNotifier
             $from = $booking->getFromStop();
             $new = $from->getDepartureAt();
             $oldTime = $new->modify(sprintf('-%d minutes', $minutes))->format('H:i');
-            $freeCancel = $trip->getDelayMinutes() >= CancellationPolicy::FREE_CANCEL_DELAY_MINUTES;
+            $freeCancel = $booking->getDelayMinutes() >= CancellationPolicy::FREE_CANCEL_DELAY_MINUTES;
             $this->send($booking, Notification::KIND_DELAY, $freeCancel ? sprintf('%s au lieu de %s · vous pouvez annuler sans frais', $new->format('H:i'), $oldTime) : sprintf('%s au lieu de %s', $new->format('H:i'), $oldTime), sprintf('Votre trajet %s → %s part %s plus tard', $from->getCity()->getName(), $booking->getToStop()->getCity()->getName(), $delay), 'delay', [
                 'driverFirstName' => $trip->getDriver()->getFirstName(),
                 'delay' => $delay,

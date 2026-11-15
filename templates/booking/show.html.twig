@@ -18,8 +18,8 @@
             {% else %}{% include 'booking/_status.html.twig' %}{% endif %}</p>
     </div>
 
-    {% if booking.status.value == 'CONFIRMED' and booking.trip.delayMinutes > 0 %}
-        {% set delay = booking.trip.delayMinutes %}
+    {% if booking.status.value == 'CONFIRMED' and booking.delayMinutes > 0 %}
+        {% set delay = booking.delayMinutes %}
         {% set free = delay >= constant('App\\Service\\CancellationPolicy::FREE_CANCEL_DELAY_MINUTES') %}
         <div class="notice stack" role="status">
             <p class="notice__title">{{ ui.icon('clock', 20) }} Horaire modifié par le conducteur.</p>

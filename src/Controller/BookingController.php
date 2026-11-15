@@ -88,7 +88,7 @@ final class BookingController extends AbstractController
             'is_passenger' => $booking->getPassenger() === $user,
             'can_cancel' => $this->isGranted(BookingVoter::CANCEL, $booking),
             'can_review' => $canReview,
-            'delay_label' => TripChangeService::label($booking->getTrip()->getDelayMinutes()),
+            'delay_label' => TripChangeService::label($booking->getDelayMinutes()),
             'map' => $mapBuilder->build($booking->getTrip(), $user),
         ]);
     }
