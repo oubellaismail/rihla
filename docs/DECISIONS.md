@@ -36,6 +36,8 @@ The price of a portion is the **sum of the prices of its legs**. The driver sets
 - **Stop removed**: bookings that board or get off at that stop are cancelled and fully refunded.
 - The driver sees the effect of the change on each passenger **before** saving it.
 
+*Built on 15 November* as « Décaler l'horaire » (whole trip, 15 min to 3 h, never earlier) and « Retirer une étape » (intermediate stops only): see the entry of that day. Editing one stop's time on its own and adding a stop after bookings are not offered.
+
 ### Can a passenger book several seats at once?
 **Yes, 1 to 4 seats** in a single booking. Availability is checked for the requested number of seats on every leg of the portion.
 
@@ -234,3 +236,14 @@ A review found the back-office was the raw EasyAdmin default: the bookings list 
 - **One action changes a trip: « Annuler le trajet »**, which runs the driver's cancellation (full refunds). The bookings read « Annulée par le conducteur »: the existing status is reused rather than adding one for a rare case.
 - **Reviews can be deleted** (moderation). **Users can be edited**, the admin role is a checkbox, and an admin cannot drop their own. **Cities can be managed**, but a city used by a trip cannot be deleted.
 - **An admin account stays in the back-office.** Every page outside `/admin` sends it there: an admin manages the platform, they do not search, book or publish with that account. Someone who is both uses two accounts.
+
+## 2026-11-15 — A driver changes a trip after bookings
+
+The answer to « what happens when the driver changes a time or removes a stop », now in the product.
+
+- **« Décaler l'horaire » moves the whole trip**, by 15, 30, 45 minutes, 1, 2 or 3 hours, so leg durations stay true. In real life a time change is a delay; a booked trip never leaves earlier, or a passenger could miss the car. Delays add up.
+- **From 30 minutes in total, passengers cancel free of charge**: a full refund even within the last 24 hours, when the usual rule gives half. Under 30 minutes the booking is kept and the passenger sees the new time on it.
+- **« Retirer une étape » only for an intermediate stop**; removing the departure or the arrival is cancelling the trip. Who boards or leaves there is cancelled by the driver and fully refunded, with the reason on their booking; who passes through keeps their seat and price. The two legs become one at their summed price, and OSRM is asked for the new route without blocking the removal.
+- **A removed stop is marked, not deleted.** Cancelled bookings still point to it: deleting would break them, moving them would rewrite their history. Every calculation (seats, prices, map, trunk, search) ignores it.
+- **Both changes show their effect first** (new departure, passengers affected, who is refunded), then ask for a confirmation.
+- **Not built**: editing one stop's time alone, adding a stop after bookings, and e-mail notifications; passengers see the changes on their booking and in « Mes réservations ».

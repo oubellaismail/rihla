@@ -27,6 +27,7 @@ Where Rihla stands at the deadline (15 November 2026), for the challenge: levels
 **Driver**
 - « Publier un trajet » with stops, a meeting point picked on a map, a price per leg suggested from the road distance (OSRM), times filled in from road durations.
 - Driver dashboard, « Mes trajets », passengers listed stop by stop, the trunk as a checklist of what to load and unload.
+- « Décaler l'horaire » and « Retirer une étape » after bookings, with a preview; passengers see the change and, from 30 minutes late, cancel free of charge.
 - Trip cancellation with full refunds; « Mes gains » (earned, upcoming, fill rate, seats resold along the way).
 - « Mes véhicules »: add, edit, and remove a car (archived if it was used, refused while a trip is coming).
 
@@ -38,7 +39,7 @@ Where Rihla stands at the deadline (15 November 2026), for the challenge: levels
 
 ## Tests
 
-**548 tests, 1,569 assertions**, all green: `docker compose exec php composer test`.
+**583 tests, 2,049 assertions**, all green: `docker compose exec php composer test`.
 
 - Unit tests for the pure rules (seats per leg, prices, refunds, permissions).
 - Integration tests on a separate `rihla_test` database, including a real concurrency test where two processes book the last seat at the same time.
