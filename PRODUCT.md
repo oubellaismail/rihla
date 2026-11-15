@@ -18,8 +18,8 @@ A trip is a chain of **legs** (Agadir → Essaouira → Marrakech → Casablanca
 
 | | Need | What Rihla gives them |
 |---|---|---|
-| **Passenger** | A seat between two cities, at a fair price, with their luggage | Search by portion, price « dès » the cheapest leg, choose a seat on a plan of the car, declare bags and see if they fit, cancel with clear refund rules, review the driver |
-| **Driver** | Share the cost of a trip they make anyway | Publish a trip with stops, a price per leg suggested from the real road distance, a meeting point on a map, passengers listed stop by stop, a trunk checklist, « Mes gains » |
+| **Passenger** | A seat between two cities, at a fair price, with their luggage | Search by portion, price « dès » the cheapest leg, choose a seat on a plan of the car, declare bags and see if they fit, cancel with clear refund rules, be told by e-mail and under the bell when the driver changes or cancels, review the driver |
+| **Driver** | Share the cost of a trip they make anyway | Publish a trip with stops, a price per leg suggested from the real road distance, a meeting point on a map, passengers listed stop by stop, a trunk checklist, delay the trip or drop a stop with a preview of who is affected, be told of new bookings and cancellations, « Mes gains » |
 | **Admin** | Keep the platform healthy | A back-office to see everything, cancel a trip with full refunds, moderate reviews, manage users and cities |
 
 One account can be both passenger and driver: a « Passager | Conducteur » switch says which role is active. An admin account is kept apart and only sees the back-office.

@@ -40,7 +40,7 @@ Where Rihla stands at the deadline (15 November 2026), for the challenge: levels
 
 ## Tests
 
-**609 tests, 2,165 assertions**, all green: `docker compose exec php composer test`.
+**613 tests, 2,197 assertions**, all green: `docker compose exec php composer test`.
 
 - Unit tests for the pure rules (seats per leg, prices, refunds, permissions).
 - Integration tests on a separate `rihla_test` database, including a real concurrency test where two processes book the last seat at the same time.

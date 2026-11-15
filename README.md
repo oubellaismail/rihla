@@ -91,7 +91,7 @@ The full guide (configuration, tests, reset, troubleshooting) is in [`INSTALL.md
 
 Built for the **EMC PFE Challenge** (Education Media Company, Agadir), **Subject 3: regional carpooling platform**, from 9 to 15 November 2026.
 
-All five levels are done, plus two bonuses: seat choice and luggage. The project has 609 automated tests. What works, the measured performance, the known limits and what comes next are in [`docs/STATUS.md`](docs/STATUS.md).
+All five levels are done, plus two bonuses: seat choice and luggage. The project has 613 automated tests. What works, the measured performance, the known limits and what comes next are in [`docs/STATUS.md`](docs/STATUS.md).
 
 **What is left to do:**
 - **Real payment:** payments and refunds are simulated; a payment provider is the next step.

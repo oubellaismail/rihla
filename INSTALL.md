@@ -10,7 +10,7 @@ Everything runs in Docker: PHP 8.4-FPM, Nginx and MySQL 8.4. You need nothing el
 - Free ports 8080 (web), 3306 (MySQL), 8025 and 1025 (Mailpit); see [Ports](#ports) to change them
 - An internet connection on the first start (Composer packages, JavaScript packages) and for the maps (OpenStreetMap tiles, Nominatim, OSRM)
 
-These steps were checked on 2026-11-15 from a fresh clone of the GitHub repository, in an isolated Docker project (macOS, Docker Desktop). The app answered after about 3 minutes, with its demo data and road routes, and all the tests passed (561 then; 600 since the trip changes and notifications).
+These steps were checked on 2026-11-15 from a fresh clone of the GitHub repository, in an isolated Docker project (macOS, Docker Desktop). Checked again at the end of the day, with Mailpit: the app answered after about 3 minutes with its demo data and road routes, the two demo e-mails were waiting in Mailpit, and the 613 tests passed.
 
 ## Quick start
 
