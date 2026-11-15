@@ -7,8 +7,8 @@
     <div class="container hero__inner">
         <div class="hero-text">
             <span class="hero__eyebrow"><i aria-hidden="true"></i>Covoiturage régional au Maroc</span>
-            <h1>Votre bout de route,<br><span>au prix juste.</span></h1>
-            <p>Montez là où la voiture passe, descendez où vous voulez. Vous ne payez que votre tronçon.</p>
+            <h1>Yalla, on partage la <span>route.</span></h1>
+            <p>Trouvez une place dans une voiture qui fait déjà le chemin. Montez à Essaouira, descendez à Marrakech&nbsp;: vous ne payez que votre bout de route.</p>
 
             <form class="searchbar" action="{{ path('app_trip_search') }}" method="get" data-controller="hero-search">
                 <label class="searchbar__from"><span>Départ</span><input type="text" name="from" list="city-names" placeholder="Essaouira" autocomplete="off" required data-hero-search-target="from"></label>
@@ -21,27 +21,8 @@
                 <button class="btn btn--primary searchbar__go" type="submit">{{ ui.icon('search') }} C’est parti</button>
                 <datalist id="city-names">{% for name in cityNames %}<option value="{{ name }}">{% endfor %}</datalist>
             </form>
-            <div class="quick-routes">
-                <span>Souvent cherché :</span>
-                {% for pair in quickRoutes %}
-                    <a class="quick-route" href="/trips?from={{ pair[0]|url_encode }}&amp;to={{ pair[1]|url_encode }}">{{ pair[0] }} → {{ pair[1] }}</a>
-                {% endfor %}
-            </div>
         </div>
     </div>
-
-    {% if nextDeparture %}
-        {% set next = nextDeparture.trip %}
-        <a class="next-departure" href="{{ path('app_trip_show', {id: next.id}) }}">
-            <span class="container next-departure__inner">
-                <span class="next-departure__dot" aria-hidden="true"></span>
-                <span class="next-departure__label">Prochain départ</span>
-                <strong>{{ next.firstStop.city.name }} → {{ next.lastStop.city.name }}</strong>
-                <span class="next-departure__meta">{{ next.firstStop.departureAt|format_datetime(pattern: 'EEE d MMM') }}, {{ next.firstStop.departureAt|date('H:i') }} · {% if nextDeparture.freeSeats > 0 %}{{ nextDeparture.freeSeats }} {{ nextDeparture.freeSeats > 1 ? 'places' : 'place' }}{% else %}places sur une partie{% endif %} · dès <span class="num">{{ nextDeparture.price }} MAD</span></span>
-                <span class="next-departure__go">Voir le trajet {{ ui.icon('arrow', 16) }}</span>
-            </span>
-        </a>
-    {% endif %}
 </section>
 
 {# ---- 2. Principle ------------------------------------------------------------------------ #}

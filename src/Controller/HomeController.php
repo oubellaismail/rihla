@@ -22,7 +22,6 @@ final class HomeController extends AbstractController
     private const REVIEWS = 3;
 
     /** Routes offered as quick searches under the search bar. */
-    private const QUICK_ROUTES = [['Essaouira', 'Marrakech'], ['Casablanca', 'Rabat'], ['Agadir', 'Marrakech']];
 
     /** Routes proposed to drivers when a route has no upcoming departure. */
     private const POPULAR_ROUTES = [
@@ -84,29 +83,9 @@ final class HomeController extends AbstractController
             'today' => $now->format('Y-m-d'),
             'cityNames' => $cityNames,
             'cards' => $cards,
-            'nextDeparture' => $this->nextDeparture($cards),
-            'quickRoutes' => array_values(array_filter(self::QUICK_ROUTES, $known)),
             'emptyRoute' => count($cards) < self::UPCOMING_TRIPS ? $this->routeWithoutDeparture(array_values(array_filter(self::POPULAR_ROUTES, $known)), $cities, $tripSearch) : null,
             'reviews' => $reviews->findLatestWithComment(self::REVIEWS),
         ]);
-    }
-
-    /**
-     * The soonest trip on the page that still has a free seat somewhere.
-     *
-     * @param list<array{trip: Trip, freeSeats: int, someLegFree: bool, price: int}> $cards
-     *
-     * @return array{trip: Trip, freeSeats: int, someLegFree: bool, price: int}|null
-     */
-    private function nextDeparture(array $cards): ?array
-    {
-        foreach ($cards as $card) {
-            if ($card['someLegFree']) {
-                return $card;
-            }
-        }
-
-        return null;
     }
 
     /**

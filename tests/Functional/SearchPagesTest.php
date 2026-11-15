@@ -19,8 +19,6 @@ final class SearchPagesTest extends WebFlowTestCase
         self::assertSelectorExists('.hero input[name="to"][placeholder="Marrakech"]');
         self::assertSelectorExists('.hero input[name="date"][value=""]', 'no date means « the next departures »');
         self::assertSelectorNotExists('.hero input[name="date"][required]');
-        self::assertSelectorExists('.hero a[href="/trips?from=Essaouira&to=Marrakech"]');
-        self::assertSelectorTextContains('.hero a[href="/trips?from=Essaouira&to=Marrakech"]', 'Essaouira → Marrakech');
     }
 
     // ---- fix 2: /trips never opens empty -------------------------------------------------------
