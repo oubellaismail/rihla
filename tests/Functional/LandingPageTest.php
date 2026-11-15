@@ -108,4 +108,15 @@ final class LandingPageTest extends WebFlowTestCase
 
         self::assertSame('trajets', $crawler->filter('main .hero ~ section')->first()->attr('id'), 'the routes of the moment follow the hero');
     }
+
+    public function testThePassengerAndDriverPhotosHaveNoCaptionCard(): void
+    {
+        $this->client->request('GET', '/');
+
+        self::assertSelectorExists('#passagers .feature__photo img');
+        self::assertSelectorExists('#conducteurs .feature__photo img');
+        self::assertSelectorNotExists('.feature__chip');
+        self::assertStringNotContainsString('Siège avant réservé', $this->pageText());
+        self::assertStringNotContainsString('4 arrêts · 3 passagers', $this->pageText());
+    }
 }

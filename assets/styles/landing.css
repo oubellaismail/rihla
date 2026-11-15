@@ -89,10 +89,6 @@
 .feature--flip .feature__photo { order: 2; }
 .feature__photo { position: relative; margin: 0; }
 .feature__photo img { width: 100%; aspect-ratio: 4 / 3.4; object-fit: cover; border-radius: 28px; box-shadow: 0 30px 60px -36px rgba(34, 48, 92, 0.6); }
-.feature__chip { position: absolute; left: 20px; bottom: -20px; display: flex; flex-direction: column; gap: 2px; padding: 12px 18px; border-radius: 16px; background: var(--white); box-shadow: 0 16px 32px -16px rgba(60, 38, 20, 0.4); font-size: 13px; color: var(--muted); }
-.feature__chip strong { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink); }
-.feature__chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
-.feature--flip .feature__chip { left: auto; right: auto; left: 20px; }
 .feature__text { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
 .feature__text h2 { font-size: clamp(32px, 4vw, 46px); }
 .feature__text > p { font-size: 17px; color: var(--soft); max-width: 30em; }
@@ -133,7 +129,7 @@ a.route-card:hover { color: var(--asphalt); transform: translateY(-4px); box-sha
 .route-card__publish:hover { background: var(--sand); color: var(--ink); }
 
 /* 7. Trust */
-.trust-band { background: var(--dusk); color: var(--white); margin-top: 88px; padding: 88px 0; }
+.trust-band { background: var(--dusk); color: var(--white); padding: 88px 0; }
 .trust-band__inner { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); gap: 72px; align-items: center; }
 .trust-band__lead { display: flex; flex-direction: column; align-items: flex-start; gap: 24px; }
 .trust-band__shield { width: 56px; height: 56px; border-radius: 16px; background: var(--saffron); color: var(--dusk); display: inline-flex; align-items: center; justify-content: center; }
@@ -196,7 +192,7 @@ a.route-card:hover { color: var(--asphalt); transform: translateY(-4px); box-sha
     .feature + .feature { padding-top: 0; }
     .feature--tail { padding-bottom: 56px; }
     .landing-section { padding-top: 64px; }
-    .trust-band { padding: 64px 0; margin-top: 64px; }
+    .trust-band { padding: 64px 0; }
     .site-footer .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .luggage-band { flex-wrap: wrap; }
     .luggage-band__link { margin-left: 120px; }
@@ -222,7 +218,6 @@ a.route-card:hover { color: var(--asphalt); transform: translateY(-4px); box-sha
     .luggage-band { padding: 20px; gap: 16px; }
     .luggage-band__photo { width: 72px; height: 72px; }
     .luggage-band__link { margin-left: 0; }
-    .feature__chip { left: 12px; }
     .site-footer .footer-grid { grid-template-columns: minmax(0, 1fr); gap: 24px; }
     .cta-banner { padding: 40px 22px; border-radius: 24px; }
     .cta-banner::before { background: linear-gradient(180deg, rgba(21, 31, 61, 0.85) 0%, rgba(21, 31, 61, 0.7) 100%); }
