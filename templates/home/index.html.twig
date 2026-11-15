@@ -25,7 +25,53 @@
     </div>
 </section>
 
-{# ---- 2. Principle ------------------------------------------------------------------------ #}
+{# ---- 2. Live routes ---------------------------------------------------------------------- #}
+<section class="container landing-section" id="trajets">
+    <div class="landing-head">
+        <span class="eyebrow">En ce moment</span>
+        <h2>Les routes du moment</h2>
+        <p>Des conducteurs partent bientôt. Il reste de la place.</p>
+    </div>
+
+    <div class="route-grid">
+        {% for card in cards %}
+            {% set trip = card.trip %}
+            <a class="route-card" href="{{ path('app_trip_show', {id: trip.id}) }}">
+                <span class="route-card__photo">
+                    <img src="{{ asset(card.photo) }}" alt="" loading="lazy">
+                    {% if card.freeSeats == 1 %}
+                        <span class="route-card__badge route-card__badge--hot">Dernière place</span>
+                    {% elseif card.freeSeats > 1 %}
+                        <span class="route-card__badge">{{ card.freeSeats }} places libres</span>
+                    {% elseif card.someLegFree %}
+                        <span class="route-card__badge">Places sur une partie du trajet</span>
+                    {% else %}
+                        <span class="route-card__badge">Complet</span>
+                    {% endif %}
+                    <span class="route-card__title">{{ trip.firstStop.city.name }} → {{ trip.lastStop.city.name }}</span>
+                </span>
+                <span class="route-card__body">
+                    <span class="route-card__when">{{ ui.icon('clock', 15) }} {{ trip.firstStop.departureAt|format_datetime(pattern: 'EEE d MMM')|capitalize }} · {{ trip.firstStop.departureAt|date('H:i') }}</span>
+                    <span class="route-card__driver">{{ ui.avatar(trip.driver, 'avatar--s') }} {{ trip.driver.publicName }}</span>
+                    <span class="route-card__foot">
+                        <span class="route-card__price">dès <strong class="num">{{ card.price }}</strong> MAD</span>
+                        <span class="route-card__cta">Réserver</span>
+                    </span>
+                </span>
+            </a>
+        {% endfor %}
+        {% if emptyRoute %}
+            <div class="route-card route-card--empty">
+                <span class="route-card__plus">{{ ui.icon('plus', 18) }}</span>
+                <h3>{{ emptyRoute.from }} → {{ emptyRoute.to }}</h3>
+                <p>Aucun départ prévu pour l’instant. Vous faites la route ?</p>
+                <a class="route-card__publish" href="{{ path('app_trip_new') }}">Publier ce trajet {{ ui.icon('arrow', 16) }}</a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+{# ---- 3. Principle ------------------------------------------------------------------------ #}
 {% set stopNames = ['Agadir', 'Essaouira', 'Marrakech', 'Casablanca'] %}
 {% set legPrices = [60, 50, 70] %}
 {% set demoStart = 1 %}
@@ -77,7 +123,7 @@
     </div>
 </section>
 
-{# ---- 3 & 4. Passengers and drivers ------------------------------------------------------- #}
+{# ---- 4 & 5. Passengers and drivers ------------------------------------------------------- #}
 <section class="feature" id="passagers">
     <div class="container feature__inner">
         <figure class="feature__photo">
@@ -131,53 +177,7 @@
     </div>
 </section>
 
-{# ---- 6. Live routes ---------------------------------------------------------------------- #}
-<section class="container landing-section" id="trajets">
-    <div class="landing-head">
-        <span class="eyebrow">En ce moment</span>
-        <h2>Les routes du moment</h2>
-        <p>Des conducteurs partent bientôt. Il reste de la place.</p>
-    </div>
-
-    <div class="route-grid">
-        {% for card in cards %}
-            {% set trip = card.trip %}
-            <a class="route-card" href="{{ path('app_trip_show', {id: trip.id}) }}">
-                <span class="route-card__photo">
-                    <img src="{{ asset(card.photo) }}" alt="" loading="lazy">
-                    {% if card.freeSeats == 1 %}
-                        <span class="route-card__badge route-card__badge--hot">Dernière place</span>
-                    {% elseif card.freeSeats > 1 %}
-                        <span class="route-card__badge">{{ card.freeSeats }} places libres</span>
-                    {% elseif card.someLegFree %}
-                        <span class="route-card__badge">Places sur une partie du trajet</span>
-                    {% else %}
-                        <span class="route-card__badge">Complet</span>
-                    {% endif %}
-                    <span class="route-card__title">{{ trip.firstStop.city.name }} → {{ trip.lastStop.city.name }}</span>
-                </span>
-                <span class="route-card__body">
-                    <span class="route-card__when">{{ ui.icon('clock', 15) }} {{ trip.firstStop.departureAt|format_datetime(pattern: 'EEE d MMM')|capitalize }} · {{ trip.firstStop.departureAt|date('H:i') }}</span>
-                    <span class="route-card__driver">{{ ui.avatar(trip.driver, 'avatar--s') }} {{ trip.driver.publicName }}</span>
-                    <span class="route-card__foot">
-                        <span class="route-card__price">dès <strong class="num">{{ card.price }}</strong> MAD</span>
-                        <span class="route-card__cta">Réserver</span>
-                    </span>
-                </span>
-            </a>
-        {% endfor %}
-        {% if emptyRoute %}
-            <div class="route-card route-card--empty">
-                <span class="route-card__plus">{{ ui.icon('plus', 18) }}</span>
-                <h3>{{ emptyRoute.from }} → {{ emptyRoute.to }}</h3>
-                <p>Aucun départ prévu pour l’instant. Vous faites la route ?</p>
-                <a class="route-card__publish" href="{{ path('app_trip_new') }}">Publier ce trajet {{ ui.icon('arrow', 16) }}</a>
-            </div>
-        {% endif %}
-    </div>
-</section>
-
-{# ---- 7. Trust ---------------------------------------------------------------------------- #}
+{# ---- 6. Trust ---------------------------------------------------------------------------- #}
 <section class="trust-band" id="confiance">
     <div class="container trust-band__inner">
         <div class="trust-band__lead">
@@ -193,7 +193,7 @@
     </div>
 </section>
 
-{# ---- 8. Reviews -------------------------------------------------------------------------- #}
+{# ---- 7. Reviews -------------------------------------------------------------------------- #}
 {% if reviews %}
     <section class="reviews-band" id="avis">
         <div class="container landing-section">
@@ -218,7 +218,7 @@
     </section>
 {% endif %}
 
-{# ---- 9. Closing call --------------------------------------------------------------------- #}
+{# ---- 8. Closing call --------------------------------------------------------------------- #}
 <section class="container landing-section landing-section--cta">
     <div class="cta-banner">
         <img src="{{ asset('images/hero-road-sunset.jpg') }}" alt="" loading="lazy">

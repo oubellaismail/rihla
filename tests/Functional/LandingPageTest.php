@@ -98,4 +98,14 @@ final class LandingPageTest extends WebFlowTestCase
         self::assertSelectorTextContains('.site-footer', 'Photos générées par IA');
         self::assertSelectorTextNotContains('.site-footer', 'Unsplash');
     }
+
+    public function testTheLiveRoutesComeRightAfterTheHero(): void
+    {
+        $this->db->trip();
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/');
+
+        self::assertSame('trajets', $crawler->filter('main .hero ~ section')->first()->attr('id'), 'the routes of the moment follow the hero');
+    }
 }
