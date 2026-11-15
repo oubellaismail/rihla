@@ -28,10 +28,10 @@ class ReviewCrudController extends AbstractCrudController
             ->setDefaultSort(['createdAt' => 'DESC']);
     }
 
-    /** Created by the application flows (sign-up, booking service), not by hand. */
+    /** Reviews are written by members; the back-office can only moderate (delete) them. */
     public function configureActions(Actions $actions): Actions
     {
-        return $actions->disable(Action::NEW);
+        return $actions->disable(Action::NEW, Action::EDIT);
     }
 
     public function configureFields(string $pageName): iterable

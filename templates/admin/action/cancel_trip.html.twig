@@ -1,0 +1,8 @@
+{# « Annuler le trajet »: a POST form with a CSRF token, never a GET link. #}
+<form action="{{ action.linkUrl }}" method="post" class="d-inline"
+      onsubmit="return confirm('Annuler ce trajet et rembourser intégralement les passagers ?');">
+    <input type="hidden" name="_token" value="{{ csrf_token('admin_cancel_trip_' ~ entity.primaryKeyValue) }}">
+    <button type="submit" class="btn btn-danger">
+        <i class="fa fa-ban"></i> <span class="action-label">Annuler le trajet</span>
+    </button>
+</form>

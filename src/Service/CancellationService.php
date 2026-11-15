@@ -68,6 +68,24 @@ final class CancellationService
             throw new CancellationNotAllowedException('Seul le conducteur peut annuler ce trajet.');
         }
 
+        return $this->cancelTrip($trip);
+    }
+
+    /**
+     * Back-office cancellation: same rules and refunds as the driver's, without the driver check.
+     *
+     * @return int the number of bookings cancelled
+     *
+     * @throws CancellationNotAllowedException when the trip is not published or has started
+     */
+    public function cancelTripByAdmin(Trip $trip): int
+    {
+        return $this->cancelTrip($trip);
+    }
+
+    /** Shared transaction body: lock, check status/start, cancel the trip and fully refund confirmed bookings. */
+    private function cancelTrip(Trip $trip): int
+    {
         return $this->em->wrapInTransaction(function () use ($trip): int {
             $this->em->lock($trip, LockMode::PESSIMISTIC_WRITE);
             // The status may have changed while we waited for the lock.
