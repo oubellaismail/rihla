@@ -38,6 +38,10 @@ class Vehicle
     #[Assert\Range(min: 50, max: 3000, notInRangeMessage: 'Le volume du coffre doit être entre 50 et 3000 litres.')]
     private int $trunkLitres = 400;
 
+    /** Set when the driver removes a car that old trips still use: hidden everywhere except on those trips. */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $archivedAt = null;
+
     public function __toString(): string
     {
         return trim($this->model . ' ' . $this->color);
@@ -92,6 +96,18 @@ class Vehicle
     public function setPassengerSeats(int $passengerSeats): static
     {
         $this->passengerSeats = $passengerSeats;
+
+        return $this;
+    }
+
+    public function getArchivedAt(): ?\DateTimeImmutable
+    {
+        return $this->archivedAt;
+    }
+
+    public function setArchivedAt(?\DateTimeImmutable $archivedAt): static
+    {
+        $this->archivedAt = $archivedAt;
 
         return $this;
     }

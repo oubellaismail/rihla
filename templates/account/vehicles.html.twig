@@ -2,6 +2,21 @@
 {% import 'macros.html.twig' as ui %}
 {% form_theme form 'form/rihla.html.twig' %}
 
+{% macro fields(form) %}
+    {% for e in form.vars.errors %}<p class="flash flash--error" role="alert">{{ e.message }}</p>{% endfor %}
+                {{ form_row(form.model) }}
+                <div class="form-row">
+                    {{ form_row(form.color) }}
+                    {{ form_row(form.passengerSeats) }}
+                </div>
+                <div class="field unit-field">
+                    {{ form_label(form.trunkLitres) }}
+                    <div class="unit-input">{{ form_widget(form.trunkLitres) }}<span class="unit-input__unit" aria-hidden="true">litres</span></div>
+                    {{ form_help(form.trunkLitres) }}
+                    {{ form_errors(form.trunkLitres) }}
+                </div>
+{% endmacro %}
+
 {% block title %}Mes véhicules{% endblock %}
 
 {% block body %}
@@ -15,43 +30,54 @@
         {% if vehicles is not empty %}
             <ul class="vehicle-list">
                 {% for vehicle in vehicles %}
+                    {% set usage_of = usage[vehicle.id] ?? null %}
                     <li class="card">
                         <span class="vehicle-icon">{{ ui.icon('car', 24) }}</span>
                         <div>
                             <strong>{{ vehicle.model }}</strong>, {{ vehicle.color }}<br>
                             <span class="small muted">{{ vehicle.passengerSeats }} place{{ vehicle.passengerSeats > 1 ? 's' : '' }} passagers · coffre {{ vehicle.trunkLitres }} L</span>
                         </div>
-                        {% if vehicle.id not in usedIds %}
-                            <form method="post" action="{{ path('app_vehicle_delete', {id: vehicle.id}) }}" onsubmit="return confirm('Supprimer ce véhicule ?')">
-                                <input type="hidden" name="_token" value="{{ csrf_token('delete-vehicle-' ~ vehicle.id) }}">
-                                <button type="submit" class="btn btn--ghost" aria-label="Supprimer {{ vehicle.model }}">{{ ui.icon('trash') }} Supprimer</button>
-                            </form>
+                        {% if editing and editing.id == vehicle.id %}
+                            {{ form_start(form, {attr: {class: 'form vehicle-edit'}}) }}
+                                <p class="small muted">Les trajets déjà publiés gardent leurs places et leur coffre.</p>
+                                {{ _self.fields(form) }}
+                                <div class="vehicle-actions">
+                                    {{ form_widget(form.save, {label: 'Enregistrer', attr: {class: 'btn btn--dusk'}}) }}
+                                    <a href="{{ path('app_vehicles') }}" class="btn btn--outline">Annuler</a>
+                                </div>
+                            {{ form_end(form) }}
                         {% else %}
-                            <span class="small muted">Utilisé par un trajet</span>
+                            <div class="vehicle-actions">
+                                {% if usage_of is not null and usage_of.nextDeparture is not null %}
+                                    <span class="badge badge--warn">Trajet prévu le {{ usage_of.nextDeparture|format_datetime(pattern: 'd MMM') }}</span>
+                                {% elseif usage_of is not null %}
+                                    <form method="post" action="{{ path('app_vehicle_delete', {id: vehicle.id}) }}" data-controller="confirm" data-action="submit->confirm#ask" data-confirm="Retirer la {{ vehicle.model }} ? Elle ne sera plus proposée pour vos prochains trajets. Vos trajets passés, vos gains et vos avis la gardent.">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete-vehicle-' ~ vehicle.id) }}">
+                                        <button type="submit" class="btn btn--outline" aria-label="Retirer {{ vehicle.model }}">{{ ui.icon('trash') }} Retirer</button>
+                                    </form>
+                                {% else %}
+                                    <form method="post" action="{{ path('app_vehicle_delete', {id: vehicle.id}) }}" data-controller="confirm" data-action="submit->confirm#ask" data-confirm="Supprimer la {{ vehicle.model }} ?">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete-vehicle-' ~ vehicle.id) }}">
+                                        <button type="submit" class="btn btn--outline" aria-label="Supprimer {{ vehicle.model }}">{{ ui.icon('trash') }} Supprimer</button>
+                                    </form>
+                                {% endif %}
+                                <a href="{{ path('app_vehicle_edit', {id: vehicle.id}) }}" class="btn btn--outline" aria-label="Modifier {{ vehicle.model }}">{{ ui.icon('edit') }} Modifier</a>
+                            </div>
                         {% endif %}
                     </li>
                 {% endfor %}
             </ul>
         {% endif %}
 
+        {% if editing is null %}
         <section class="card stack">
             <h2 class="h2-s">Ajouter un véhicule</h2>
             {{ form_start(form, {attr: {class: 'form'}}) }}
-                {% for e in form.vars.errors %}<p class="flash flash--error" role="alert">{{ e.message }}</p>{% endfor %}
-                {{ form_row(form.model) }}
-                <div class="form-row">
-                    {{ form_row(form.color) }}
-                    {{ form_row(form.passengerSeats) }}
-                </div>
-                <div class="field unit-field">
-                    {{ form_label(form.trunkLitres) }}
-                    <div class="unit-input">{{ form_widget(form.trunkLitres) }}<span class="unit-input__unit" aria-hidden="true">litres</span></div>
-                    {{ form_help(form.trunkLitres) }}
-                    {{ form_errors(form.trunkLitres) }}
-                </div>
+                {{ _self.fields(form) }}
                 <div>{{ form_widget(form.save) }}</div>
             {{ form_end(form) }}
         </section>
+        {% endif %}
 
         <p><a href="{{ path('app_account') }}">Retour à mon compte</a></p>
     </div>

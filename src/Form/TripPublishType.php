@@ -29,7 +29,7 @@ final class TripPublishType extends AbstractType
                 'class' => Vehicle::class,
                 'choice_label' => static fn (Vehicle $v) => sprintf('%s %s (%d places)', $v->getModel(), $v->getColor(), $v->getPassengerSeats()),
                 'query_builder' => static fn (EntityRepository $r) => $r->createQueryBuilder('v')
-                    ->where('v.owner = :owner')->setParameter('owner', $owner)->orderBy('v.id', 'ASC'),
+                    ->where('v.owner = :owner')->andWhere('v.archivedAt IS NULL')->setParameter('owner', $owner)->orderBy('v.id', 'ASC'),
                 'label' => 'Véhicule',
                 'placeholder' => 'Choisir un véhicule',
                 'constraints' => [new NotNull(message: 'Choisissez un véhicule.')],

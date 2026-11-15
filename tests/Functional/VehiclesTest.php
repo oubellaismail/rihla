@@ -216,7 +216,7 @@ final class VehiclesTest extends WebFlowTestCase
     {
         $archived = $this->vehicleWithTripOn('2026-11-01');
         $this->remove($archived);
-        $active = $this->db->vehicle($this->karim);
+        $active = $this->db->vehicle($this->reload($this->karim));
         $this->em->flush();
 
         $crawler = $this->client->request('GET', '/trips/new');

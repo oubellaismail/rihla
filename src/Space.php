@@ -13,7 +13,7 @@ final class Space
     public const SESSION_KEY = 'rihla_space';
 
     /** Route names that belong to the driver space. */
-    private const DRIVER_ROUTES = ['app_trip_new', 'app_vehicles', 'app_vehicle_delete'];
+    private const DRIVER_ROUTES = ['app_trip_new', 'app_vehicles', 'app_vehicle_delete', 'app_vehicle_edit'];
     /** Route name prefixes that belong to the driver space. */
     private const DRIVER_PREFIXES = ['app_driver_'];
 

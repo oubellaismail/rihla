@@ -24,7 +24,7 @@ final class TripPublishController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        if (0 === $vehicles->count(['owner' => $user])) {
+        if (0 === $vehicles->count(['owner' => $user, 'archivedAt' => null])) {
             $this->addFlash('info', 'Ajoutez d\'abord votre véhicule pour publier un trajet.');
 
             return $this->redirectToRoute('app_vehicles');
