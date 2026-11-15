@@ -259,3 +259,11 @@ A passenger whose trip changed only found out by opening their booking. For a tr
 - **Drivers are told too** (added the same evening): a new booking and a passenger's cancellation by e-mail and under the bell, a trip cancelled from the back-office likewise, and a new review under the bell only (an e-mail per review would be too much). A driver who cancels their own trip is not told about it.
 - **A delay only counts from the moment of booking.** A passenger who books an already delayed trip has booked the new time: each booking keeps the trip's delay when it is made, and only later delays give a banner or a free cancellation.
 - **Still not built**: SMS and push notifications, a booking confirmation for the passenger, a reminder the day before.
+
+## 2026-11-15 — Late changes by a driver: visible, not forbidden
+
+Question raised: should a driver be prevented from changing a trip in the last 12 hours before it leaves?
+
+- **No hard block.** A late change has a cause the app cannot prevent (a breakdown, illness, a closed road). Refusing it in the app does not keep the driver on the road: they simply do not show up, and the passenger learns it at the meeting point, without a refund. Letting the change through tells everyone at once, refunds or frees them, and leaves time to find another car.
+- **What protects passengers is making late changes cost the driver.** The rule decided: a stop removed or a trip cancelled within 12 hours of departure counts as a *late change* on the driver's public profile (« 2 annulations tardives sur 40 trajets »), next to the rating, so passengers can pick reliable drivers. Delays stay free at any time, up to the 6-hour cap: they are how a driver says they are late.
+- **Not built yet**: the profile counter of late changes. Today the profile counts all cancellations together. It is the next step on this subject.

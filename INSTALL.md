@@ -51,7 +51,7 @@ The demo trips are dated relative to the day the data is loaded, so there are al
 
 ### E-mails
 
-E-mails sent by Rihla (a trip delayed, a stop removed, a trip cancelled) never leave your machine: they land in **Mailpit**, a test mailbox started with the app, at <http://localhost:8025> (also linked from the login page). It is one inbox for every demo account; search `to:salma@rihla.ma` to see one person's mail. To try it: sign in as Karim, open one of his upcoming trips, « Décaler l'horaire », confirm, then open Mailpit. The same changes appear under the bell in the passenger's header.
+E-mails sent by Rihla (to passengers: a trip delayed, a stop removed, a trip cancelled; to drivers: a new booking, a cancellation) never leave your machine: they land in **Mailpit**, a test mailbox started with the app, at <http://localhost:8025> (also linked from the login page). The demo data already leaves two there: Salma's delayed trip and Omar's removed stop. It is one inbox for every demo account; search `to:salma@rihla.ma` to see one person's mail. To try it: sign in as Karim, open one of his upcoming trips, « Décaler l'horaire », confirm, then open Mailpit. The same changes appear under the bell in the passenger's header.
 
 ## Running the tests
 
@@ -117,6 +117,10 @@ If these services cannot be reached, the rest of the app keeps working: the map 
 **The Symfony debug toolbar is missing.** It is off in dev so it does not cover phone pages. Set `toolbar: true` in `config/packages/web_profiler.yaml` to see it; `/_profiler` stays available either way.
 
 **Port already in use** (`Bind for 0.0.0.0:8080 failed`). Another program uses the port. Pick another one: `HTTP_PORT=8090 docker compose up -d`.
+
+**Mailpit's port 8025 already in use** (another Mailpit or mail tool). Stop the other tool, or remove the `"8025:8025"` line from `compose.override.yaml`: the app still works, only the demo mailbox is not reachable.
+
+**No e-mail in Mailpit.** Check that the `mailer` container runs (`docker compose ps`). A sending failure never blocks the app: the passenger still sees the change on their booking and under the bell, and the error is in `docker compose logs php`.
 
 **The page shows 502 Bad Gateway.** The PHP container is still installing dependencies or waiting for MySQL. Wait and watch `docker compose logs -f php`.
 

@@ -33,6 +33,7 @@ erDiagram
     APP_USER ||--o{ REVIEW : "writes / receives"
     APP_USER ||--o{ NOTIFICATION : receives
     BOOKING |o--o{ NOTIFICATION : "is about"
+    TRIP |o--o{ NOTIFICATION : "is about (driver notices)"
 
     APP_USER {
         int id PK
@@ -100,6 +101,7 @@ erDiagram
         datetime created_at
         datetime cancelled_at
         string cancellation_reason
+        smallint trip_delay_at_booking
     }
     PAYMENT {
         int id PK
@@ -122,6 +124,7 @@ erDiagram
         int id PK
         int user_id FK
         int booking_id FK
+        int trip_id FK
         string kind
         string title
         string body
@@ -142,7 +145,7 @@ erDiagram
 | `Booking` | A passenger's portion of a trip: stops, seats, chosen seats, bags, frozen price, status |
 | `Payment` | The simulated payment of a booking, and what was refunded |
 | `Review` | A rating from 1 to 5 after a completed trip, passenger about driver or driver about passenger |
-| `Notification` | A notice shown under the bell: a delay, a removed stop or a cancelled trip, linked to the booking |
+| `Notification` | A notice shown under the bell. For passengers: a delay, a removed stop, a cancelled trip. For drivers: a new booking, a passenger's cancellation, a trip cancelled by Rihla. For anyone: a new review. Linked to the booking and, for drivers, the trip |
 
 ## Lifecycles
 
@@ -165,7 +168,7 @@ Only `CONFIRMED` bookings hold seats and trunk space.
 | One payment per booking | Unique foreign key `payment.booking_id` |
 | Stops disappear with their trip | `ON DELETE CASCADE` on `trip_stop.trip_id` (and ORM orphan removal) |
 | A deleted account takes its cars and notices with it | `ON DELETE CASCADE` on `vehicle.owner_id` and `notification.user_id` |
-| A notice survives its booking | `ON DELETE SET NULL` on `notification.booking_id` |
+| A notice survives its booking or trip | `ON DELETE SET NULL` on `notification.booking_id` and `notification.trip_id` |
 
 ## Rules enforced by the validator and the services
 
@@ -185,7 +188,7 @@ Only `CONFIRMED` bookings hold seats and trunk space.
 - **Bags as counts per size** (cabin 40 L, medium 70 L, large 100 L, `LuggageSize`) rather than litres: passengers think in suitcases; the litres are only used to check the trunk.
 - **Exact meeting points** (`meeting_latitude`, `meeting_longitude`) picked on a map; the city's centre is the fallback.
 - **Soft removal where history matters**: a used car gets `archived_at`; a stop removed after bookings gets `removed_at` and loses its position. Cancelled bookings still point to them, and every calculation ignores them.
-- **`delay_minutes` on the trip** keeps the total delay: passengers see the original time, and from 30 minutes they cancel free of charge.
+- **`delay_minutes` on the trip** keeps the total delay; **`trip_delay_at_booking` on the booking** keeps how late the trip already was when the passenger booked. A passenger's delay is the difference: someone who books an already delayed trip has booked the new time. From 30 minutes of their own delay, they cancel free of charge.
 - **`City` with latitude and longitude** acts as a cache for Nominatim geocoding, so the API is not called again on every search.
 - **Statuses as PHP backed enums** (`TripStatus`, `BookingStatus`, `PaymentStatus`) stored as readable strings, with French labels for the interface.
 - **One user can be both driver and passenger**: a single `User`; the role follows from what the person does. The interface switches between a passenger space and a driver space.
