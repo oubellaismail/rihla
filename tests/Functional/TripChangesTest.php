@@ -257,6 +257,61 @@ final class TripChangesTest extends WebFlowTestCase
         self::assertStringContainsString('Horaire modifié', $this->pageText());
     }
 
+    // ---- a booking made after a delay ------------------------------------------------------------
+
+    /** Books one seat from Agadir to Marrakech through the pages (BookingService), as a new passenger. */
+    private function bookThroughThePages(Trip $trip, string $name): Booking
+    {
+        $passenger = $this->db->user($name);
+        $this->login($passenger);
+        $crawler = $this->client->request('GET', sprintf('/trips/%d?from=0&to=1', $trip->getId()));
+        $crawler = $this->client->submit($crawler->selectButton('Choisir ma place')->form(['seats' => 1]));
+        $this->client->submit($crawler->selectButton('Pas de préférence, choisir pour moi')->form());
+
+        return $this->em->getRepository(Booking::class)->findOneBy(['passenger' => $this->reload($passenger)]);
+    }
+
+    public function testABookingMadeAfterADelayIsNotFlagged(): void
+    {
+        $trip = $this->db->trip();
+        $this->driverOf($trip);
+        $this->delay($trip, 45);
+
+        $booking = $this->bookThroughThePages($this->em->find(Trip::class, $trip->getId()), 'Lina');
+        $this->client->request('GET', sprintf('/bookings/%d', $booking->getId()));
+
+        self::assertStringNotContainsString('Horaire modifié', $this->pageText(), 'she booked the new time');
+        self::assertStringNotContainsString('Annuler sans frais', $this->pageText());
+    }
+
+    public function testABookingMadeAfterADelayKeepsTheUsualRefund(): void
+    {
+        $trip = $this->db->trip(day: '2026-11-10', stops: [['Agadir', '20:00', 60], ['Marrakech', '23:30', null]]);
+        $this->driverOf($trip);
+        $this->delay($trip, 30);
+
+        $booking = $this->bookThroughThePages($this->em->find(Trip::class, $trip->getId()), 'Lina'); // 60 MAD, the same day
+        $this->client->request('GET', sprintf('/bookings/%d/cancel', $booking->getId()));
+
+        self::assertStringContainsString('30 MAD', $this->pageText(), 'half, as for any booking within 24 hours');
+    }
+
+    public function testOnlyTheDelayAfterTheBookingCounts(): void
+    {
+        $trip = $this->db->trip();
+        $this->driverOf($trip);
+        $this->delay($trip, 45);
+        $booking = $this->bookThroughThePages($this->em->find(Trip::class, $trip->getId()), 'Lina');
+        $this->login($this->em->find(Trip::class, $trip->getId())->getDriver());
+        $this->delay($trip, 15);
+        $this->login($this->reload($booking)->getPassenger());
+
+        $this->client->request('GET', sprintf('/bookings/%d', $booking->getId()));
+
+        self::assertStringContainsString("Départ d'Agadir à 09:00 au lieu de 08:45 (15 min de retard)", $this->pageText());
+        self::assertStringNotContainsString('Annuler sans frais', $this->pageText(), '15 minutes for her, not 1 h');
+    }
+
     // ---- remove a stop: the driver ----------------------------------------------------------------
 
     public function testOnlyIntermediateStopsCanBeRemoved(): void
