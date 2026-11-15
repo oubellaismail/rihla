@@ -55,7 +55,6 @@
                                 <a href="{{ path('app_user_profile', {id: app.user.id}) }}">Mon profil public</a>
                                 <a href="{{ path('app_account') }}">Mon compte</a>
                                 <a href="{{ path('app_vehicles') }}">Mes véhicules</a>
-                                {% if is_granted('ROLE_ADMIN') %}<a href="{{ path('admin') }}">Back-office</a>{% endif %}
                                 <a href="{{ path('app_logout') }}">Déconnexion</a>
                             </div>
                         </details>
