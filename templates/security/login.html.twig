@@ -38,6 +38,9 @@
                 <button type="button" class="btn btn--outline" data-email="admin@rihla.ma" data-action="demo-login#fill">Admin, back-office</button>
             </div>
             <p class="small muted">Mot de passe : rihla2026</p>
+            {% if app.environment != 'prod' %}
+            <p class="small"><a href="http://localhost:8025" target="_blank" rel="noopener">Voir les e-mails envoyés (boîte de démo)</a></p>
+            {% endif %}
         </section>
         {% endif %}
 

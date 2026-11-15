@@ -172,7 +172,8 @@ final class DriverTripController extends AbstractController
             'cancelled' => $cancelled,
             'can_cancel' => $canCancel,
             'can_change' => $this->isGranted(TripVoter::CHANGE, $trip) && $changes->isChangeable($trip),
-            'delays' => TripChangeService::DELAYS,
+            'delays' => array_values(array_filter(TripChangeService::DELAYS, static fn (int $m): bool => $changes->canDelayBy($trip, $m))),
+            'delay_capped' => $trip->getDelayMinutes() > 0 && !$changes->canDelayBy($trip, max(TripChangeService::DELAYS)),
             'delay_label' => TripChangeService::label($trip->getDelayMinutes()),
             'trunk' => $trunkPlan->build($trip),
             'map' => $mapBuilder->build($trip, $this->currentUser()),
@@ -211,6 +212,11 @@ final class DriverTripController extends AbstractController
         $minutes = $request->query->getInt('minutes');
         if (!$this->isGranted(TripVoter::CHANGE, $trip) || !$changes->isChangeable($trip) || !\in_array($minutes, TripChangeService::DELAYS, true)) {
             $this->addFlash('error', 'Ce décalage n\'est pas possible.');
+
+            return $this->redirectToRoute('app_driver_trip_show', ['id' => $trip->getId()]);
+        }
+        if (!$changes->canDelayBy($trip, $minutes)) {
+            $this->addFlash('error', 'Au-delà de 6 h de retard, annulez le trajet.');
 
             return $this->redirectToRoute('app_driver_trip_show', ['id' => $trip->getId()]);
         }

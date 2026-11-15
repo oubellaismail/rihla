@@ -6,6 +6,7 @@ services:
     environment:
       APP_ENV: ${APP_ENV:-dev}
       APP_SECRET: ${APP_SECRET:-dev-only-secret-change-me}
+      MAILER_DSN: ${RIHLA_MAILER_DSN:-smtp://mailer:1025}  # not MAILER_DSN: Compose would read the null://null of the Symfony .env
       DATABASE_URL: mysql://${MYSQL_USER:-rihla}:${MYSQL_PASSWORD:-rihla}@database:3306/${MYSQL_DATABASE:-rihla}?serverVersion=8.4.0&charset=utf8mb4
     volumes:
       - ./:/app

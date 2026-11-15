@@ -1,0 +1,8 @@
+{% extends 'email/layout.html.twig' %}
+{% block title %}{{ subject }}{% endblock %}
+{% block content %}
+<p style="margin:0 0 16px;">{{ driver }} a retiré l'étape {{ stopCity }} de son trajet {{ first }} → {{ last }} du {{ date }}.</p>
+<div style="background:#fbf3e4;border-left:4px solid #f2a541;padding:12px 16px;margin:0 0 16px;">Remboursement intégral : {{ amount }} MAD</div>
+<p style="margin:0 0 16px;">D'autres conducteurs font peut-être la route.</p>
+{% endblock %}
+{% block button %}{% include 'email/_button.html.twig' with {url: searchUrl, label: 'Chercher un autre trajet'} %}{% endblock %}

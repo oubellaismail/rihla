@@ -1,0 +1,10 @@
+Bonjour {{ firstName }},
+
+{{ driverFirstName }} a décalé son trajet de {{ delay }}.
+
+{{ city }}, {{ meetingPoint }} — {{ newTime }} au lieu de {{ oldTime }}, {{ date }}
+{% if freeCancel %}
+Ce retard dépasse 30 min : vous pouvez annuler sans frais et être remboursé(e) intégralement.
+{% endif %}
+
+Voir ma réservation : {{ bookingUrl }}

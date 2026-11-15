@@ -22,6 +22,7 @@ final class CancellationService
         private readonly EntityManagerInterface $em,
         private readonly CancellationPolicy $policy,
         private readonly ClockInterface $clock,
+        private readonly PassengerNotifier $notifier,
     ) {
     }
 
@@ -86,7 +87,7 @@ final class CancellationService
     /** Shared transaction body: lock, check status/start, cancel the trip and fully refund confirmed bookings. */
     private function cancelTrip(Trip $trip): int
     {
-        return $this->em->wrapInTransaction(function () use ($trip): int {
+        $bookings = $this->em->wrapInTransaction(function () use ($trip): array {
             $this->em->lock($trip, LockMode::PESSIMISTIC_WRITE);
             // The status may have changed while we waited for the lock.
             $this->em->refresh($trip);
@@ -114,7 +115,12 @@ final class CancellationService
             }
             $this->em->flush();
 
-            return \count($bookings);
+            return $bookings;
         });
+
+        // After the commit: a mailer failure must not undo the cancellation.
+        $this->notifier->notifyTripCancelled($trip, $bookings);
+
+        return \count($bookings);
     }
 }

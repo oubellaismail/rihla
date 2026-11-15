@@ -22,10 +22,14 @@ final class TripChangeService
     /** Delays the driver may choose, in minutes. A trip never leaves earlier than announced. */
     public const DELAYS = [15, 30, 45, 60, 120, 180];
 
+    /** A trip is never delayed by more than 6 h in total: beyond, the driver cancels it. */
+    public const MAX_TOTAL_DELAY_MINUTES = 360;
+
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly ClockInterface $clock,
         private readonly RouteEnricher $routeEnricher,
+        private readonly PassengerNotifier $notifier,
     ) {
     }
 
@@ -37,6 +41,12 @@ final class TripChangeService
         }
 
         return intdiv($minutes, 60).' h'.(0 === $minutes % 60 ? '' : ' '.($minutes % 60));
+    }
+
+    /** Whether the trip can still take a delay of $minutes without passing the 6 h cap. */
+    public function canDelayBy(Trip $trip, int $minutes): bool
+    {
+        return $trip->getDelayMinutes() + $minutes <= self::MAX_TOTAL_DELAY_MINUTES;
     }
 
     /** Whether the trip can still be changed (published, first departure ahead). */
@@ -69,6 +79,9 @@ final class TripChangeService
 
         $this->em->wrapInTransaction(function () use ($trip, $minutes): void {
             $this->lockAndCheck($trip);
+            if (!$this->canDelayBy($trip, $minutes)) {
+                throw new TripChangeNotAllowedException('Au-delà de 6 h de retard, annulez le trajet.');
+            }
 
             foreach ($trip->getStops() as $stop) {
                 $stop->setDepartureAt($stop->getDepartureAt()->modify(sprintf('+%d minutes', $minutes)));
@@ -76,6 +89,11 @@ final class TripChangeService
             $trip->addDelay($minutes);
             $this->em->flush();
         });
+
+        // After the commit: a mailer failure must not undo the delay.
+        $this->notifier->notifyDelay($trip, $trip->getBookings()->filter(
+            static fn (Booking $b): bool => BookingStatus::Confirmed === $b->getStatus(),
+        ), $minutes);
     }
 
     /**
@@ -90,7 +108,7 @@ final class TripChangeService
      */
     public function removeStop(Trip $trip, TripStop $stop): int
     {
-        $cancelled = $this->em->wrapInTransaction(function () use ($trip, $stop): int {
+        $cancelled = $this->em->wrapInTransaction(function () use ($trip, $stop): array {
             $this->lockAndCheck($trip);
             if (!$this->isIntermediate($trip, $stop)) {
                 throw new TripChangeNotAllowedException('Seules les étapes intermédiaires peuvent être retirées.');
@@ -98,14 +116,14 @@ final class TripChangeService
 
             $now = $this->clock->now();
             $reason = sprintf('Le conducteur a retiré l\'étape %s.', $stop->getCity()->getName());
-            $count = 0;
+            $cancelled = [];
             foreach ($trip->getBookings() as $booking) {
                 if (BookingStatus::Confirmed !== $booking->getStatus() || !$this->touches($booking, $stop)) {
                     continue;
                 }
                 $booking->setStatus(BookingStatus::CancelledByDriver)->setCancelledAt($now)->setCancellationReason($reason);
                 $booking->getPayment()?->refund($booking->getPayment()->getAmount());
-                ++$count;
+                $cancelled[] = $booking;
             }
 
             // The previous stop now drives to the next one: its leg is the sum of the two.
@@ -126,8 +144,10 @@ final class TripChangeService
             }
             $this->em->flush();
 
-            return $count;
+            return $cancelled;
         });
+
+        $this->notifier->notifyStopRemoved($trip, $stop, $cancelled);
 
         // Best effort and outside the lock: a slow or failing OSRM must not undo the removal.
         try {
@@ -136,7 +156,7 @@ final class TripChangeService
         } catch (\Throwable) {
         }
 
-        return $cancelled;
+        return \count($cancelled);
     }
 
     /** Confirmed bookings boarding or leaving at $stop, then those passing through it. */

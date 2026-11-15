@@ -131,6 +131,8 @@
                 <h2 class="section-title">Décaler l'horaire</h2>
                 <p class="muted">Tous les arrêts sont décalés d'autant. Un trajet réservé ne peut pas partir plus tôt.</p>
                 {% if trip.delayMinutes > 0 %}<p class="small">Retard déjà annoncé : <strong>{{ delay_label }}</strong></p>{% endif %}
+                {% if delay_capped %}<p class="small">Le trajet est déjà décalé de {{ delay_label }} : au-delà de 6 h, annulez-le.</p>{% endif %}
+                {% if delays %}
                 <form method="get" action="{{ path('app_driver_trip_delay', {id: trip.id}) }}" class="stack">
                     <fieldset class="chips">
                         <legend class="visually-hidden">Retard</legend>
@@ -140,6 +142,7 @@
                     </fieldset>
                     <button type="submit" class="btn btn--outline">Décaler le trajet</button>
                 </form>
+                {% endif %}
             </section>
             {% if stops|length >= 3 %}
             <section class="card stack">
