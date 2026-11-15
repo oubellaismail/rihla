@@ -48,6 +48,11 @@
                             <a href="{{ path('app_trip_search') }}" {% if space == 'passenger' %}aria-current="true"{% endif %}>Passager</a>
                             <a href="{{ path('app_driver_dashboard') }}" {% if space == 'driver' %}aria-current="true"{% endif %}>Conducteur</a>
                         </div>
+                        {% set unread = unread_notifications() %}
+                        <a class="notification-bell" href="{{ path('app_notifications') }}" aria-label="Notifications{% if unread > 0 %}, {{ unread }} non lue{{ unread > 1 ? 's' : '' }}{% endif %}">
+                            {{ ui.icon('bell', 22) }}
+                            {% if unread > 0 %}<span class="notification-bell__count" aria-hidden="true">{{ unread > 9 ? '9+' : unread }}</span>{% endif %}
+                        </a>
                         <details class="menu">
                             <summary aria-label="Menu du compte">{{ ui.avatar(app.user) }}</summary>
                             <div class="menu-panel">

@@ -3,10 +3,13 @@
 namespace App\Service;
 
 use App\Entity\Booking;
+use App\Entity\Notification;
 use App\Entity\Trip;
 use App\Entity\TripStop;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
@@ -23,6 +26,8 @@ final class PassengerNotifier
         private readonly MailerInterface $mailer,
         private readonly UrlGeneratorInterface $urls,
         private readonly LoggerInterface $logger,
+        private readonly EntityManagerInterface $em,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -36,15 +41,17 @@ final class PassengerNotifier
         foreach ($bookings as $booking) {
             $from = $booking->getFromStop();
             $new = $from->getDepartureAt();
-            $this->send($booking, sprintf('Votre trajet %s → %s part %s plus tard', $from->getCity()->getName(), $booking->getToStop()->getCity()->getName(), $delay), 'delay', [
+            $oldTime = $new->modify(sprintf('-%d minutes', $minutes))->format('H:i');
+            $freeCancel = $trip->getDelayMinutes() >= CancellationPolicy::FREE_CANCEL_DELAY_MINUTES;
+            $this->send($booking, Notification::KIND_DELAY, $freeCancel ? sprintf('%s au lieu de %s · vous pouvez annuler sans frais', $new->format('H:i'), $oldTime) : sprintf('%s au lieu de %s', $new->format('H:i'), $oldTime), sprintf('Votre trajet %s → %s part %s plus tard', $from->getCity()->getName(), $booking->getToStop()->getCity()->getName(), $delay), 'delay', [
                 'driverFirstName' => $trip->getDriver()->getFirstName(),
                 'delay' => $delay,
                 'city' => $from->getCity()->getName(),
                 'meetingPoint' => $from->getMeetingPoint(),
                 'newTime' => $new->format('H:i'),
-                'oldTime' => $new->modify(sprintf('-%d minutes', $minutes))->format('H:i'),
+                'oldTime' => $oldTime,
                 'date' => self::date($new),
-                'freeCancel' => $trip->getDelayMinutes() >= CancellationPolicy::FREE_CANCEL_DELAY_MINUTES,
+                'freeCancel' => $freeCancel,
                 'bookingUrl' => $this->urls->generate('app_booking_show', ['id' => $booking->getId()], UrlGeneratorInterface::ABSOLUTE_URL),
             ]);
         }
@@ -55,13 +62,14 @@ final class PassengerNotifier
     {
         $city = $stop->getCity()->getName();
         foreach ($bookings as $booking) {
-            $this->send($booking, sprintf("Réservation annulée : l'étape %s est retirée", $city), 'stop_removed', [
+            $amount = $this->amount($booking);
+            $this->send($booking, Notification::KIND_STOP_REMOVED, sprintf('Remboursement intégral : %d MAD', $amount), sprintf("Réservation annulée : l'étape %s est retirée", $city), 'stop_removed', [
                 'driver' => $trip->getDriver()->getFirstName(),
                 'stopCity' => $city,
                 'first' => $trip->getFirstStop()->getCity()->getName(),
                 'last' => $trip->getLastStop()->getCity()->getName(),
                 'date' => self::date($trip->getFirstStop()->getDepartureAt()),
-                'amount' => $this->amount($booking),
+                'amount' => $amount,
                 'searchUrl' => $this->searchUrl($booking),
             ]);
         }
@@ -74,13 +82,14 @@ final class PassengerNotifier
         $last = $trip->getLastStop()->getCity()->getName();
         $date = self::date($trip->getFirstStop()->getDepartureAt());
         foreach ($bookings as $booking) {
-            $this->send($booking, sprintf('Trajet annulé : %s → %s, %s', $first, $last, $date), 'trip_cancelled', [
+            $amount = $this->amount($booking);
+            $this->send($booking, Notification::KIND_TRIP_CANCELLED, sprintf('Remboursement intégral : %d MAD', $amount), sprintf('Trajet annulé : %s → %s, %s', $first, $last, $date), 'trip_cancelled', [
                 'driver' => $trip->getDriver()->getFirstName(),
                 'first' => $first,
                 'last' => $last,
                 'from' => $booking->getFromStop()->getCity()->getName(),
                 'to' => $booking->getToStop()->getCity()->getName(),
-                'amount' => $this->amount($booking),
+                'amount' => $amount,
                 'searchUrl' => $this->searchUrl($booking),
             ]);
         }
@@ -108,9 +117,12 @@ final class PassengerNotifier
     }
 
     /** @param array<string, mixed> $context */
-    private function send(Booking $booking, string $subject, string $template, array $context): void
+    private function send(Booking $booking, string $kind, string $body, string $subject, string $template, array $context): void
     {
         $passenger = $booking->getPassenger();
+        // The in-app notice is saved first: a failing mailer must never lose it.
+        $this->em->persist(new Notification($passenger, $booking, $kind, $subject, $body, \DateTimeImmutable::createFromInterface($this->clock->now())));
+        $this->em->flush();
         try {
             $this->mailer->send((new TemplatedEmail())
                 ->from(new Address('noreply@rihla.ma', 'Rihla'))
