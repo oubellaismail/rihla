@@ -27,19 +27,20 @@ Where Rihla stands at the deadline (15 November 2026), for the challenge: levels
 **Driver**
 - « Publier un trajet » with stops, a meeting point picked on a map, a price per leg suggested from the road distance (OSRM), times filled in from road durations.
 - Driver dashboard, « Mes trajets », passengers listed stop by stop, the trunk as a checklist of what to load and unload.
-- « Décaler l'horaire » and « Retirer une étape » after bookings, with a preview; passengers see the change and, from 30 minutes late, cancel free of charge.
+- « Décaler l'horaire » (up to 6 h in total) and « Retirer une étape » after bookings, with a preview; passengers see the change and, from 30 minutes late, cancel free of charge.
 - Trip cancellation with full refunds; « Mes gains » (earned, upcoming, fill rate, seats resold along the way).
 - « Mes véhicules »: add, edit, and remove a car (archived if it was used, refused while a trip is coming).
 
 **Platform**
 - Accounts, sign-up, a passenger space and a driver space with a switch.
 - Back-office: read-only views of trips, stops, bookings and payments; « Annuler le trajet » with refunds; review moderation; users and cities. Admin accounts stay in the back-office.
+- Passengers are told when a driver delays, removes a stop or cancels: an e-mail (in Docker, in Mailpit at <http://localhost:8025>) and a notice under the bell in the header.
 - French error pages (404, 403, 500 and others).
 - Trips become « Terminé » after their last stop (`bin/console app:trips:complete`, also run by the pages).
 
 ## Tests
 
-**583 tests, 2,049 assertions**, all green: `docker compose exec php composer test`.
+**600 tests, 2,125 assertions**, all green: `docker compose exec php composer test`.
 
 - Unit tests for the pure rules (seats per leg, prices, refunds, permissions).
 - Integration tests on a separate `rihla_test` database, including a real concurrency test where two processes book the last seat at the same time.
@@ -62,14 +63,14 @@ Load test with `ab` (500 requests, 20 at a time): no failed request; search went
 
 - **Payments are simulated.** No payment provider; refunds are recorded, not sent.
 - **No live tracking.** The app does not know when the driver leaves, where the car is, or whether it is late. A trip ends by the clock.
-- **No in-app messaging or e-mail notifications** for delays and cancellations; the passenger sees them on their booking.
+- **No in-app messaging between passenger and driver**, and no SMS or push notifications. Passengers get an e-mail and a notice in the app when their trip is delayed, a stop is removed or the trip is cancelled; drivers get no notices yet.
 - **City photos on the landing page are AI-generated** (stated in the footer).
 - **Nominatim and OSRM are the public demo servers**, rate-limited; a production version would host its own or use a paid provider.
 
 ## With one more week
 
 1. A payment provider (CMI or a card processor) and real refunds.
-2. E-mail and SMS notifications: booking confirmed, trip changed, trip cancelled, reminder the day before.
+2. More notifications: SMS and push, notices for drivers (new booking, cancellation), booking confirmation and a reminder the day before.
 3. A mobile version for drivers: « Je suis parti », position shared during the trip, lateness warning.
 4. Recurring trips (« every Friday Agadir → Casablanca »).
 5. Deployment on a server with HTTPS, backups and monitoring.

@@ -7,10 +7,10 @@ Everything runs in Docker: PHP 8.4-FPM, Nginx and MySQL 8.4. You need nothing el
 - Docker with Docker Compose v2 (Docker Desktop on macOS and Windows, Docker Engine on Linux)
 - Git
 - About 2 GB of free disk space for Docker
-- Free ports 8080 (web) and 3306 (MySQL); see [Ports](#ports) to change them
+- Free ports 8080 (web), 3306 (MySQL), 8025 and 1025 (Mailpit); see [Ports](#ports) to change them
 - An internet connection on the first start (Composer packages, JavaScript packages) and for the maps (OpenStreetMap tiles, Nominatim, OSRM)
 
-These steps were checked on 2026-11-15 from a fresh clone of the GitHub repository, in an isolated Docker project (macOS, Docker Desktop). The app answered after about 3 minutes, with its demo data and road routes, and all the tests passed (561 then; 583 since the trip changes).
+These steps were checked on 2026-11-15 from a fresh clone of the GitHub repository, in an isolated Docker project (macOS, Docker Desktop). The app answered after about 3 minutes, with its demo data and road routes, and all the tests passed (561 then; 600 since the trip changes and notifications).
 
 ## Quick start
 
@@ -49,6 +49,10 @@ All demo accounts use the password `rihla2026`.
 
 The demo trips are dated relative to the day the data is loaded, so there are always upcoming and completed trips.
 
+### E-mails
+
+E-mails sent by Rihla (a trip delayed, a stop removed, a trip cancelled) never leave your machine: they land in **Mailpit**, a test mailbox started with the app, at <http://localhost:8025> (also linked from the login page). It is one inbox for every demo account; search `to:salma@rihla.ma` to see one person's mail. To try it: sign in as Karim, open one of his upcoming trips, « Décaler l'horaire », confirm, then open Mailpit. The same changes appear under the bell in the passenger's header.
+
 ## Running the tests
 
 ```bash
@@ -78,6 +82,8 @@ The defaults work as they are. To change them, put variables in a `.env` file ne
 |---|---|---|
 | `HTTP_PORT` | `8080` | The website |
 | `MYSQL_PORT` | `3306` | MySQL from the host (for a database client) |
+| — | `8025` | Mailpit, the demo mailbox (fixed port) |
+| `MAILPIT_SMTP_PORT` | `1025` | Mailpit's SMTP port on the host |
 
 Example:
 

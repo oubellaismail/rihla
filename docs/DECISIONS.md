@@ -31,7 +31,7 @@ The price of a portion is the **sum of the prices of its legs**. The driver sets
 *Rejected*: a price proportional to the full trip, which ignores mountain roads that are much longer than the straight-line distance.
 
 ### What happens when the driver changes a time or removes a stop after bookings?
-- **Delay under 30 minutes**: bookings are kept and passengers are notified.
+- **Delay under 30 minutes**: bookings are kept and passengers are told (by e-mail and in the app since 15 November; see below).
 - **Delay of 30 minutes or more**: each affected passenger can cancel free of charge.
 - **Stop removed**: bookings that board or get off at that stop are cancelled and fully refunded.
 - The driver sees the effect of the change on each passenger **before** saving it.
@@ -47,7 +47,7 @@ The passenger reviews the driver, and the driver reviews each passenger. A revie
 ## Cancellation rules
 
 - **Passenger**: full refund up to 24 h before the departure of their portion, 50 % after that, nothing once the car has left.
-- **Driver**: every booking is fully refunded and passengers are notified; the cancellation is counted on the driver's profile.
+- **Driver**: every booking is fully refunded; the cancellation is counted on the driver's profile. *Correction, 15 November*: until that day passengers were not told outside their booking page, although this line said « notified ». They now get an e-mail and a notice (see below).
 
 ## Concurrent access (overbooking)
 
@@ -246,4 +246,14 @@ The answer to « what happens when the driver changes a time or removes a stop �
 - **« Retirer une étape » only for an intermediate stop**; removing the departure or the arrival is cancelling the trip. Who boards or leaves there is cancelled by the driver and fully refunded, with the reason on their booking; who passes through keeps their seat and price. The two legs become one at their summed price, and OSRM is asked for the new route without blocking the removal.
 - **A removed stop is marked, not deleted.** Cancelled bookings still point to it: deleting would break them, moving them would rewrite their history. Every calculation (seats, prices, map, trunk, search) ignores it.
 - **Both changes show their effect first** (new departure, passengers affected, who is refunded), then ask for a confirmation.
-- **Not built**: editing one stop's time alone, adding a stop after bookings, and e-mail notifications; passengers see the changes on their booking and in « Mes réservations ».
+- **Not built**: editing one stop's time alone, and adding a stop after bookings.
+
+## 2026-11-15 — Telling passengers: e-mails and a notification bell
+
+A passenger whose trip changed only found out by opening their booking. For a trip moved the night before, that is too late.
+
+- **An e-mail for each change that affects a passenger**: a delay (to everyone booked, with their new time and, from 30 minutes, the free cancellation), a removed stop (only to those whose booking it cancelled), a cancelled trip (to everyone booked, whether the driver or an admin cancelled it). HTML and text, sent after the change is saved, so a mail failure never undoes it.
+- **In Docker, every e-mail lands in Mailpit** (<http://localhost:8025>), one inbox for the whole demo, searchable by recipient (`to:salma@rihla.ma`). In production only the mailer address changes. E-mails are sent at once rather than queued: no worker runs in this setup.
+- **A notification bell**, next to the avatar, with the unread count and a « Notifications » page. E-mail reaches people who do not open the app; the bell keeps the history inside it. Each notice is saved with its e-mail, before sending, so a mail failure never loses it.
+- **A delay is capped at 6 hours in total.** Beyond that, a trip is no longer the one passengers booked: the driver cancels it, which refunds everyone.
+- **Still not built**: SMS and push notifications, and notices for drivers (a new booking, a passenger cancelling).
